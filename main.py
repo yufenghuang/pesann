@@ -44,6 +44,7 @@ if params['restart']:
     loadParams = np.load(paramFile+".npz")
     for param in loadParams.files:
         params[param] = loadParams[param]
+    params['restart'] = True
 else:
     params = pyf.initialize(params)
 
