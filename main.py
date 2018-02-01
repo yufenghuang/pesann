@@ -12,6 +12,8 @@ import pandas as pd
 import tf_func as tff
 import py_func as pyf
 
+import os
+
 
 ##############################################################################
 #
@@ -21,23 +23,61 @@ import py_func as pyf
 
 chunkSize = 256
 
+restart = True
+outfile = "log/spec"
+
 iGPU = 0
-dcut = 6.2
-learningRate = 0.001
-n2bBasis = 100
-n3bBasis = 10 # Total = n3bBasis * n3bBasis * n3bBasis
-numFeat = n2bBasis + n3bBasis**3
-nL1Nodes = 300
-nL2Nodes = 300
 
-fileName = "MOVEMENT.train.first100"
-file = open(fileName, 'r')
-nAtoms, iIter, lattice, R, f, v, e = pyf.getData(file)
+if restart:
+    varLoad = np.load(outfile+".npz")
+    varList = varLoad.files
+    dcut = varLoad[varList[0]]
+    learningRate = varLoad[varList[1]]
+    n2bBasis = varLoad[varList[2]]
+    n3bBasis = varLoad[varList[3]]
+    numFeat = varLoad[varList[4]]
+    nL1Nodes = varLoad[varList[5]]
+    nL2Nodes = varLoad[varList[6]]
+    featScalerA = varLoad[varList[7]]
+    featScalerB = varLoad[varList[8]]
+    engyScalerA = varLoad[varList[9]]
+    engyScalerB = varLoad[varList[10]]
+    
+else:
+    dcut = 6.2
+    learningRate = 0.001
+    n2bBasis = 100
+    n3bBasis = 10 # Total = n3bBasis * n3bBasis * n3bBasis
+    numFeat = n2bBasis + n3bBasis**3
+    nL1Nodes = 300
+    nL2Nodes = 300
 
-featScalerA = np.ones((1,numFeat))
-featScalerB = np.zeros((1,numFeat))
-engyScalerA = np.ones((1,1))
-engyScalerB = np.zeros((1,1))
+    fileName = "MOVEMENT.train.first100"
+    file = open(fileName, 'r')
+    nAtoms, iIter, lattice, R, f, v, e = pyf.getData(file)
+    feat = pyf.getFeats(R, lattice, dcut, n2bBasis,n3bBasis)
+    engy = e.reshape([-1,1])
+    file.close()
+    
+    featScalerA,featScalerB,engyScalerA,engyScalerB = pyf.getFeatEngyScaler(feat,engy)
+    
+    feat_scaled = featScalerA * feat + featScalerB
+    engy_scaled = engyScalerA * engy + engyScalerB
+    
+    if not os.path.exists("log"):
+        os.mkdir("log")
+        
+    outfile = "log/spec"
+    
+    np.savez(outfile, dcut, learningRate,\
+             n2bBasis,n3bBasis,numFeat,nL1Nodes, nL2Nodes,\
+             featScalerA, featScalerB, engyScalerA,engyScalerB)
+
+
+#featScalerA = np.ones((1,numFeat))
+#featScalerB = np.zeros((1,numFeat))
+#engyScalerA = np.ones((1,1))
+#engyScalerB = np.zeros((1,1))
 
 
 ##############################################################################
