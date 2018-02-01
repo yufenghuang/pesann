@@ -49,12 +49,12 @@ if restart:
     
 else:
     dcut = 6.2
-    learningRate = 0.001
+    learningRate = 0.0001
     n2bBasis = 100
     n3bBasis = 10 # Total = n3bBasis * n3bBasis * n3bBasis
     numFeat = n2bBasis + n3bBasis**3
     nL1Nodes = 300
-    nL2Nodes = 300
+    nL2Nodes = 500
 
     file = open(inputData, 'r')
     nAtoms, iIter, lattice, R, f, v, e = pyf.getData(file)
@@ -135,16 +135,18 @@ dfEngy = pd.read_csv(engyFile, header=None, index_col=False).values
 #dfFeat = dfFeat_chunk.get_chunk().values
 #    dfEngy = dfEngy_chunk.get_chunk().values
 
-for _ in range(100):
+for _ in range(5000):
     feedDict = {tfFeat: dfFeat * featScalerA + featScalerB, \
                 tfEngy: dfEngy * engyScalerA + engyScalerB, \
                 tfLR: learningRate}
 
     sess.run(tfOptimizer, feed_dict=feedDict)
-    Ep, loss = sess.run((tfEs, tfLoss), feed_dict=feedDict)
-    Ep = (Ep - engyScalerB)/engyScalerA
-    Ermse = np.sqrt(np.sum((Ep - dfEngy)**2))
-    print(loss, Ermse)
+    
+    if _ % 10 == 0:
+        Ep, loss = sess.run((tfEs, tfLoss), feed_dict=feedDict)
+        Ep = (Ep - engyScalerB)/engyScalerA
+        Ermse = np.sqrt(np.sum((Ep - dfEngy)**2))
+        print(loss, Ermse)
 
 
     
