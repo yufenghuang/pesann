@@ -76,6 +76,7 @@ else:
              n2bBasis,n3bBasis,numFeat,nL1Nodes, nL2Nodes,\
              featScalerA, featScalerB, engyScalerA,engyScalerB)
 
+'''
 if os.path.exists(featFile):
     os.remove(featFile)
 if os.path.exists(engyFile):
@@ -98,8 +99,8 @@ with open(inputData, 'r') as datafile:
         engy = e.reshape([-1,1])
         pd.DataFrame(feat).to_csv(featFile,mode='a',header=False,index=False)
         pd.DataFrame(engy).to_csv(engyFile,mode='a',header=False,index=False)
-
 '''
+
 
 ##############################################################################
 #
@@ -114,6 +115,31 @@ tfFeatB = tf.constant(featScalerB, dtype=tf.float32)
 tfEngyA = tf.constant(engyScalerA, dtype=tf.float32)
 tfEngyB = tf.constant(engyScalerB, dtype=tf.float32)
 
+# train with features
+
+tfFeat = tf.placeholder(tf.float32,shape=(None, numFeat))
+tfEngy = tf.placeholder(tf.float32,shape=(None, 1))
+tfLR = tf.placeholder(tf.float32)
+
+tfEs = tff.tf_engyFromFeats(tfFeat, numFeat, nL1Nodes, nL2Nodes)
+
+tfLoss = tf.reduce_sum((tfEs-tfEngy)**2)
+tfOptimizer = tf.train.AdamOptimizer(tfLR).minimize(tfLoss)
+
+
+sess = tf.Session()
+sess.run(tf.global_variables_initializer())
+dfFeat_chunk = pd.read_csv(featFile, header=None, index_col=False, chunksize=100, iterator=True)
+dfEngy_chunk = pd.read_csv(engyFile, header=None, index_col=False, chunksize=100, iterator=True)
+
+dfFeat = dfFeat_chunk.get_chunk().values
+dfEngy = dfEngy_chunk.get_chunk().values
+
+Ep = sess.run(tfOptimizer, feed_dict={tfFeat: dfFeat * featScalerA + featScalerB, \
+                               tfEngy: dfEngy * engyScalerA + engyScalerB, \
+                               tfLR: learningRate})
+
+'''
 # Tensorflow placeholders
 tfCoord = tf.placeholder(tf.float32, shape=(None,3))
 tfLattice = tf.placeholder(tf.float32, shape=(3,3))
