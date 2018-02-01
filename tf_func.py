@@ -111,6 +111,8 @@ def tf_engyFromFeats(tfFeats, nFeat, nL1, nL2):
         B = tf.get_variable("biases",shape=[nL1],\
              initializer=tf.zeros_initializer())
         L1out = tf.nn.sigmoid(tf.matmul(tfFeats, W)+B)
+        tf.add_to_collection("saved_params", W)
+        tf.add_to_collection("saved_params", B)
         
     with tf.variable_scope('layer2', reuse=tf.AUTO_REUSE):
         W = tf.get_variable("weights", shape=[nL1,nL2],\
@@ -118,12 +120,17 @@ def tf_engyFromFeats(tfFeats, nFeat, nL1, nL2):
         B = tf.get_variable("biases",shape=[nL2],\
              initializer=tf.zeros_initializer())
         L2out = tf.nn.sigmoid(tf.matmul(L1out, W)+B)
+        tf.add_to_collection("saved_params", W)
+        tf.add_to_collection("saved_params", B)
         
     with tf.variable_scope('layer3', reuse=tf.AUTO_REUSE):
         W = tf.get_variable("weights", shape=[nL2,1],\
               initializer=tf.contrib.layers.xavier_initializer())
         B = tf.get_variable("biases",shape=[1],\
              initializer=tf.zeros_initializer())
+        tf.add_to_collection("saved_params", W)
+        tf.add_to_collection("saved_params", B)
+
         L3out = tf.matmul(L2out, W)+B
     return L3out
 

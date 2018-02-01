@@ -128,7 +128,6 @@ tfLoss = tf.reduce_mean((tfEs-tfEngy)**2)
 with tf.variable_scope("Adam", reuse=tf.AUTO_REUSE):
     tfOptimizer = tf.train.AdamOptimizer(tfLR).minimize(tfLoss)
 
-saver = tf.train.Saver()
 sess = tf.Session()
 sess.run(tf.global_variables_initializer())
 dfFeat = pd.read_csv(featFile, header=None, index_col=False).values
@@ -150,7 +149,8 @@ for _ in range(5000):
         Ermse = np.sqrt(np.mean((Ep - dfEngy)**2))
         print(loss, Ermse)
 
-
+saver = tf.train.Saver(tf.get_collection("saved_params"))
+save_path = saver.save(sess, logDir+"/tf.chpt")
     
 
 '''
