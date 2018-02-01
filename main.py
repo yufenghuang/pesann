@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 
 import tf_func as tff
+import py_func as pyf
 
 
 ##############################################################################
@@ -18,12 +19,7 @@ import tf_func as tff
 #
 ##############################################################################
 
-
-
 chunkSize = 256
-
-
-
 
 iGPU = 0
 dcut = 6.2
@@ -33,6 +29,10 @@ n3bBasis = 10 # Total = n3bBasis * n3bBasis * n3bBasis
 numFeat = n2bBasis + n3bBasis**3
 nL1Nodes = 300
 nL2Nodes = 300
+
+fileName = "MOVEMENT.train.first100"
+file = open(fileName, 'r')
+nAtoms, iIter, lattice, R, f, v, e = pyf.getData(file)
 
 featScalerA = np.ones((1,numFeat))
 featScalerB = np.zeros((1,numFeat))
