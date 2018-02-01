@@ -24,7 +24,11 @@ params = {
         "chunkSize": 0,
         "epoch": 5000,
         "restart": True,
-        "iGPU":0
+        "inputData": "MOVEMENT.train.first100",
+        "featFile": "feat",
+        "engyFile": "engy",
+        "logDir": "log",
+        "iGPU": 0,
         }
 
 os.environ["CUDA_VISIBLE_DEVICES"]=str(params['iGPU'])
