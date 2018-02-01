@@ -50,6 +50,26 @@ def getData(dataFile):
     else:
         return getData(dataFile)
 
+def getRmmt(mmtFile):
+    line = mmtFile.readline()
+    
+    sptline = line.split()
+    nAtoms = int(sptline[0])
+    
+    mmtFile.readline()
+    lattice = np.zeros((3,3))
+    lattice[0,:] = np.array(mmtFile.readline().split(),dtype=float)
+    lattice[1,:] = np.array(mmtFile.readline().split(),dtype=float)
+    lattice[2,:] = np.array(mmtFile.readline().split(),dtype=float)
+    
+    mmtFile.readline()
+    R = np.zeros((nAtoms,3))
+    for i in range(nAtoms):
+        sptline = mmtFile.readline().split()
+        R[i,:] = np.array(sptline[1:4])
+    
+    return nAtoms, lattice, R 
+    
 
 def getFeats(R, lattice, dcut,n2bBasis, n3bBasis):
     import tensorflow as tf
@@ -153,6 +173,36 @@ def trainEngy(params):
     
     save_path = saver.save(sess, str(params['logDir'])+"/tf.chpt")
     return save_path
+
+def getEngy(params):
+    import tensorflow as tf
+    import tf_func as tff
+    
+    tfFeatA = tf.constant(params['featScalerA'], dtype=tf.float32)
+    tfFeatB = tf.constant(params['featScalerB'], dtype=tf.float32)
+    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
+    tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
+
+    tfCoord = tf.placeholder(tf.float32, shape=(None,3))
+    tfLattice = tf.placeholder(tf.float32, shape=(3,3))
+    tfIdxNb, tfRNb,tfMaxNb, tfNAtoms= tff.tf_getNb(tfCoord,tfLattice,params["dcut"])
+    tfRhat, tfRi, tfDc = tff.tf_getStruct(tfRNb)
+    tfGR2 = tf.scatter_nd(tf.where(tfRi>0),tff.tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*3/params["dcut"]-2,params['n2bBasis']),[tfNAtoms,tfMaxNb,params['n2bBasis']])
+    tfGR3 = tf.scatter_nd(tf.where(tfRi>0),tff.tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*3/params["dcut"]-2,params['n3bBasis']),[tfNAtoms,tfMaxNb,params['n3bBasis']])
+    tfGD3 = tf.scatter_nd(tf.where(tfDc>0),tff.tf_getCos(tf.boolean_mask(tfDc,tfDc>0)*3/params["dcut"]-2,params['n3bBasis']),[tfNAtoms,tfMaxNb, tfMaxNb,params['n3bBasis']])
+    tfFeats = tff.tf_getFeats(tfGR2,tfGR3,tfGD3)
+    tfFeats = tfFeats * tfFeatA + tfFeatB
+    tfEs = tff.tf_engyFromFeats(tfFeats, params['numFeat'], params['nL1Nodes'], params['nL2Nodes'])
+    tfEi = tfEs * tfEngyA + tfEngyB
+    
+    with tf.Session() as sess:
+        nAtoms, lattice, R= getData(params["mmtFile"])
+        feedDict={
+                tfCoord:R,
+                tfLattice: lattice
+                }
+        Ei = sess.run(tfEi, feed_dict=feedDict)
+    return Ei
 
 def initialize(params):
     import os

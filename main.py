@@ -29,6 +29,12 @@ params = {
         "engyFile": "engy",
         "logDir": "log",
         "iGPU": 0,
+        "runtype": 1,   # 2: evaluate energy and forces
+                        # 1: evaluate energy
+                        # 0: MD
+                        #-1: training with energy
+                        #-2: training with energy and forces
+        "mmtFile": "coord.mmt"
         }
 
 os.environ["CUDA_VISIBLE_DEVICES"]=str(params['iGPU'])
@@ -47,7 +53,21 @@ else:
 
 print("Initialization done")
 
-print(pyf.trainEngy(params))
+if params["runtype"] == 2:
+    pass
+elif params["runtype"] == 1:
+    params["mmtFile"] = "coord.mmt"
+    Ep = pyf.getEngy(params)
+elif params["runtype"] == 0:
+    pass
+elif params["runtype"] == -1:
+    params["featFile"] = "feat"
+    params["engyFile"] = "engy"
+    print(pyf.trainEngy(params))
+elif params["runtype"] == -2:
+    pass
+else:
+    print("Unrecognized runtype: ", params["runtype"])
 
     
 '''
