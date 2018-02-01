@@ -30,7 +30,7 @@ logDir = "log"
 
 iGPU = 0
 
-os.environ["CUDA_VISIBLE_DEVICES"]=iGPU
+os.environ["CUDA_VISIBLE_DEVICES"]=str(iGPU)
 
 if restart:
     varLoad = np.load(logDir+"/spec.npz")
