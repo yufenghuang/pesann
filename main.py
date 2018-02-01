@@ -108,25 +108,27 @@ with open(inputData, 'r') as datafile:
 #
 ##############################################################################
 
-with tf.variable_scope("Training", reuse=tf.AUTO_REUSE):
-    # Tensorflow constants
-    tf_pi = tf.constant(np.pi, dtype=tf.float32)
-    tfFeatA = tf.constant(featScalerA, dtype=tf.float32)
-    tfFeatB = tf.constant(featScalerB, dtype=tf.float32)
-    tfEngyA = tf.constant(engyScalerA, dtype=tf.float32)
-    tfEngyB = tf.constant(engyScalerB, dtype=tf.float32)
-    
-    # train with features
-    
-    tfFeat = tf.placeholder(tf.float32,shape=(None, numFeat))
-    tfEngy = tf.placeholder(tf.float32,shape=(None, 1))
-    tfLR = tf.placeholder(tf.float32)
-    
-    tfEs = tff.tf_engyFromFeats(tfFeat, numFeat, nL1Nodes, nL2Nodes)
-    
-    tfLoss = tf.reduce_mean((tfEs-tfEngy)**2)
+# Tensorflow constants
+tf_pi = tf.constant(np.pi, dtype=tf.float32)
+tfFeatA = tf.constant(featScalerA, dtype=tf.float32)
+tfFeatB = tf.constant(featScalerB, dtype=tf.float32)
+tfEngyA = tf.constant(engyScalerA, dtype=tf.float32)
+tfEngyB = tf.constant(engyScalerB, dtype=tf.float32)
+
+# train with features
+
+tfFeat = tf.placeholder(tf.float32,shape=(None, numFeat))
+tfEngy = tf.placeholder(tf.float32,shape=(None, 1))
+tfLR = tf.placeholder(tf.float32)
+
+tfEs = tff.tf_engyFromFeats(tfFeat, numFeat, nL1Nodes, nL2Nodes)
+
+tfLoss = tf.reduce_mean((tfEs-tfEngy)**2)
+
+with tf.variable_scope("Adam", reuse=tf.AUTO_REUSE):
     tfOptimizer = tf.train.AdamOptimizer(tfLR).minimize(tfLoss)
 
+saver = tf.train.Saver()
 sess = tf.Session()
 sess.run(tf.global_variables_initializer())
 dfFeat = pd.read_csv(featFile, header=None, index_col=False).values
