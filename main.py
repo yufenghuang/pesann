@@ -20,62 +20,66 @@ import os
 #
 ##############################################################################
 
-chunkSize = 256
-
-restart = False
-inputData = "MOVEMENT.train.first100"
-featFile = "feat"
-engyFile = "engy"
-logDir = "log"
-
-iGPU = 0
-
-os.environ["CUDA_VISIBLE_DEVICES"]=str(iGPU)
-
-if restart:
-    varLoad = np.load(logDir+"/spec.npz")
-    varList = varLoad.files
-    dcut = varLoad[varList[0]]
-    learningRate = varLoad[varList[1]]
-    n2bBasis = varLoad[varList[2]]
-    n3bBasis = varLoad[varList[3]]
-    numFeat = varLoad[varList[4]]
-    nL1Nodes = varLoad[varList[5]]
-    nL2Nodes = varLoad[varList[6]]
-    featScalerA = varLoad[varList[7]]
-    featScalerB = varLoad[varList[8]]
-    engyScalerA = varLoad[varList[9]]
-    engyScalerB = varLoad[varList[10]]
+def initialize(params):
+    params['dcut'] = 6.2
+    params['learningRate']=0.0001
+    params['n2bBasis'] = 100
+    params['n3bBasis'] = 10
+    params['numFeat'] = params['n2bBasis'] + params['n3bBasis'] **3
+    params['nL1Nodes'] = 300
+    params['nL2Nodes'] = 500
     
-else:
-    dcut = 6.2
-    learningRate = 0.0001
-    n2bBasis = 100
-    n3bBasis = 10 # Total = n3bBasis * n3bBasis * n3bBasis
-    numFeat = n2bBasis + n3bBasis**3
-    nL1Nodes = 300
-    nL2Nodes = 500
-
-    file = open(inputData, 'r')
+    file = open(str(params["inputData"]), 'r')
     nAtoms, iIter, lattice, R, f, v, e = pyf.getData(file)
-    feat = pyf.getFeats(R, lattice, dcut, n2bBasis,n3bBasis)
+    feat = pyf.getFeats(R, lattice, params['dcut'], params['n2bBasis'],params['n3bBasis'])
     engy = e.reshape([-1,1])
     file.close()
     
     featScalerA,featScalerB,engyScalerA,engyScalerB = pyf.getFeatEngyScaler(feat,engy)
     
-    feat_scaled = featScalerA * feat + featScalerB
-    engy_scaled = engyScalerA * engy + engyScalerB
+    params['featScalerA'],params['featScalerB'],params['engyScalerA'],params['engyScalerB'] = \
+    pyf.getFeatEngyScaler(feat,engy)
     
-    if not os.path.exists(logDir):
-        os.mkdir(logDir)
-        
-    outfile = logDir+"/spec"
+#    feat_scaled = params['featScalerA'] * feat + params['featScalerB']
+#    engy_scaled = params['engyScalerA'] * engy + params['engyScalerB']
     
-    np.savez(outfile, dcut, learningRate,\
-             n2bBasis,n3bBasis,numFeat,nL1Nodes, nL2Nodes,\
-             featScalerA, featScalerB, engyScalerA,engyScalerB)
+    if not os.path.exists(str(params['logDir'])):
+        os.mkdir(str(params['logDir']))
+            
+    paramFile = str(params['logDir'])+"/params"
+    np.savez(paramFile,**params)
+    return params
 
+params = {
+        "chunkSize": 0,
+        "epoch": 5000,
+        "restart": False,
+        "inputData": "MOVEMENT.train.first100",
+        "featFile": "feat",
+        "engyFile": "engy",
+        "logDir": "log",
+        "iGPU": 0,
+        "dcut": 6.2,
+        "learningRate": 0.0001,
+        "n2bBasis": 100,
+        "n3bBasis": 10,
+        "nL1Nodes": 300,
+        "nL2Nodes": 500
+        }
+
+os.environ["CUDA_VISIBLE_DEVICES"]=str(params['iGPU'])
+
+if params['restart']:
+    paramFile = str(params['logDir'])+"/params"
+    loadParams = np.load(paramFile+".npz")
+    for param in loadParams.files:
+        params[param] = loadParams[param]
+        
+else:
+    params = initialize(params)
+
+print("Initialization done")
+    
 '''
 if os.path.exists(featFile):
     os.remove(featFile)
@@ -110,18 +114,18 @@ with open(inputData, 'r') as datafile:
 
 # Tensorflow constants
 tf_pi = tf.constant(np.pi, dtype=tf.float32)
-tfFeatA = tf.constant(featScalerA, dtype=tf.float32)
-tfFeatB = tf.constant(featScalerB, dtype=tf.float32)
-tfEngyA = tf.constant(engyScalerA, dtype=tf.float32)
-tfEngyB = tf.constant(engyScalerB, dtype=tf.float32)
+tfFeatA = tf.constant(params['featScalerA'], dtype=tf.float32)
+tfFeatB = tf.constant(params['featScalerB'], dtype=tf.float32)
+tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
+tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
 
 # train with features
 
-tfFeat = tf.placeholder(tf.float32,shape=(None, numFeat))
+tfFeat = tf.placeholder(tf.float32,shape=(None, params['numFeat']))
 tfEngy = tf.placeholder(tf.float32,shape=(None, 1))
 tfLR = tf.placeholder(tf.float32)
 
-tfEs = tff.tf_engyFromFeats(tfFeat, numFeat, nL1Nodes, nL2Nodes)
+tfEs = tff.tf_engyFromFeats(tfFeat, params['numFeat'], params['nL1Nodes'], params['nL2Nodes'])
 
 tfLoss = tf.reduce_mean((tfEs-tfEngy)**2)
 
@@ -130,28 +134,48 @@ with tf.variable_scope("Adam", reuse=tf.AUTO_REUSE):
 
 sess = tf.Session()
 sess.run(tf.global_variables_initializer())
-dfFeat = pd.read_csv(featFile, header=None, index_col=False).values
-dfEngy = pd.read_csv(engyFile, header=None, index_col=False).values
-#for dfFeat in dfFeat_chunk:
-#dfFeat = dfFeat_chunk.get_chunk().values
-#    dfEngy = dfEngy_chunk.get_chunk().values
 
-for _ in range(5000):
-    feedDict = {tfFeat: dfFeat * featScalerA + featScalerB, \
-                tfEngy: dfEngy * engyScalerA + engyScalerB, \
-                tfLR: learningRate}
-
-    sess.run(tfOptimizer, feed_dict=feedDict)
+if params['chunkSize'] == 0:
+    dfFeat = pd.read_csv(str(params['featFile']), header=None, index_col=False).values
+    dfEngy = pd.read_csv(str(params['engyFile']), header=None, index_col=False).values
     
-    if _ % 10 == 0:
+for iEpoch in range(params['epoch']):
+    if params['chunkSize'] > 0:
+        pdFeat = pd.read_csv(str(params['featFile']), header=None, index_col=False, \
+                             chunksize=int(params['chunkSize']), iterator=True)
+        pdEngy = pd.read_csv(str(params['engyFile']), header=None, index_col=False, \
+                             chunksize=int(params['chunkSize']), iterator=True)
+        
+        for pdF in pdFeat:
+            pdE = next(pdEngy)
+            dfFeat = pdF.values
+            dfEngy = pdE.values
+            feedDict = {tfFeat: dfFeat * params['featScalerA'] + params['featScalerB'], \
+                        tfEngy: dfEngy * params['engyScalerA'] + params['engyScalerB'], \
+                        tfLR: params['learningRate']}
+        
+            sess.run(tfOptimizer, feed_dict=feedDict)
+            print("running",iEpoch)
+
+    elif params['chunkSize'] == 0:
+        feedDict = {tfFeat: dfFeat * params['featScalerA'] + params['featScalerB'], \
+                    tfEngy: dfEngy * params['engyScalerA'] + params['engyScalerB'], \
+                    tfLR: params['learningRate']}
+    
+        sess.run(tfOptimizer, feed_dict=feedDict)
+    else:
+        print("Invalid chunkSize, not within [0,inf]. chunkSize=",params['chunkSize'])
+
+    if iEpoch % 10 == 0:
         Ep, loss = sess.run((tfEs, tfLoss), feed_dict=feedDict)
-        Ep = (Ep - engyScalerB)/engyScalerA
+        Ep = (Ep - params['engyScalerB'])/params['engyScalerA']
         Ermse = np.sqrt(np.mean((Ep - dfEngy)**2))
-        print(loss, Ermse)
+        print(iEpoch, loss, Ermse)
 
-saver = tf.train.Saver(tf.get_collection("saved_params"))
-save_path = saver.save(sess, logDir+"/tf.chpt")
-    
+saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
+save_path = saver.save(sess, str(params['logDir'])+"/tf.chpt")
+
+
 
 '''
 # Tensorflow placeholders

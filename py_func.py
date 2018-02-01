@@ -90,3 +90,7 @@ def getFeatEngyScaler(feat,engy):
     
     return feat_a,feat_b,engy_a,engy_b
     
+
+def trainEngy(featFile, engyFile, epoch, chunkSize, logDir):
+    
+    return 0
