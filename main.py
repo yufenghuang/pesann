@@ -124,7 +124,7 @@ with tf.variable_scope("Training", reuse=tf.AUTO_REUSE):
     
     tfEs = tff.tf_engyFromFeats(tfFeat, numFeat, nL1Nodes, nL2Nodes)
     
-    tfLoss = tf.reduce_sum((tfEs-tfEngy)**2)
+    tfLoss = tf.reduce_mean((tfEs-tfEngy)**2)
     tfOptimizer = tf.train.AdamOptimizer(tfLR).minimize(tfLoss)
 
 sess = tf.Session()
@@ -145,7 +145,7 @@ for _ in range(5000):
     if _ % 10 == 0:
         Ep, loss = sess.run((tfEs, tfLoss), feed_dict=feedDict)
         Ep = (Ep - engyScalerB)/engyScalerA
-        Ermse = np.sqrt(np.sum((Ep - dfEngy)**2))
+        Ermse = np.sqrt(np.mean((Ep - dfEngy)**2))
         print(loss, Ermse)
 
 
