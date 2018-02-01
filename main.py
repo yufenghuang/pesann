@@ -108,36 +108,46 @@ with open(inputData, 'r') as datafile:
 #
 ##############################################################################
 
-# Tensorflow constants
-tf_pi = tf.constant(np.pi, dtype=tf.float32)
-tfFeatA = tf.constant(featScalerA, dtype=tf.float32)
-tfFeatB = tf.constant(featScalerB, dtype=tf.float32)
-tfEngyA = tf.constant(engyScalerA, dtype=tf.float32)
-tfEngyB = tf.constant(engyScalerB, dtype=tf.float32)
-
-# train with features
-
-tfFeat = tf.placeholder(tf.float32,shape=(None, numFeat))
-tfEngy = tf.placeholder(tf.float32,shape=(None, 1))
-tfLR = tf.placeholder(tf.float32)
-
-tfEs = tff.tf_engyFromFeats(tfFeat, numFeat, nL1Nodes, nL2Nodes)
-
-tfLoss = tf.reduce_sum((tfEs-tfEngy)**2)
-tfOptimizer = tf.train.AdamOptimizer(tfLR).minimize(tfLoss)
-
+with tf.variable_scope("Training", reuse=tf.AUTO_REUSE):
+    # Tensorflow constants
+    tf_pi = tf.constant(np.pi, dtype=tf.float32)
+    tfFeatA = tf.constant(featScalerA, dtype=tf.float32)
+    tfFeatB = tf.constant(featScalerB, dtype=tf.float32)
+    tfEngyA = tf.constant(engyScalerA, dtype=tf.float32)
+    tfEngyB = tf.constant(engyScalerB, dtype=tf.float32)
+    
+    # train with features
+    
+    tfFeat = tf.placeholder(tf.float32,shape=(None, numFeat))
+    tfEngy = tf.placeholder(tf.float32,shape=(None, 1))
+    tfLR = tf.placeholder(tf.float32)
+    
+    tfEs = tff.tf_engyFromFeats(tfFeat, numFeat, nL1Nodes, nL2Nodes)
+    
+    tfLoss = tf.reduce_sum((tfEs-tfEngy)**2)
+    tfOptimizer = tf.train.AdamOptimizer(tfLR).minimize(tfLoss)
 
 sess = tf.Session()
 sess.run(tf.global_variables_initializer())
-dfFeat_chunk = pd.read_csv(featFile, header=None, index_col=False, chunksize=100, iterator=True)
-dfEngy_chunk = pd.read_csv(engyFile, header=None, index_col=False, chunksize=100, iterator=True)
+dfFeat = pd.read_csv(featFile, header=None, index_col=False).values
+dfEngy = pd.read_csv(engyFile, header=None, index_col=False).values
+#for dfFeat in dfFeat_chunk:
+#dfFeat = dfFeat_chunk.get_chunk().values
+#    dfEngy = dfEngy_chunk.get_chunk().values
 
-dfFeat = dfFeat_chunk.get_chunk().values
-dfEngy = dfEngy_chunk.get_chunk().values
+for _ in range(100):
+    feedDict = {tfFeat: dfFeat * featScalerA + featScalerB, \
+                tfEngy: dfEngy * engyScalerA + engyScalerB, \
+                tfLR: learningRate}
 
-Ep = sess.run(tfOptimizer, feed_dict={tfFeat: dfFeat * featScalerA + featScalerB, \
-                               tfEngy: dfEngy * engyScalerA + engyScalerB, \
-                               tfLR: learningRate})
+    sess.run(tfOptimizer, feed_dict=feedDict)
+    Ep, loss = sess.run((tfEs, tfLoss), feed_dict=feedDict)
+    Ep = (Ep - engyScalerB)/engyScalerA
+    Ermse = np.sqrt(np.sum((Ep - dfEngy)**2))
+    print(loss, Ermse)
+
+
+    
 
 '''
 # Tensorflow placeholders
