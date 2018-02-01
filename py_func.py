@@ -156,13 +156,27 @@ def trainEngy(params):
 
 def initialize(params):
     import os
-    params['dcut'] = 6.2
-    params['learningRate']=0.0001
-    params['n2bBasis'] = 100
-    params['n3bBasis'] = 10
-    params['numFeat'] = params['n2bBasis'] + params['n3bBasis'] **3
-    params['nL1Nodes'] = 300
-    params['nL2Nodes'] = 500
+    oldParams={
+        "chunkSize": 0,
+        "epoch": 5000,
+        "restart": True,
+        "inputData": "MOVEMENT.train.first100",
+        "featFile": "feat",
+        "engyFile": "engy",
+        "logDir": "log",
+        "iGPU": 0,
+        "dcut": 6.2,
+        "learningRate": 0.0001,
+        "n2bBasis": 100,
+        "n3bBasis": 10,
+        "nL1Nodes": 300,
+        "nL2Nodes": 500
+        }
+    
+    for param in params:
+        oldParams[param] = params[param]
+        
+    params = oldParams
     
     file = open(str(params["inputData"]), 'r')
     nAtoms, iIter, lattice, R, f, v, e = getData(file)

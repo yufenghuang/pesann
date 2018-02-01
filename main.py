@@ -24,17 +24,6 @@ params = {
         "chunkSize": 0,
         "epoch": 5000,
         "restart": True,
-        "inputData": "MOVEMENT.train.first100",
-        "featFile": "feat",
-        "engyFile": "engy",
-        "logDir": "log",
-        "iGPU": 0,
-        "dcut": 6.2,
-        "learningRate": 0.0001,
-        "n2bBasis": 100,
-        "n3bBasis": 10,
-        "nL1Nodes": 300,
-        "nL2Nodes": 500
         }
 
 os.environ["CUDA_VISIBLE_DEVICES"]=str(params['iGPU'])
@@ -42,9 +31,12 @@ os.environ["CUDA_VISIBLE_DEVICES"]=str(params['iGPU'])
 if params['restart']:
     paramFile = str(params['logDir'])+"/params"
     loadParams = np.load(paramFile+".npz")
+    oldParams = {}
     for param in loadParams.files:
-        params[param] = loadParams[param]
-    params['restart'] = True
+        oldParams[param] = loadParams[param]
+    for param in params:
+        oldParams[param] = params[param]
+    params = oldParams
 else:
     params = pyf.initialize(params)
 
