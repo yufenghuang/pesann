@@ -24,6 +24,7 @@ params = {
         "chunkSize": 0,
         "epoch": 5000,
         "restart": True,
+        "iGPU":0
         }
 
 os.environ["CUDA_VISIBLE_DEVICES"]=str(params['iGPU'])
