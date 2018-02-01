@@ -195,3 +195,12 @@ def tf_getFeats(tf_GR2, tf_GR3, tf_GD3):
     tf_yD = tf.reduce_sum(tf.expand_dims(tf.expand_dims(tf_GR3,3),4) * tf.expand_dims(tf_yD,2),1)
     tf_yD = tf.reshape(tf_yD,[-1,tf_n3bBasis**3])
     return tf.concat([tf_yR, tf_yD],axis=1)
+
+def tf_getFeatsFromR(tfCoord, tfLattice, dcut,n2bBasis, n3bBasis):
+    tfIdxNb, tfRNb,tfMaxNb, tfNAtoms= tf_getNb(tfCoord,tfLattice,dcut)
+    tfRhat, tfRi, tfDc = tf_getStruct(tfRNb)
+    tfGR2 = tf.scatter_nd(tf.where(tfRi>0),tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*3/dcut-2,n2bBasis),[tfNAtoms,tfMaxNb,n2bBasis])
+    tfGR3 = tf.scatter_nd(tf.where(tfRi>0),tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*3/dcut-2,n3bBasis),[tfNAtoms,tfMaxNb,n3bBasis])
+    tfGD3 = tf.scatter_nd(tf.where(tfDc>0),tf_getCos(tf.boolean_mask(tfDc,tfDc>0)*3/dcut-2,n3bBasis),[tfNAtoms,tfMaxNb, tfMaxNb,n3bBasis])
+    tfFeats = tf_getFeats(tfGR2,tfGR3,tfGD3)
+    return tfFeats

@@ -14,7 +14,6 @@ import py_func as pyf
 
 import os
 
-
 ##############################################################################
 #
 #   Initializing the program
@@ -23,13 +22,18 @@ import os
 
 chunkSize = 256
 
-restart = True
-outfile = "log/spec"
+restart = False
+inputData = "MOVEMENT.train.first100"
+featFile = "feat"
+engyFile = "engy"
+logDir = "log"
 
 iGPU = 0
 
+os.environ["CUDA_VISIBLE_DEVICES"]=iGPU
+
 if restart:
-    varLoad = np.load(outfile+".npz")
+    varLoad = np.load(logDir+"/spec.npz")
     varList = varLoad.files
     dcut = varLoad[varList[0]]
     learningRate = varLoad[varList[1]]
@@ -52,8 +56,7 @@ else:
     nL1Nodes = 300
     nL2Nodes = 300
 
-    fileName = "MOVEMENT.train.first100"
-    file = open(fileName, 'r')
+    file = open(inputData, 'r')
     nAtoms, iIter, lattice, R, f, v, e = pyf.getData(file)
     feat = pyf.getFeats(R, lattice, dcut, n2bBasis,n3bBasis)
     engy = e.reshape([-1,1])
@@ -64,21 +67,39 @@ else:
     feat_scaled = featScalerA * feat + featScalerB
     engy_scaled = engyScalerA * engy + engyScalerB
     
-    if not os.path.exists("log"):
-        os.mkdir("log")
+    if not os.path.exists(logDir):
+        os.mkdir(logDir)
         
-    outfile = "log/spec"
+    outfile = logDir+"/spec"
     
     np.savez(outfile, dcut, learningRate,\
              n2bBasis,n3bBasis,numFeat,nL1Nodes, nL2Nodes,\
              featScalerA, featScalerB, engyScalerA,engyScalerB)
 
+if os.path.exists(featFile):
+    os.remove(featFile)
+if os.path.exists(engyFile):
+    os.remove(engyFile)
+tfR = tf.placeholder(tf.float32, shape=(None,3))
+tfL = tf.placeholder(tf.float32, shape=(3,3))
 
-#featScalerA = np.ones((1,numFeat))
-#featScalerB = np.zeros((1,numFeat))
-#engyScalerA = np.ones((1,1))
-#engyScalerB = np.zeros((1,1))
+nCase = 0
+with open(inputData, 'r') as datafile:
+    for line in datafile:
+        if "Iteration" in line:
+            nCase += 1
 
+sess = tf.Session()
+with open(inputData, 'r') as datafile:
+    for i in range(nCase):
+        nAtoms, iIter, lattice, R, f, v, e = pyf.getData(datafile)
+        feedDict = {tfR: R, tfL:lattice}
+        feat = sess.run(tff.tf_getFeatsFromR(tfR,tfL,dcut,n2bBasis, n3bBasis), feed_dict=feedDict)
+        engy = e.reshape([-1,1])
+        pd.DataFrame(feat).to_csv(featFile,mode='a',header=False,index=False)
+        pd.DataFrame(engy).to_csv(engyFile,mode='a',header=False,index=False)
+
+'''
 
 ##############################################################################
 #
@@ -157,3 +178,4 @@ R = df.iloc[:,1:4].values
 
 feedDict = {tfCoord: R, tfLattice:lattice}
 tmp1 = sess.run(dEnldXin,feed_dict=feedDict)
+'''
