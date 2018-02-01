@@ -121,60 +121,7 @@ tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
 
 # train with features
 
-tfFeat = tf.placeholder(tf.float32,shape=(None, params['numFeat']))
-tfEngy = tf.placeholder(tf.float32,shape=(None, 1))
-tfLR = tf.placeholder(tf.float32)
-
-tfEs = tff.tf_engyFromFeats(tfFeat, params['numFeat'], params['nL1Nodes'], params['nL2Nodes'])
-
-tfLoss = tf.reduce_mean((tfEs-tfEngy)**2)
-
-with tf.variable_scope("Adam", reuse=tf.AUTO_REUSE):
-    tfOptimizer = tf.train.AdamOptimizer(tfLR).minimize(tfLoss)
-
-sess = tf.Session()
-sess.run(tf.global_variables_initializer())
-
-if params['chunkSize'] == 0:
-    dfFeat = pd.read_csv(str(params['featFile']), header=None, index_col=False).values
-    dfEngy = pd.read_csv(str(params['engyFile']), header=None, index_col=False).values
-    
-for iEpoch in range(params['epoch']):
-    if params['chunkSize'] > 0:
-        pdFeat = pd.read_csv(str(params['featFile']), header=None, index_col=False, \
-                             chunksize=int(params['chunkSize']), iterator=True)
-        pdEngy = pd.read_csv(str(params['engyFile']), header=None, index_col=False, \
-                             chunksize=int(params['chunkSize']), iterator=True)
-        
-        for pdF in pdFeat:
-            pdE = next(pdEngy)
-            dfFeat = pdF.values
-            dfEngy = pdE.values
-            feedDict = {tfFeat: dfFeat * params['featScalerA'] + params['featScalerB'], \
-                        tfEngy: dfEngy * params['engyScalerA'] + params['engyScalerB'], \
-                        tfLR: params['learningRate']}
-        
-            sess.run(tfOptimizer, feed_dict=feedDict)
-            print("running",iEpoch)
-
-    elif params['chunkSize'] == 0:
-        feedDict = {tfFeat: dfFeat * params['featScalerA'] + params['featScalerB'], \
-                    tfEngy: dfEngy * params['engyScalerA'] + params['engyScalerB'], \
-                    tfLR: params['learningRate']}
-    
-        sess.run(tfOptimizer, feed_dict=feedDict)
-    else:
-        print("Invalid chunkSize, not within [0,inf]. chunkSize=",params['chunkSize'])
-
-    if iEpoch % 10 == 0:
-        Ep, loss = sess.run((tfEs, tfLoss), feed_dict=feedDict)
-        Ep = (Ep - params['engyScalerB'])/params['engyScalerA']
-        Ermse = np.sqrt(np.mean((Ep - dfEngy)**2))
-        print(iEpoch, loss, Ermse)
-
-saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
-save_path = saver.save(sess, str(params['logDir'])+"/tf.chpt")
-
+print(pyf.trainEngy(params))
 
 
 '''
