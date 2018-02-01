@@ -106,8 +106,12 @@ def trainEngy(params):
     with tf.variable_scope("Adam", reuse=tf.AUTO_REUSE):
         tfOptimizer = tf.train.AdamOptimizer(tfLR).minimize(tfLoss)
     
+    saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
+    if params["restart"]:
+        saver.restore(sess, str(params['logDir'])+"/tf.chpt")
+        print("Model restored")
     
     if params['chunkSize'] == 0:
         dfFeat = pd.read_csv(str(params['featFile']), header=None, index_col=False).values
@@ -146,6 +150,37 @@ def trainEngy(params):
             Ermse = np.sqrt(np.mean((Ep - dfEngy)**2))
             print(iEpoch, loss, Ermse)
     
-    saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
+    
     save_path = saver.save(sess, str(params['logDir'])+"/tf.chpt")
     return save_path
+
+def initialize(params):
+    import os
+    params['dcut'] = 6.2
+    params['learningRate']=0.0001
+    params['n2bBasis'] = 100
+    params['n3bBasis'] = 10
+    params['numFeat'] = params['n2bBasis'] + params['n3bBasis'] **3
+    params['nL1Nodes'] = 300
+    params['nL2Nodes'] = 500
+    
+    file = open(str(params["inputData"]), 'r')
+    nAtoms, iIter, lattice, R, f, v, e = getData(file)
+    feat = getFeats(R, lattice, params['dcut'], params['n2bBasis'],params['n3bBasis'])
+    engy = e.reshape([-1,1])
+    file.close()
+    
+    featScalerA,featScalerB,engyScalerA,engyScalerB = getFeatEngyScaler(feat,engy)
+    
+    params['featScalerA'],params['featScalerB'],params['engyScalerA'],params['engyScalerB'] = \
+    getFeatEngyScaler(feat,engy)
+    
+#    feat_scaled = params['featScalerA'] * feat + params['featScalerB']
+#    engy_scaled = params['engyScalerA'] * engy + params['engyScalerB']
+    
+    if not os.path.exists(str(params['logDir'])):
+        os.mkdir(str(params['logDir']))
+            
+    paramFile = str(params['logDir'])+"/params"
+    np.savez(paramFile,**params)
+    return params

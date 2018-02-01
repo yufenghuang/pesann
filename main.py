@@ -20,40 +20,10 @@ import os
 #
 ##############################################################################
 
-def initialize(params):
-    params['dcut'] = 6.2
-    params['learningRate']=0.0001
-    params['n2bBasis'] = 100
-    params['n3bBasis'] = 10
-    params['numFeat'] = params['n2bBasis'] + params['n3bBasis'] **3
-    params['nL1Nodes'] = 300
-    params['nL2Nodes'] = 500
-    
-    file = open(str(params["inputData"]), 'r')
-    nAtoms, iIter, lattice, R, f, v, e = pyf.getData(file)
-    feat = pyf.getFeats(R, lattice, params['dcut'], params['n2bBasis'],params['n3bBasis'])
-    engy = e.reshape([-1,1])
-    file.close()
-    
-    featScalerA,featScalerB,engyScalerA,engyScalerB = pyf.getFeatEngyScaler(feat,engy)
-    
-    params['featScalerA'],params['featScalerB'],params['engyScalerA'],params['engyScalerB'] = \
-    pyf.getFeatEngyScaler(feat,engy)
-    
-#    feat_scaled = params['featScalerA'] * feat + params['featScalerB']
-#    engy_scaled = params['engyScalerA'] * engy + params['engyScalerB']
-    
-    if not os.path.exists(str(params['logDir'])):
-        os.mkdir(str(params['logDir']))
-            
-    paramFile = str(params['logDir'])+"/params"
-    np.savez(paramFile,**params)
-    return params
-
 params = {
         "chunkSize": 0,
         "epoch": 5000,
-        "restart": False,
+        "restart": True,
         "inputData": "MOVEMENT.train.first100",
         "featFile": "feat",
         "engyFile": "engy",
@@ -74,11 +44,13 @@ if params['restart']:
     loadParams = np.load(paramFile+".npz")
     for param in loadParams.files:
         params[param] = loadParams[param]
-        
 else:
-    params = initialize(params)
+    params = pyf.initialize(params)
 
 print("Initialization done")
+
+print(pyf.trainEngy(params))
+
     
 '''
 if os.path.exists(featFile):
@@ -113,15 +85,14 @@ with open(inputData, 'r') as datafile:
 ##############################################################################
 
 # Tensorflow constants
-tf_pi = tf.constant(np.pi, dtype=tf.float32)
-tfFeatA = tf.constant(params['featScalerA'], dtype=tf.float32)
-tfFeatB = tf.constant(params['featScalerB'], dtype=tf.float32)
-tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
-tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
+#tf_pi = tf.constant(np.pi, dtype=tf.float32)
+#tfFeatA = tf.constant(params['featScalerA'], dtype=tf.float32)
+#tfFeatB = tf.constant(params['featScalerB'], dtype=tf.float32)
+#tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
+#tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
 
 # train with features
 
-print(pyf.trainEngy(params))
 
 
 '''
