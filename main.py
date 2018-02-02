@@ -151,7 +151,7 @@ elif params["runtype"] == -1:
     params["inputData"] = dFile
     params["featFile"] = fFile
     params["engyFile"] = eFile
-    pyf.outputFeatures(params)
+#    pyf.outputFeatures(params)
     print(pyf.trainEngy(params))
 elif params["runtype"] == -2:
     print(pyf.trainEF(params))
