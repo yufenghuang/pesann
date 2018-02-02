@@ -31,7 +31,7 @@ params={
     "genValidationFeats": False,
     "genTestFeats": False,
     "validate": 1,    #1: calculate the validation after every epoch
-    "test": 0,  #0: only calculate the errors on the data set a the end
+    "test": -1,  #0: only calculate the errors on the data set a the end
     "validationSet": "",
     "testSec": "",
     }
@@ -48,7 +48,7 @@ parser.add_argument("--runtype", choices=[-2,-1,0,1,2], type=int,\
                                    -4=train energy using precalculated features")
 parser.add_argument("inputData", type=str, help="Geometry file. Must include energies and/or forces when training")
 parser.add_argument("--validationSet", type=str)
-parser.add_argument("--testSect", type=str)
+parser.add_argument("--testSet", type=str)
 
 parser.add_argument("--inputFile", type=str, help="Input file specifying the calculation. \
                                                    Keys will be overwritten by command line arguments")
