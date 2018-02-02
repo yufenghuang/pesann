@@ -5,13 +5,8 @@ Created on Tue Jan 30 22:49:17 2018
 
 @author: yufeng
 """
-import tensorflow as tf
 import numpy as np
-import pandas as pd
-
-import tf_func as tff
 import py_func as pyf
-
 import os
 
 #import re
@@ -32,6 +27,7 @@ for line in sampleInput.split("\n"):
         else:
             print("unknown input", line0)
 '''
+
 params = {
         "chunkSize": 0,
         "epoch": 10,
@@ -41,7 +37,7 @@ params = {
         "engyFile": "engy",
         "logDir": "log",
         "iGPU": 0,
-        "runtype": -2,   # 2: evaluate energy and forces
+        "runtype": -2,  # 2: evaluate energy and forces
                         # 1: evaluate energy
                         # 0: MD
                         #-1: training with energy
@@ -67,7 +63,8 @@ else:
 print("Initialization done")
 
 if params["runtype"] == 2:
-    pass
+    params["mmtFile"] = "coord.mmt"
+    Ep,Fp = pyf.getEngyFors(params)
 elif params["runtype"] == 1:
     params["mmtFile"] = "coord.mmt"
     Ep = pyf.getEngy(params)

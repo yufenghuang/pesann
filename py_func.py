@@ -7,6 +7,8 @@ Created on Wed Jan 31 17:59:01 2018
 
 import re
 import numpy as np
+import tensorflow as tf
+import tf_func as tff
 
 def getData(dataFile):
     line = dataFile.readline()
@@ -72,8 +74,8 @@ def getRmmt(mmtFile):
     
 
 def getFeats(R, lattice, dcut,n2bBasis, n3bBasis):
-    import tensorflow as tf
-    import tf_func as tff
+#    import tensorflow as tf
+#    import tf_func as tff
     
     tfCoord = tf.placeholder(tf.float32, shape=(None,3))
     tfLattice = tf.placeholder(tf.float32, shape=(3,3))
@@ -112,8 +114,8 @@ def getFeatEngyScaler(feat,engy):
     
 
 def trainEngy(params):
-    import tensorflow as tf
-    import tf_func as tff
+#    import tensorflow as tf
+#    import tf_func as tff
     import pandas as pd
     tfFeat = tf.placeholder(tf.float32,shape=(None, params['numFeat']))
     tfEngy = tf.placeholder(tf.float32,shape=(None, 1))
@@ -175,24 +177,27 @@ def trainEngy(params):
     return save_path
 
 def getEngy(params):
-    import tensorflow as tf
-    import tf_func as tff
+#    import tensorflow as tf
+#    import tf_func as tff
     
-    tfFeatA = tf.constant(params['featScalerA'], dtype=tf.float32)
-    tfFeatB = tf.constant(params['featScalerB'], dtype=tf.float32)
+#    tfFeatA = tf.constant(params['featScalerA'], dtype=tf.float32)
+#    tfFeatB = tf.constant(params['featScalerB'], dtype=tf.float32)
     tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
     tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
 
     tfCoord = tf.placeholder(tf.float32, shape=(None,3))
     tfLattice = tf.placeholder(tf.float32, shape=(3,3))
-    tfIdxNb, tfRNb,tfMaxNb, tfNAtoms= tff.tf_getNb(tfCoord,tfLattice,float(params["dcut"]))
-    tfRhat, tfRi, tfDc = tff.tf_getStruct(tfRNb)
-    tfGR2 = tf.scatter_nd(tf.where(tfRi>0),tff.tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*3/params["dcut"]-2,params['n2bBasis']),[tfNAtoms,tfMaxNb,params['n2bBasis']])
-    tfGR3 = tf.scatter_nd(tf.where(tfRi>0),tff.tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*3/params["dcut"]-2,params['n3bBasis']),[tfNAtoms,tfMaxNb,params['n3bBasis']])
-    tfGD3 = tf.scatter_nd(tf.where(tfDc>0),tff.tf_getCos(tf.boolean_mask(tfDc,tfDc>0)*3/params["dcut"]-2,params['n3bBasis']),[tfNAtoms,tfMaxNb, tfMaxNb,params['n3bBasis']])
-    tfFeats = tff.tf_getFeats(tfGR2,tfGR3,tfGD3)
-    tfFeats = tfFeats * tfFeatA + tfFeatB
-    tfEs = tff.tf_engyFromFeats(tfFeats, params['numFeat'], params['nL1Nodes'], params['nL2Nodes'])
+
+#    tfIdxNb, tfRNb,tfMaxNb, tfNAtoms= tff.tf_getNb(tfCoord,tfLattice,float(params["dcut"]))
+#    tfRhat, tfRi, tfDc = tff.tf_getStruct(tfRNb)
+#    tfGR2 = tf.scatter_nd(tf.where(tfRi>0),tff.tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*3/params["dcut"]-2,params['n2bBasis']),[tfNAtoms,tfMaxNb,params['n2bBasis']])
+#    tfGR3 = tf.scatter_nd(tf.where(tfRi>0),tff.tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*3/params["dcut"]-2,params['n3bBasis']),[tfNAtoms,tfMaxNb,params['n3bBasis']])
+#    tfGD3 = tf.scatter_nd(tf.where(tfDc>0),tff.tf_getCos(tf.boolean_mask(tfDc,tfDc>0)*3/params["dcut"]-2,params['n3bBasis']),[tfNAtoms,tfMaxNb, tfMaxNb,params['n3bBasis']])
+#    tfFeats = tff.tf_getFeats(tfGR2,tfGR3,tfGD3)
+#    tfFeats = tfFeats * tfFeatA + tfFeatB
+#    tfEs = tff.tf_engyFromFeats(tfFeats, params['numFeat'], params['nL1Nodes'], params['nL2Nodes'])
+    
+    tfEs=tff.tf_getE(tfCoord, tfLattice,params)
     tfEi = (tfEs - tfEngyB)/tfEngyA
     
     saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
@@ -208,6 +213,35 @@ def getEngy(params):
             saver.restore(sess, str(params['logDir'])+"/tf.chpt")
         Ei = sess.run(tfEi, feed_dict=feedDict)
     return Ei
+
+def getEngyFors(params):
+#    import tensorflow as tf
+#    import tf_func as tff
+    
+    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
+    tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
+
+    tfCoord = tf.placeholder(tf.float32, shape=(None,3))
+    tfLattice = tf.placeholder(tf.float32, shape=(3,3))
+    
+    tfEs,tfFs = tff.tf_getEF(tfCoord,tfLattice,params)
+    tfEp = (tfEs - tfEngyB)/tfEngyA
+    tfFp = tfFs/tfEngyA
+    
+    saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
+    with tf.Session() as sess:
+        with open(params["mmtFile"], 'r') as mmtFile:
+            nAtoms, lattice, R= getRmmt(mmtFile)
+        feedDict={
+                tfCoord:R,
+                tfLattice: lattice
+                }
+        sess.run(tf.global_variables_initializer())
+        if params["restart"]:
+            saver.restore(sess, str(params['logDir'])+"/tf.chpt")
+        Ep, Fp = sess.run(tfEp, tfFp, feed_dict=feedDict)
+    return Ep, Fp
+
 
 def initialize(params):
     import os
@@ -256,8 +290,8 @@ def initialize(params):
 
 def outputFeatures(params):
     import os
-    import tensorflow as tf
-    import tf_func as tff
+#    import tensorflow as tf
+#    import tf_func as tff
     import pandas as pd
     
     if os.path.exists(str(params["featFile"])):
@@ -285,10 +319,8 @@ def outputFeatures(params):
             pd.DataFrame(engy).to_csv(params["engyFile"],mode='a',header=False,index=False)
 
 def trainEF(params):
-    import tensorflow as tf
-    import tf_func as tff
-    tfFeatA = tf.constant(params['featScalerA'], dtype=tf.float32)
-    tfFeatB = tf.constant(params['featScalerB'], dtype=tf.float32)
+#    import tensorflow as tf
+#    import tf_func as tff
     tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
     tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
     
@@ -299,30 +331,33 @@ def trainEF(params):
     tfFors = tf.placeholder(tf.float32, shape=(None,3))
     tfLearningRate = tf.placeholder(tf.float32)
     
-    tfIdxNb, tfRNb,tfMaxNb, tfNAtoms= tff.tf_getNb(tfCoord,tfLattice,float(params['dcut']))
-    tfRhat, tfRi, tfDc = tff.tf_getStruct(tfRNb)
     
-    tfGR2 = tf.scatter_nd(tf.where(tfRi>0),tff.tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*3/float(params['dcut'])-2,params['n2bBasis']),[tfNAtoms,tfMaxNb,params['n2bBasis']])
-    tfGR2d = tf.scatter_nd(tf.where(tfRi>0),tff.tf_getdCos(tf.boolean_mask(tfRi,tfRi>0)*3/float(params['dcut'])-2,params['n2bBasis']),[tfNAtoms,tfMaxNb,params['n2bBasis']])
-    tfGR3 = tf.scatter_nd(tf.where(tfRi>0),tff.tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*3/float(params['dcut'])-2,params['n3bBasis']),[tfNAtoms,tfMaxNb,params['n3bBasis']])
-    tfGR3d = tf.scatter_nd(tf.where(tfRi>0),tff.tf_getdCos(tf.boolean_mask(tfRi,tfRi>0)*3/float(params['dcut'])-2,params['n3bBasis']),[tfNAtoms,tfMaxNb,params['n3bBasis']])
-    tfGD3 = tf.scatter_nd(tf.where(tfDc>0),tff.tf_getCos(tf.boolean_mask(tfDc,tfDc>0)*3/float(params['dcut'])-2,params['n3bBasis']),[tfNAtoms,tfMaxNb, tfMaxNb,params['n3bBasis']])
-    
-    tfdXi, tfdXin = tff.tf_get_dXidRl(tfGR2,tfGR2d,tfGR3,tfGR3d,tfGD3,tfRhat)
-    tfdXi =  tf.expand_dims(tfFeatA,2) * tfdXi 
-    tfdXin =  tf.expand_dims(tfFeatA,2) * tfdXin
-    
-    tfFeats = tfFeatA*tff.tf_getFeats(tfGR2,tfGR3,tfGD3)+tfFeatB
-    tfEs = tff.tf_engyFromFeats(tfFeats, params['numFeat'], params['nL1Nodes'], params['nL2Nodes'])
-    
-    dEldXi = tff.tf_get_dEldXi(tfFeats, params['numFeat'], params['nL1Nodes'], params['nL2Nodes'])
-    Fll = tf.reduce_sum(tf.expand_dims(dEldXi,2)*tfdXi,axis=1)
-    
-    dENldXi=tf.gather_nd(dEldXi,tf.expand_dims(tf.transpose(tf.boolean_mask(tfIdxNb, tf.greater(tfIdxNb,0))-1),1))
-    dEnldXin=tf.scatter_nd(tf.where(tf.greater(tfIdxNb,0)), dENldXi, [tfNAtoms,tfMaxNb,params['numFeat']])
-    Fln = tf.reduce_sum(tf.expand_dims(dEnldXin,3)*tfdXin,axis=[1,2])
-    
-    tfFs = Fln + Fll 
+    tfEs,tfFs = tff.tf_getEF(tfCoord,tfLattice,params)
+
+#    tfIdxNb, tfRNb,tfMaxNb, tfNAtoms= tff.tf_getNb(tfCoord,tfLattice,float(params['dcut']))
+#    tfRhat, tfRi, tfDc = tff.tf_getStruct(tfRNb)
+#    
+#    tfGR2 = tf.scatter_nd(tf.where(tfRi>0),tff.tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*3/float(params['dcut'])-2,params['n2bBasis']),[tfNAtoms,tfMaxNb,params['n2bBasis']])
+#    tfGR2d = tf.scatter_nd(tf.where(tfRi>0),tff.tf_getdCos(tf.boolean_mask(tfRi,tfRi>0)*3/float(params['dcut'])-2,params['n2bBasis']),[tfNAtoms,tfMaxNb,params['n2bBasis']])
+#    tfGR3 = tf.scatter_nd(tf.where(tfRi>0),tff.tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*3/float(params['dcut'])-2,params['n3bBasis']),[tfNAtoms,tfMaxNb,params['n3bBasis']])
+#    tfGR3d = tf.scatter_nd(tf.where(tfRi>0),tff.tf_getdCos(tf.boolean_mask(tfRi,tfRi>0)*3/float(params['dcut'])-2,params['n3bBasis']),[tfNAtoms,tfMaxNb,params['n3bBasis']])
+#    tfGD3 = tf.scatter_nd(tf.where(tfDc>0),tff.tf_getCos(tf.boolean_mask(tfDc,tfDc>0)*3/float(params['dcut'])-2,params['n3bBasis']),[tfNAtoms,tfMaxNb, tfMaxNb,params['n3bBasis']])
+#    
+#    tfdXi, tfdXin = tff.tf_get_dXidRl(tfGR2,tfGR2d,tfGR3,tfGR3d,tfGD3,tfRhat)
+#    tfdXi =  tf.expand_dims(tfFeatA,2) * tfdXi 
+#    tfdXin =  tf.expand_dims(tfFeatA,2) * tfdXin
+#    
+#    tfFeats = tfFeatA*tff.tf_getFeats(tfGR2,tfGR3,tfGD3)+tfFeatB
+#    tfEs = tff.tf_engyFromFeats(tfFeats, params['numFeat'], params['nL1Nodes'], params['nL2Nodes'])
+#    
+#    dEldXi = tff.tf_get_dEldXi(tfFeats, params['numFeat'], params['nL1Nodes'], params['nL2Nodes'])
+#    Fll = tf.reduce_sum(tf.expand_dims(dEldXi,2)*tfdXi,axis=1)
+#    
+#    dENldXi=tf.gather_nd(dEldXi,tf.expand_dims(tf.transpose(tf.boolean_mask(tfIdxNb, tf.greater(tfIdxNb,0))-1),1))
+#    dEnldXin=tf.scatter_nd(tf.where(tf.greater(tfIdxNb,0)), dENldXi, [tfNAtoms,tfMaxNb,params['numFeat']])
+#    Fln = tf.reduce_sum(tf.expand_dims(dEnldXin,3)*tfdXin,axis=[1,2])
+#    
+#    tfFs = Fln + Fll 
     
     tfEp = (tfEs - tfEngyB)/tfEngyA
     tfFp = tfFs/tfEngyA
