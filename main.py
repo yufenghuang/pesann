@@ -38,7 +38,7 @@ params={
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--runtype", choices=[-2,-1,0,1,2], type=int,\
+parser.add_argument("--runtype", choices=[-4,-3,-2,-1,0,1,2], type=int,\
                     help="Runtype.  2=get energy and forces, \
                                     1=get energy (default), \
                                     0=MD, \
