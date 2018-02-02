@@ -202,7 +202,7 @@ def getEngy(params):
     
     saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
     with tf.Session() as sess:
-        with open(params["mmtFile"], 'r') as mmtFile:
+        with open(params["inputData"], 'r') as mmtFile:
             nAtoms, lattice, R= getRmmt(mmtFile)
         feedDict={
                 tfCoord:R,
@@ -230,7 +230,7 @@ def getEngyFors(params):
     
     saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
     with tf.Session() as sess:
-        with open(params["mmtFile"], 'r') as mmtFile:
+        with open(params["inputData"], 'r') as mmtFile:
             nAtoms, lattice, R= getRmmt(mmtFile)
         feedDict={
                 tfCoord:R,

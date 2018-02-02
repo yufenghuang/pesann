@@ -8,7 +8,7 @@ Created on Tue Jan 30 22:49:17 2018
 import numpy as np
 import py_func as pyf
 import os
-import sys
+#import sys
 
 import argparse
 
@@ -16,8 +16,25 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument("--runtype", choices=[-2,-1,0,1,2], type=int, default=1,\
                     help="Runtype. 2=get energy and forces, 1=get energy, 0=MD, -1=train energy, -2=train energy and forces")
+parser.add_argument("--restart", action="store_true", help="Restarting the calculations with old parameters")
+parser.add_argument("--chunkSize", type=int, default=0)
+parser.add_argument("--epoch", type=int, default=1)
+parser.add_argument("--inputData", type=str)
+parser.add_argument("--logDir", type=str, default="log")
+parser.add_argument("--iGPU", type=int, default=0)
+parser.add_argument("--feRatio", type=float, default=1.0)
+parser.add_argument("--dcut", type=float, default=6.2)
+parser.add_argument("--learningRate", type=float, default=0.0001)
+parser.add_argument("--n2bBasis", type=int, default=100)
+parser.add_argument("--n3bBasis", type=int, default=10)
+parser.add_argument("--nL1Nodes", type=int, default=300)
+parser.add_argument("--nL2Nodes", type=int, default=500)
+
 args = parser.parse_args()
-print(args.runtype)
+for arg in vars(args):
+    print(arg, "=",getattr(args, arg))
+
+#sys.exit()
 
 #import re
 
@@ -77,10 +94,8 @@ else:
 print("Initialization done")
 
 if params["runtype"] == 2:
-    params["mmtFile"] = "coord.mmt"
     Ep,Fp = pyf.getEngyFors(params)
 elif params["runtype"] == 1:
-    params["mmtFile"] = "coord.mmt"
     Ep = pyf.getEngy(params)
 elif params["runtype"] == 0:
     pass
