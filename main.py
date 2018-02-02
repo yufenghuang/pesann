@@ -19,7 +19,7 @@ parser.add_argument("--runtype", choices=[-2,-1,0,1,2], type=int, default=1,\
 parser.add_argument("--restart", action="store_true", help="Restarting the calculations with old parameters")
 parser.add_argument("--chunkSize", type=int, default=0)
 parser.add_argument("--epoch", type=int, default=1)
-parser.add_argument("--inputData", type=str)
+parser.add_argument("--inputData", type=str, default="MOVEMENT.train.first100")
 parser.add_argument("--logDir", type=str, default="log")
 parser.add_argument("--iGPU", type=int, default=0)
 parser.add_argument("--feRatio", type=float, default=1.0)
