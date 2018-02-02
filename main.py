@@ -8,6 +8,16 @@ Created on Tue Jan 30 22:49:17 2018
 import numpy as np
 import py_func as pyf
 import os
+import sys
+
+import argparse
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument("--runtype", choices=[-2,-1,0,1,2], type=int, default=1,\
+                    help="Runtype. 2=get energy and forces, 1=get energy, 0=MD, -1=train energy, -2=train energy and forces")
+args = parser.parse_args()
+print(args.runtype)
 
 #import re
 
@@ -28,6 +38,8 @@ for line in sampleInput.split("\n"):
             print("unknown input", line0)
 '''
 
+
+
 params = {
         "chunkSize": 0,
         "epoch": 10,
@@ -45,6 +57,8 @@ params = {
         "mmtFile": "coord.mmt",
         "feRatio": 1,
         }
+
+params["runtype"] = args.runtype
 
 os.environ["CUDA_VISIBLE_DEVICES"]=str(params['iGPU'])
 
