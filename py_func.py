@@ -239,7 +239,7 @@ def getEngyFors(params):
         sess.run(tf.global_variables_initializer())
         if params["restart"]:
             saver.restore(sess, str(params['logDir'])+"/tf.chpt")
-        Ep, Fp = sess.run(tfEp, tfFp, feed_dict=feedDict)
+        Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
     return Ep, Fp
 
 
