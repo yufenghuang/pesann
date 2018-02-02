@@ -195,11 +195,11 @@ def trainEngy(params):
             
         if params["validate"] > 0:
             if iEpoch % params["validate"] == 0:
-                print(iEpoch+"th epoch")
+                print(str(iEpoch)+"th epoch")
                 getError('v'+str(params['featFile']), 'v'+str(params['engyFile']))
         if params["test"] > 0:
             if iEpoch % params["test"] == 0:
-                print(iEpoch+"th epoch")
+                print(str(iEpoch)+"th epoch")
                 getError('t'+str(params['featFile']), 't'+str(params['engyFile']))
             
     if params["validate"] == 0:
@@ -445,11 +445,11 @@ def trainEF(params):
         
         if params["validate"] > 0:
             if iEpoch % params["validate"] == 0:
-                print(iEpoch+"th epoch")
+                print(str(iEpoch)+"th epoch")
                 getError(vCase, str(params['validationSet']))
         if params["test"] > 0:
             if iEpoch % params["test"] == 0:
-                print(iEpoch+"th epoch")
+                print(str(iEpoch)+"th epoch")
                 getError(tCase, str(params['testSet']))
     if params["validate"] == 0:
         getError(vCase, str(params['validationSet']))

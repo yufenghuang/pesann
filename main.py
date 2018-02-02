@@ -30,7 +30,7 @@ params={
     "nL2Nodes": 500,
     "genValidationFeats": False,
     "genTestFeats": False,
-    "validate": 1,    #1: calculate the validation after every epoch
+    "validate": -1,    #1: calculate the validation after every epoch
     "test": -1,  #0: only calculate the errors on the data set a the end
     "validationSet": "",
     "testSec": "",
