@@ -102,44 +102,6 @@ for p in params:
 
 sys.exit()
 
-#import re
-#sampleInput = "# comments \n" \
-#              "a = 1 \n" \
-#              "b = \"movement file\" # specifying b \n" \
-#              "c = # wrong input \n" \
-#              "d = movement file" 
-#
-#for line in sampleInput.split("\n"):
-#    line0 = line.split('#')[0].strip()
-#    if line0 != '':
-#        if re.match("^([\w\s\"]+)=([\w\s\"]+)$", line0):
-#            key = line0.split("=")[0].strip().strip("\"")
-#            value = line0.split("=")[1].strip().strip("\"")
-#            print(key,"is",value)
-#        else:
-#            print("unknown input", line0)
-
-
-
-#params = {
-#        "chunkSize": 0,
-#        "epoch": 10,
-#        "restart": True,
-#        "inputData": "MOVEMENT.train.first100",
-#        "featFile": "feat",
-#        "engyFile": "engy",
-#        "logDir": "log",
-#        "iGPU": 0,
-#        "runtype": -2,  # 2: evaluate energy and forces
-#                        # 1: evaluate energy
-#                        # 0: MD
-#                        #-1: training with energy
-#                        #-2: training with energy and forces
-#        "mmtFile": "coord.mmt",
-#        "feRatio": 1,
-#        }
-
-
 os.environ["CUDA_VISIBLE_DEVICES"]=str(params['iGPU'])
 
 if params['restart']:
