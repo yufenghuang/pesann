@@ -177,25 +177,11 @@ def trainEngy(params):
     return save_path
 
 def getEngy(params):
-#    import tensorflow as tf
-#    import tf_func as tff
-    
-#    tfFeatA = tf.constant(params['featScalerA'], dtype=tf.float32)
-#    tfFeatB = tf.constant(params['featScalerB'], dtype=tf.float32)
     tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
     tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
 
     tfCoord = tf.placeholder(tf.float32, shape=(None,3))
     tfLattice = tf.placeholder(tf.float32, shape=(3,3))
-
-#    tfIdxNb, tfRNb,tfMaxNb, tfNAtoms= tff.tf_getNb(tfCoord,tfLattice,float(params["dcut"]))
-#    tfRhat, tfRi, tfDc = tff.tf_getStruct(tfRNb)
-#    tfGR2 = tf.scatter_nd(tf.where(tfRi>0),tff.tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*3/params["dcut"]-2,params['n2bBasis']),[tfNAtoms,tfMaxNb,params['n2bBasis']])
-#    tfGR3 = tf.scatter_nd(tf.where(tfRi>0),tff.tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*3/params["dcut"]-2,params['n3bBasis']),[tfNAtoms,tfMaxNb,params['n3bBasis']])
-#    tfGD3 = tf.scatter_nd(tf.where(tfDc>0),tff.tf_getCos(tf.boolean_mask(tfDc,tfDc>0)*3/params["dcut"]-2,params['n3bBasis']),[tfNAtoms,tfMaxNb, tfMaxNb,params['n3bBasis']])
-#    tfFeats = tff.tf_getFeats(tfGR2,tfGR3,tfGD3)
-#    tfFeats = tfFeats * tfFeatA + tfFeatB
-#    tfEs = tff.tf_engyFromFeats(tfFeats, params['numFeat'], params['nL1Nodes'], params['nL2Nodes'])
     
     tfEs=tff.tf_getE(tfCoord, tfLattice,params)
     tfEi = (tfEs - tfEngyB)/tfEngyA
@@ -215,8 +201,6 @@ def getEngy(params):
     return Ei
 
 def getEngyFors(params):
-#    import tensorflow as tf
-#    import tf_func as tff
     
     tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
     tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
@@ -245,27 +229,27 @@ def getEngyFors(params):
 
 def initialize(params):
     import os
-    oldParams={
-        "chunkSize": 0,
-        "epoch": 5000,
-        "restart": True,
-        "inputData": "MOVEMENT.train.first100",
-        "featFile": "feat",
-        "engyFile": "engy",
-        "logDir": "log",
-        "iGPU": 0,
-        "dcut": 6.2,
-        "learningRate": 0.0001,
-        "n2bBasis": 100,
-        "n3bBasis": 10,
-        "nL1Nodes": 300,
-        "nL2Nodes": 500
-        }
-    
-    for param in params:
-        oldParams[param] = params[param]
-        
-    params = oldParams
+#    defaultParams={
+#        "chunkSize": 0,
+#        "epoch": 5000,
+#        "restart": True,
+#        "inputData": "MOVEMENT.train.first100",
+#        "featFile": "feat",
+#        "engyFile": "engy",
+#        "logDir": "log",
+#        "iGPU": 0,
+#        "dcut": 6.2,
+#        "learningRate": 0.0001,
+#        "n2bBasis": 100,
+#        "n3bBasis": 10,
+#        "nL1Nodes": 300,
+#        "nL2Nodes": 500
+#        }
+#    
+#    for param in params:
+#        defaultParams[param] = params[param]
+#        
+#    params = defaultParams
     
     file = open(str(params["inputData"]), 'r')
     nAtoms, iIter, lattice, R, f, v, e = getData(file)
@@ -277,10 +261,7 @@ def initialize(params):
     
     params['featScalerA'],params['featScalerB'],params['engyScalerA'],params['engyScalerB'] = \
     getFeatEngyScaler(feat,engy)
-    
-#    feat_scaled = params['featScalerA'] * feat + params['featScalerB']
-#    engy_scaled = params['engyScalerA'] * engy + params['engyScalerB']
-    
+        
     if not os.path.exists(str(params['logDir'])):
         os.mkdir(str(params['logDir']))
             
@@ -290,8 +271,6 @@ def initialize(params):
 
 def outputFeatures(params):
     import os
-#    import tensorflow as tf
-#    import tf_func as tff
     import pandas as pd
     
     if os.path.exists(str(params["featFile"])):
@@ -319,8 +298,6 @@ def outputFeatures(params):
             pd.DataFrame(engy).to_csv(params["engyFile"],mode='a',header=False,index=False)
 
 def trainEF(params):
-#    import tensorflow as tf
-#    import tf_func as tff
     tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
     tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
     
@@ -333,31 +310,6 @@ def trainEF(params):
     
     
     tfEs,tfFs = tff.tf_getEF(tfCoord,tfLattice,params)
-
-#    tfIdxNb, tfRNb,tfMaxNb, tfNAtoms= tff.tf_getNb(tfCoord,tfLattice,float(params['dcut']))
-#    tfRhat, tfRi, tfDc = tff.tf_getStruct(tfRNb)
-#    
-#    tfGR2 = tf.scatter_nd(tf.where(tfRi>0),tff.tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*3/float(params['dcut'])-2,params['n2bBasis']),[tfNAtoms,tfMaxNb,params['n2bBasis']])
-#    tfGR2d = tf.scatter_nd(tf.where(tfRi>0),tff.tf_getdCos(tf.boolean_mask(tfRi,tfRi>0)*3/float(params['dcut'])-2,params['n2bBasis']),[tfNAtoms,tfMaxNb,params['n2bBasis']])
-#    tfGR3 = tf.scatter_nd(tf.where(tfRi>0),tff.tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*3/float(params['dcut'])-2,params['n3bBasis']),[tfNAtoms,tfMaxNb,params['n3bBasis']])
-#    tfGR3d = tf.scatter_nd(tf.where(tfRi>0),tff.tf_getdCos(tf.boolean_mask(tfRi,tfRi>0)*3/float(params['dcut'])-2,params['n3bBasis']),[tfNAtoms,tfMaxNb,params['n3bBasis']])
-#    tfGD3 = tf.scatter_nd(tf.where(tfDc>0),tff.tf_getCos(tf.boolean_mask(tfDc,tfDc>0)*3/float(params['dcut'])-2,params['n3bBasis']),[tfNAtoms,tfMaxNb, tfMaxNb,params['n3bBasis']])
-#    
-#    tfdXi, tfdXin = tff.tf_get_dXidRl(tfGR2,tfGR2d,tfGR3,tfGR3d,tfGD3,tfRhat)
-#    tfdXi =  tf.expand_dims(tfFeatA,2) * tfdXi 
-#    tfdXin =  tf.expand_dims(tfFeatA,2) * tfdXin
-#    
-#    tfFeats = tfFeatA*tff.tf_getFeats(tfGR2,tfGR3,tfGD3)+tfFeatB
-#    tfEs = tff.tf_engyFromFeats(tfFeats, params['numFeat'], params['nL1Nodes'], params['nL2Nodes'])
-#    
-#    dEldXi = tff.tf_get_dEldXi(tfFeats, params['numFeat'], params['nL1Nodes'], params['nL2Nodes'])
-#    Fll = tf.reduce_sum(tf.expand_dims(dEldXi,2)*tfdXi,axis=1)
-#    
-#    dENldXi=tf.gather_nd(dEldXi,tf.expand_dims(tf.transpose(tf.boolean_mask(tfIdxNb, tf.greater(tfIdxNb,0))-1),1))
-#    dEnldXin=tf.scatter_nd(tf.where(tf.greater(tfIdxNb,0)), dENldXi, [tfNAtoms,tfMaxNb,params['numFeat']])
-#    Fln = tf.reduce_sum(tf.expand_dims(dEnldXin,3)*tfdXin,axis=[1,2])
-#    
-#    tfFs = Fln + Fll 
     
     tfEp = (tfEs - tfEngyB)/tfEngyA
     tfFp = tfFs/tfEngyA
@@ -395,7 +347,6 @@ def trainEF(params):
                     }
             sess.run(tfOptimizer,feed_dict=feedDict)
             
-#            loss = sess.run(tfLoss, feed_dict=feedDict)
             (Ei,Fi) = sess.run((tfEp,tfFp),feed_dict=feedDict)
             Ermse = np.sqrt(np.mean((Ei-engy)**2))
             Frmse = np.sqrt(np.mean((Fi-f)**2))
@@ -404,7 +355,6 @@ def trainEF(params):
     
         file.close()
         
-#        loss = sess.run(tfLoss, feed_dict=feedDict)
         (Ei,Fi) = sess.run((tfEp,tfFp),feed_dict=feedDict)
         Ermse = np.sqrt(np.mean((Ei-engy)**2))
         Frmse = np.sqrt(np.mean((Fi-f)**2))
