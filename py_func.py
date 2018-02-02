@@ -117,11 +117,12 @@ def trainEngy(params):
 #    import tensorflow as tf
 #    import tf_func as tff
     import pandas as pd
-    tfFeat = tf.placeholder(tf.float32,shape=(None, params['numFeat']))
+    numFeat = params['n2bBasis'] + params['n3bBasis']**3
+    tfFeat = tf.placeholder(tf.float32,shape=(None, numFeat))
     tfEngy = tf.placeholder(tf.float32,shape=(None, 1))
     tfLR = tf.placeholder(tf.float32)
     
-    tfEs = tff.tf_engyFromFeats(tfFeat, params['numFeat'], params['nL1Nodes'], params['nL2Nodes'])
+    tfEs = tff.tf_engyFromFeats(tfFeat, numFeat, params['nL1Nodes'], params['nL2Nodes'])
     
     tfLoss = tf.reduce_mean((tfEs-tfEngy)**2)
     
