@@ -167,6 +167,8 @@ elif params["runtype"] == -4:
         params["featFile"] = "f" + fFile
         params["engyFile"] = "f" + eFile
     pyf.outputFeatures(params)
+    params["featFile"] = fFile
+    params["engyFile"] = eFile
 else:
     print("Unrecognized runtype: ", params["runtype"])
     
