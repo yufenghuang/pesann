@@ -15,11 +15,6 @@ import py_func as pyf
 import os
 
 #import re
-##############################################################################
-#
-#   Initializing the program
-#
-##############################################################################
 
 '''
 sampleInput = "# comments \n" \
@@ -88,53 +83,3 @@ elif params["runtype"] == -2:
 else:
     print("Unrecognized runtype: ", params["runtype"])
     
-
-##############################################################################
-#
-#   Defining the Neural Network
-#
-##############################################################################
-
-# Tensorflow constants
-#tf_pi = tf.constant(np.pi, dtype=tf.float32)
-#tfFeatA = tf.constant(params['featScalerA'], dtype=tf.float32)
-#tfFeatB = tf.constant(params['featScalerB'], dtype=tf.float32)
-#tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
-#tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
-
-# train with features
-
-
-
-#tfEp = (tfEs-tfEngyB)/tfEngyA
-#tfFp = tfFs/tfEngyA
-
-#loss = tf.reduce_mean(tf.squared_difference(prediction,Y)) #+ tf.reduce_sum(regLoss)
-#lossEF = tf.reduce_mean(tf.squared_difference(prediction,Y)) + \
-#        tf.reduce_mean(tf.squared_difference(predictedF,tfForces))
-#optimizer=tf.train.AdamOptimizer(learning_rate).minimize(loss)
-#optimizer2=tf.train.AdamOptimizer(learning_rate, name="lossEF").minimize(lossEF)
-
-#tfFeatures = tff.tf_getFeats(tfGR2,tfGR3,tfGD3)
-
-'''
-##############################################################################
-#
-#   Evaluating the Neural Network
-#
-##############################################################################
-
-
-sess = tf.Session()
-sess.run(tf.global_variables_initializer())
-
-lattice = np.array([[0.2169434000E+02, 0, 0], \
-                    [0, 0.1481809000E+02, 0], \
-                    [0,0,0.1578275000E+02]])
-
-df = pd.read_csv("Rtemp", header=None, index_col=False, delim_whitespace=True)
-R = df.iloc[:,1:4].values
-
-feedDict = {tfCoord: R, tfLattice:lattice}
-tmp1 = sess.run(dEnldXin,feed_dict=feedDict)
-'''

@@ -315,7 +315,6 @@ def trainEF(params):
     tfFeats = tfFeatA*tff.tf_getFeats(tfGR2,tfGR3,tfGD3)+tfFeatB
     tfEs = tff.tf_engyFromFeats(tfFeats, params['numFeat'], params['nL1Nodes'], params['nL2Nodes'])
     
-    
     dEldXi = tff.tf_get_dEldXi(tfFeats, params['numFeat'], params['nL1Nodes'], params['nL2Nodes'])
     Fll = tf.reduce_sum(tf.expand_dims(dEldXi,2)*tfdXi,axis=1)
     
