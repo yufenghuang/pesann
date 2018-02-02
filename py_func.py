@@ -81,9 +81,15 @@ def getFeats(R, lattice, dcut,n2bBasis, n3bBasis):
     tfLattice = tf.placeholder(tf.float32, shape=(3,3))
     tfIdxNb, tfRNb,tfMaxNb, tfNAtoms= tff.tf_getNb(tfCoord,tfLattice,dcut)
     tfRhat, tfRi, tfDc = tff.tf_getStruct(tfRNb)
-    tfGR2 = tf.scatter_nd(tf.where(tfRi>0),tff.tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*3/dcut-2,n2bBasis),[tfNAtoms,tfMaxNb,n2bBasis])
-    tfGR3 = tf.scatter_nd(tf.where(tfRi>0),tff.tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*3/dcut-2,n3bBasis),[tfNAtoms,tfMaxNb,n3bBasis])
-    tfGD3 = tf.scatter_nd(tf.where(tfDc>0),tff.tf_getCos(tf.boolean_mask(tfDc,tfDc>0)*3/dcut-2,n3bBasis),[tfNAtoms,tfMaxNb, tfMaxNb,n3bBasis])
+    tfGR2 = tf.scatter_nd(tf.where(tfRi>0),\
+                          tff.tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*3/dcut-2,n2bBasis),\
+                          [tfNAtoms,tfMaxNb,n2bBasis])
+    tfGR3 = tf.scatter_nd(tf.where(tfRi>0),\
+                          tff.tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*3/dcut-2,n3bBasis),\
+                          [tfNAtoms,tfMaxNb,n3bBasis])
+    tfGD3 = tf.scatter_nd(tf.where(tfDc>0),\
+                          tff.tf_getCos(tf.boolean_mask(tfDc,tfDc>0)*3/dcut-2,n3bBasis),\
+                          [tfNAtoms,tfMaxNb, tfMaxNb,n3bBasis])
     tfFeats = tff.tf_getFeats(tfGR2,tfGR3,tfGD3)
 
     feedDict={
@@ -132,6 +138,20 @@ def trainEngy(params):
     saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
+    
+    def getError(fFile, eFile):
+        featDF = pd.read_csv(fFile, header=None, index_col=False).values
+        engyDF = pd.read_csv(eFile, header=None, index_col=False).values
+        feedDict = {tfFeat: featDF * params['featScalerA'] + params['featScalerB'], \
+                    tfEngy: engyDF * params['engyScalerA'] + params['engyScalerB']}
+        Ep = sess.run(tfEs, feed_dict=feedDict)
+        Ep = (Ep - params['engyScalerB'])/params['engyScalerA']
+        
+        Ermse = np.sqrt(np.mean((Ep-engyDF)**2))
+        Emae = np.mean(np.abs(Ep - engyDF))
+        print("Ermse is: ", Ermse)
+        print("Emae is : ", Emae)
+
     if params["restart"]:
         saver.restore(sess, str(params['logDir'])+"/tf.chpt")
         print("Model restored")
@@ -156,7 +176,7 @@ def trainEngy(params):
                             tfLR: params['learningRate']}
             
                 sess.run(tfOptimizer, feed_dict=feedDict)
-                print("running",iEpoch)
+#                print("running",iEpoch)
     
         elif params['chunkSize'] == 0:
             feedDict = {tfFeat: dfFeat * params['featScalerA'] + params['featScalerB'], \
@@ -172,8 +192,21 @@ def trainEngy(params):
             Ep = (Ep - params['engyScalerB'])/params['engyScalerA']
             Ermse = np.sqrt(np.mean((Ep - dfEngy)**2))
             print(iEpoch, loss, Ermse)
-    
-    
+            
+        if params["validate"] > 0:
+            if iEpoch % params["validate"] == 0:
+                print(iEpoch+"th epoch")
+                getError('v'+str(params['featFile']), 'v'+str(params['engyFile']))
+        if params["test"] > 0:
+            if iEpoch % params["test"] == 0:
+                print(iEpoch+"th epoch")
+                getError('t'+str(params['featFile']), 't'+str(params['engyFile']))
+            
+    if params["validate"] == 0:
+        getError('v'+str(params['featFile']), 'v'+str(params['engyFile']))
+    if params["test"] == 0:
+        getError('t'+str(params['featFile']), 't'+str(params['engyFile']))
+
     save_path = saver.save(sess, str(params['logDir'])+"/tf.chpt")
     return save_path
 
@@ -293,7 +326,9 @@ def outputFeatures(params):
         for i in range(nCase):
             nAtoms, iIter, lattice, R, f, v, e = getData(datafile)
             feedDict = {tfR: R, tfL:lattice}
-            feat = sess.run(tff.tf_getFeatsFromR(tfR,tfL,float(params['dcut']), params['n2bBasis'],params['n3bBasis']), feed_dict=feedDict)
+            feat = sess.run(
+                    tff.tf_getFeatsFromR(tfR,tfL,float(params['dcut']), params['n2bBasis'],params['n3bBasis']), \
+                    feed_dict=feedDict)
             engy = e.reshape([-1,1])
             pd.DataFrame(feat).to_csv(params["featFile"],mode='a',header=False,index=False)
             pd.DataFrame(engy).to_csv(params["engyFile"],mode='a',header=False,index=False)
@@ -324,6 +359,33 @@ def trainEF(params):
     saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
     sess=tf.Session()
     sess.run(tf.global_variables_initializer())
+    
+    def getError(mCase, tfileName):
+        n = 0
+        Ese = 0
+        Eae = 0
+        EseTot = 0
+        with open(tfileName) as tfile:
+            for jCase in range(mCase):
+                nAtoms, iIter, lattice, R, f, v, e = getData(tfile)
+                engy = e.reshape([-1,1])
+                feedDict={
+                        tfCoord:R,
+                        tfLattice: lattice,
+                        }
+                (Ep,Fp) = sess.run((tfEp,tfFp),feed_dict=feedDict)
+                EseTot += (np.sum(Ep) - np.sum(engy))**2
+                Ese += np.sum((Ep - engy)**2)
+                Eae += np.sum(np.abs(Ep-engy))
+                n += len(engy)
+        ErmseTot = np.sqrt(EseTot/mCase)
+        Ermse = np.sqrt(Ese/n)
+        Emae = Eae/n
+        print("Total Ermse: ", ErmseTot)
+        print("Ermse: ", Ermse)
+        print("Emae : ", Emae)
+        pass
+    
     if params["restart"]:
         saver.restore(sess, str(params['logDir'])+"/tf.chpt")
         print("Model restored")
@@ -333,7 +395,26 @@ def trainEF(params):
         for line in datafile:
             if "Iteration" in line:
                 nCase += 1
-    
+    vCase = 0
+    if params["validate"] >= 0:
+        if params["validationSet"] != "":
+            with open(str(params["validationSet"]), 'r') as datafile:
+                for line in datafile:
+                    if "Iteration" in line:
+                        vCase += 1
+        else:
+            print("Please use --validationSet to specify the test set")
+            
+    tCase = 0
+    if params["test"] >= 0:
+        if params["testSet"] != "":
+            with open(str(params["testSet"]), 'r') as datafile:
+                for line in datafile:
+                    if "Iteration" in line:
+                        tCase += 1
+        else:
+            print("Please use --testSet to specify the test set")
+
     for iEpoch in range(params["epoch"]):
         file = open(str(params["inputData"]), 'r')
         for iCase in range(nCase):
@@ -361,6 +442,19 @@ def trainEF(params):
         Frmse = np.sqrt(np.mean((Fi-f)**2))
         print(iEpoch, "Ermse:", Ermse)
         print(iEpoch, "Frmse:", Frmse)
+        
+        if params["validate"] > 0:
+            if iEpoch % params["validate"] == 0:
+                print(iEpoch+"th epoch")
+                getError(vCase, str(params['validationSet']))
+        if params["test"] > 0:
+            if iEpoch % params["test"] == 0:
+                print(iEpoch+"th epoch")
+                getError(tCase, str(params['testSet']))
+    if params["validate"] == 0:
+        getError(vCase, str(params['validationSet']))
+    if params["test"] == 0:
+        getError(tCase, str(params['testSet']))
         
     save_path = saver.save(sess, str(params['logDir'])+"/tf.chpt")
     return save_path

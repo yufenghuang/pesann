@@ -27,15 +27,31 @@ params={
     "n2bBasis": 100,
     "n3bBasis": 10,
     "nL1Nodes": 300,
-    "nL2Nodes": 500
+    "nL2Nodes": 500,
+    "genValidationFeats": False,
+    "genTestFeats": False,
+    "validate": 1,    #1: calculate the validation after every epoch
+    "test": 0,  #0: only calculate the errors on the data set a the end
+    "validationSet": "",
+    "testSec": "",
     }
 
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--runtype", choices=[-2,-1,0,1,2], type=int,\
-                    help="Runtype. 2=get energy and forces, 1=get energy (default), 0=MD, -1=train energy, -2=train energy and forces")
+                    help="Runtype.  2=get energy and forces, \
+                                    1=get energy (default), \
+                                    0=MD, \
+                                   -1=train energy, \
+                                   -2=train energy and forces \
+                                   -3=generate features \
+                                   -4=train energy using precalculated features")
 parser.add_argument("inputData", type=str, help="Geometry file. Must include energies and/or forces when training")
-parser.add_argument("--inputFile", type=str, help="Input file specifying the calculation. Keys will be overwritten by command line arguments")
+parser.add_argument("--validationSet", type=str)
+parser.add_argument("--testSec", type=str)
+
+parser.add_argument("--inputFile", type=str, help="Input file specifying the calculation. \
+                                                   Keys will be overwritten by command line arguments")
 parser.add_argument("--restart", action="store_true", help="Restart calculation by loading saved data  in the logDir directory. \
                     Seting this flag will ignore --dcut, --n2bBasis, --n3bBasis, --nL1Nodes and --nL2Nodes")
 parser.add_argument("--chunkSize", type=int, help="default: chuckSize="+str(params["chunkSize"]))
@@ -49,6 +65,11 @@ parser.add_argument("--n2bBasis", type=int)
 parser.add_argument("--n3bBasis", type=int)
 parser.add_argument("--nL1Nodes", type=int)
 parser.add_argument("--nL2Nodes", type=int)
+genFeatGroup = parser.add_mutually_exclusive_group()
+genFeatGroup.add_argument("--genValidationFeats", action="store_true")
+genFeatGroup.add_argument("--genTestFeats", action="store_true")
+parser.add_argument("--validate", type=int)
+parser.add_argument("--test", type=int)
 
 args = parser.parse_args()
 
@@ -73,13 +94,13 @@ for arg in vars(args):
     if getattr(args, arg) != None:
 #        print(arg, "=", getattr(args, arg))
         params[arg] = getattr(args, arg)
-        
+
 #print("==============")
 
 for p in params:
     print(p, "=", params[p])
 
-#sys.exit()
+sys.exit()
 
 #import re
 #sampleInput = "# comments \n" \
@@ -145,12 +166,47 @@ elif params["runtype"] == 1:
 elif params["runtype"] == 0:
     pass
 elif params["runtype"] == -1:
-    params["featFile"] = "feat"
-    params["engyFile"] = "engy"
+    fFile = params["featFile"]
+    eFile = params["engyFile"]
+    dFile = params["inputData"]
+    
+    if params["validate"]>=0:
+        if params["validationSet"] != "":
+            params["inputData"] = params["validationSet"]
+            params["featFile"] = "v" + fFile
+            params["engyFile"] = "v" + eFile
+            pyf.outputFeatures(params)
+        else:
+            print("Please use --validationSet to specify the validation set")
+            
+    if params["test"]>=0:
+        if params["testSet"] != "":
+            params["inputData"] = params["testSet"]
+            params["featFile"] = "t" + fFile
+            params["engyFile"] = "t" + eFile
+            pyf.outputFeatures(params)
+        else:
+            print("Please use --testSet to specify the test set")
+            
+    params["inputData"] = dFile
+    params["featFile"] = fFile
+    params["engyFile"] = eFile
     pyf.outputFeatures(params)
     print(pyf.trainEngy(params))
 elif params["runtype"] == -2:
     print(pyf.trainEF(params))
+elif params["runtype"] == -3:
+    pass
+elif params["runtype"] == -4:
+    fFile = params["featFile"]
+    eFile = params["engyFile"]
+    if params["genValidationFeats"]:
+        params["featFile"] = "v" + fFile
+        params["engyFile"] = "v" + eFile
+    elif params["genTestFeats"]:
+        params["featFile"] = "f" + fFile
+        params["engyFile"] = "f" + eFile
+    pyf.outputFeatures(params)
 else:
     print("Unrecognized runtype: ", params["runtype"])
     
