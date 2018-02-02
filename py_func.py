@@ -350,11 +350,12 @@ def trainEF(params):
     for iEpoch in range(params["epoch"]):
         file = open(str(params["inputData"]), 'r')
         for iCase in range(nCase):
-            nAtoms, iIter, lattice, R, f, v, e = getData(file)    
+            nAtoms, iIter, lattice, R, f, v, e = getData(file)
+            engy = e.reshape([-1,1])
             feedDict={
                     tfCoord:R,
                     tfLattice: lattice,
-                    tfEngy: e[:,None]*params['engyScalerA']+params['engyScalerB'], 
+                    tfEngy: engy*params['engyScalerA']+params['engyScalerB'], 
                     tfFors: f*params['engyScalerA'],
                     tfLearningRate: float(params['learningRate']),
                     }
@@ -362,7 +363,7 @@ def trainEF(params):
             
 #            loss = sess.run(tfLoss, feed_dict=feedDict)
             (Ei,Fi) = sess.run((tfEp,tfFp),feed_dict=feedDict)
-            Ermse = np.sqrt(np.mean((Ei-e[:,None])**2))
+            Ermse = np.sqrt(np.mean((Ei-engy)**2))
             Frmse = np.sqrt(np.mean((Fi-f)**2))
             print(iEpoch, "Ermse:", Ermse)
             print(iEpoch, "Frmse:", Frmse)
@@ -371,7 +372,7 @@ def trainEF(params):
         
 #        loss = sess.run(tfLoss, feed_dict=feedDict)
         (Ei,Fi) = sess.run((tfEp,tfFp),feed_dict=feedDict)
-        Ermse = np.sqrt(np.mean((Ei-e[:,None])**2))
+        Ermse = np.sqrt(np.mean((Ei-engy)**2))
         Frmse = np.sqrt(np.mean((Fi-f)**2))
         print(iEpoch, "Ermse:", Ermse)
         print(iEpoch, "Frmse:", Frmse)
