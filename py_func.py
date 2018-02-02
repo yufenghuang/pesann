@@ -354,7 +354,7 @@ def trainEF(params):
             feedDict={
                     tfCoord:R,
                     tfLattice: lattice,
-                    tfEngy: e*params['engyScalerA']+params['engyScalerB'], 
+                    tfEngy: e[:,None]*params['engyScalerA']+params['engyScalerB'], 
                     tfFors: f*params['engyScalerA'],
                     tfLearningRate: float(params['learningRate']),
                     }
@@ -362,7 +362,7 @@ def trainEF(params):
             
 #            loss = sess.run(tfLoss, feed_dict=feedDict)
             (Ei,Fi) = sess.run((tfEp,tfFp),feed_dict=feedDict)
-            Ermse = np.sqrt(np.mean((Ei-e)**2))
+            Ermse = np.sqrt(np.mean((Ei-e[:,None])**2))
             Frmse = np.sqrt(np.mean((Fi-f)**2))
             print(iEpoch, "Ermse:", Ermse)
             print(iEpoch, "Frmse:", Frmse)
@@ -371,7 +371,7 @@ def trainEF(params):
         
 #        loss = sess.run(tfLoss, feed_dict=feedDict)
         (Ei,Fi) = sess.run((tfEp,tfFp),feed_dict=feedDict)
-        Ermse = np.sqrt(np.mean((Ei-e)**2))
+        Ermse = np.sqrt(np.mean((Ei-e[:,None])**2))
         Frmse = np.sqrt(np.mean((Fi-f)**2))
         print(iEpoch, "Ermse:", Ermse)
         print(iEpoch, "Frmse:", Frmse)
