@@ -285,6 +285,8 @@ def outputFeatures(params):
             pd.DataFrame(engy).to_csv(params["engyFile"],mode='a',header=False,index=False)
 
 def trainEF(params):
+    import tensorflow as tf
+    import tf_func as tff
     tfFeatA = tf.constant(params['featScalerA'], dtype=tf.float32)
     tfFeatB = tf.constant(params['featScalerB'], dtype=tf.float32)
     tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
@@ -348,7 +350,7 @@ def trainEF(params):
     for iEpoch in range(params["epoch"]):
         file = open(str(params["inputData"]), 'r')
         for iCase in range(nCase):
-            nAtoms, iIter, lattice, R, f, v, e = pyf.getData(file)    
+            nAtoms, iIter, lattice, R, f, v, e = getData(file)    
             feedDict={
                     tfCoord:R,
                     tfLattice: lattice,
