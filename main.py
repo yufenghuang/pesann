@@ -100,8 +100,6 @@ for arg in vars(args):
 for p in params:
     print(p, "=", params[p])
 
-sys.exit()
-
 os.environ["CUDA_VISIBLE_DEVICES"]=str(params['iGPU'])
 
 if params['restart']:
