@@ -76,6 +76,7 @@ params = {
         }
 
 params["runtype"] = args.runtype
+params["inputData"] = args.inputData
 
 os.environ["CUDA_VISIBLE_DEVICES"]=str(params['iGPU'])
 
