@@ -129,6 +129,10 @@ if params['restart']:
     params["n3bBasis"] = int(loadParams["n3bBasis"])
     params["nL1Nodes"] = int(loadParams["nL1Nodes"])
     params["nL2Nodes"] = int(loadParams["nL2Nodes"])
+    params["featScalerA"] = loadParams["featScalerA"]
+    params["featScalerB"] = loadParams["featScalerB"]
+    params["engyScalerA"] = loadParams["engyScalerA"]
+    params["engyScalerB"] = loadParams["engyScalerB"]
 else:
     params = pyf.initialize(params)
 
