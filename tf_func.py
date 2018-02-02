@@ -162,6 +162,7 @@ def tf_get_dEldXi(tfFeats, nFeat, nL1, nL2):
 def tf_getEF(tfCoord, tfLattice,params):
     tfFeatA = tf.constant(params['featScalerA'], dtype=tf.float32)
     tfFeatB = tf.constant(params['featScalerB'], dtype=tf.float32)
+    numFeat = params['n2bBasis'] + params['n3bBasis']**3
         
     tfIdxNb, tfRNb,tfMaxNb, tfNAtoms= tf_getNb(tfCoord,tfLattice,float(params['dcut']))
     tfRhat, tfRi, tfDc = tf_getStruct(tfRNb)
@@ -177,13 +178,13 @@ def tf_getEF(tfCoord, tfLattice,params):
     tfdXin =  tf.expand_dims(tfFeatA,2) * tfdXin
     
     tfFeats = tfFeatA*tf_getFeats(tfGR2,tfGR3,tfGD3)+tfFeatB
-    tfEs = tf_engyFromFeats(tfFeats, params['numFeat'], params['nL1Nodes'], params['nL2Nodes'])
+    tfEs = tf_engyFromFeats(tfFeats, numFeat, params['nL1Nodes'], params['nL2Nodes'])
     
-    dEldXi = tf_get_dEldXi(tfFeats, params['numFeat'], params['nL1Nodes'], params['nL2Nodes'])
+    dEldXi = tf_get_dEldXi(tfFeats, numFeat, params['nL1Nodes'], params['nL2Nodes'])
     Fll = tf.reduce_sum(tf.expand_dims(dEldXi,2)*tfdXi,axis=1)
     
     dENldXi=tf.gather_nd(dEldXi,tf.expand_dims(tf.transpose(tf.boolean_mask(tfIdxNb, tf.greater(tfIdxNb,0))-1),1))
-    dEnldXin=tf.scatter_nd(tf.where(tf.greater(tfIdxNb,0)), dENldXi, [tfNAtoms,tfMaxNb,params['numFeat']])
+    dEnldXin=tf.scatter_nd(tf.where(tf.greater(tfIdxNb,0)), dENldXi, [tfNAtoms,tfMaxNb,numFeat])
     Fln = tf.reduce_sum(tf.expand_dims(dEnldXin,3)*tfdXin,axis=[1,2])
     
     tfFs = Fln + Fll 
@@ -193,6 +194,7 @@ def tf_getEF(tfCoord, tfLattice,params):
 def tf_getE(tfCoord, tfLattice,params):
     tfFeatA = tf.constant(params['featScalerA'], dtype=tf.float32)
     tfFeatB = tf.constant(params['featScalerB'], dtype=tf.float32)
+    numFeat = params['n2bBasis'] + params['n3bBasis']**3
         
     tfIdxNb, tfRNb,tfMaxNb, tfNAtoms= tf_getNb(tfCoord,tfLattice,float(params['dcut']))
     tfRhat, tfRi, tfDc = tf_getStruct(tfRNb)
@@ -202,7 +204,7 @@ def tf_getE(tfCoord, tfLattice,params):
     tfGD3 = tf.scatter_nd(tf.where(tfDc>0),tf_getCos(tf.boolean_mask(tfDc,tfDc>0)*3/float(params['dcut'])-2,params['n3bBasis']),[tfNAtoms,tfMaxNb, tfMaxNb,params['n3bBasis']])
         
     tfFeats = tfFeatA*tf_getFeats(tfGR2,tfGR3,tfGD3)+tfFeatB
-    tfEs = tf_engyFromFeats(tfFeats, params['numFeat'], params['nL1Nodes'], params['nL2Nodes'])
+    tfEs = tf_engyFromFeats(tfFeats, numFeat, params['nL1Nodes'], params['nL2Nodes'])
 
     return tfEs
 
