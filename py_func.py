@@ -193,12 +193,14 @@ def trainEngy(params):
             Ermse = np.sqrt(np.mean((Ep - dfEngy)**2))
             print(iEpoch, loss, Ermse)
             
-        if (params["validate"] > 0) & (iEpoch % params["validate"] == 0):
-            print(str(iEpoch)+"th epoch")
-            getError('v'+str(params['featFile']), 'v'+str(params['engyFile']))
-        if (params["test"] > 0) & (iEpoch % params["test"] == 0):
-            print(str(iEpoch)+"th epoch")
-            getError('t'+str(params['featFile']), 't'+str(params['engyFile']))
+        if params["validate"] > 0:
+            if iEpoch % params["validate"] == 0:
+                print(str(iEpoch)+"th epoch")
+                getError('v'+str(params['featFile']), 'v'+str(params['engyFile']))
+        if params["test"] > 0:
+            if iEpoch % params["test"] == 0:
+                print(str(iEpoch)+"th epoch")
+                getError('t'+str(params['featFile']), 't'+str(params['engyFile']))
             
     if params["validate"] == 0:
         getError('v'+str(params['featFile']), 'v'+str(params['engyFile']))
@@ -435,12 +437,14 @@ def trainEF(params):
         print(iEpoch, "Ermse:", Ermse)
         print(iEpoch, "Frmse:", Frmse)
         
-        if (params["validate"] > 0) & (iEpoch % params["validate"] == 0):
-            print(str(iEpoch)+"th epoch")
-            getError(vCase, str(params['validationSet']))
-        if (params["test"] > 0) & (iEpoch % params["test"] == 0):
-            print(str(iEpoch)+"th epoch")
-            getError(tCase, str(params['testSet']))
+        if params["validate"] > 0:
+            if iEpoch % params["validate"] == 0:
+                print(str(iEpoch)+"th epoch")
+                getError(vCase, str(params['validationSet']))
+        if params["test"] > 0:
+            if iEpoch % params["test"] == 0:
+                print(str(iEpoch)+"th epoch")
+                getError(tCase, str(params['testSet']))
             
     if params["validate"] == 0:
         getError(vCase, str(params['validationSet']))
