@@ -370,7 +370,7 @@ def trainEF(params):
         EseTot = 0
         Fse1 = 0
         Fse2 = 0
-        with open(tfileName) as tfile:
+        with open(tfileName, "r") as tfile:
             for jCase in range(mCase):
                 nAtoms, iIter, lattice, R, f, v, e = getData(tfile)
                 engy = e.reshape([-1,1])
