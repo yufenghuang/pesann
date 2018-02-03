@@ -28,24 +28,22 @@ params={
     "n3bBasis": 10,
     "nL1Nodes": 300,
     "nL2Nodes": 500,
-    "genValidationFeats": False,
-    "genTestFeats": False,
     "validate": -1,    #1: calculate the validation after every epoch
     "test": -1,  #0: only calculate the errors on the data set a the end
     "validationSet": "",
     "testSec": "",
+    "feRatio": 1.0,
     }
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--runtype", choices=[-4,-3,-2,-1,0,1,2], type=int,\
+parser.add_argument("--runtype", choices=[-3,-2,-1,0,1,2], type=int,\
                     help="Runtype.  2=get energy and forces, \
                                     1=get energy (default), \
                                     0=MD, \
-                                   -1=train energy, \
-                                   -2=train energy and forces \
-                                   -3=generate features \
-                                   -4=train energy using precalculated features")
+                                   -1=generate features, \
+                                   -2=train against E \
+                                   -3=train against E & F")
 parser.add_argument("inputData", type=str, help="Geometry file. Must include energies and/or forces when training")
 parser.add_argument("--validationSet", type=str)
 parser.add_argument("--testSet", type=str)
@@ -65,9 +63,6 @@ parser.add_argument("--n2bBasis", type=int)
 parser.add_argument("--n3bBasis", type=int)
 parser.add_argument("--nL1Nodes", type=int)
 parser.add_argument("--nL2Nodes", type=int)
-genFeatGroup = parser.add_mutually_exclusive_group()
-genFeatGroup.add_argument("--genValidationFeats", action="store_true")
-genFeatGroup.add_argument("--genTestFeats", action="store_true")
 parser.add_argument("--validate", type=int)
 parser.add_argument("--test", type=int)
 
@@ -126,49 +121,55 @@ elif params["runtype"] == 1:
 elif params["runtype"] == 0:
     pass
 elif params["runtype"] == -1:
-    fFile = params["featFile"]
-    eFile = params["engyFile"]
-    dFile = params["inputData"]
+    fFile = str(params["featFile"])
+    eFile = str(params["engyFile"])
+    dFile = str(params["inputData"])
     
-    if params["validate"]>=0:
-        if params["validationSet"] != "":
-            params["inputData"] = params["validationSet"]
-            params["featFile"] = "v" + fFile
-            params["engyFile"] = "v" + eFile
-            pyf.outputFeatures(params)
-        else:
-            print("Please use --validationSet to specify the validation set")
-            
-    if params["test"]>=0:
-        if params["testSet"] != "":
-            params["inputData"] = params["testSet"]
-            params["featFile"] = "t" + fFile
-            params["engyFile"] = "t" + eFile
-            pyf.outputFeatures(params)
-        else:
-            print("Please use --testSet to specify the test set")
-            
-    params["inputData"] = dFile
-    params["featFile"] = fFile
-    params["engyFile"] = eFile
-#    pyf.outputFeatures(params)
-    print(pyf.trainEngy(params))
-elif params["runtype"] == -2:
-    print(pyf.trainEF(params))
-elif params["runtype"] == -3:
-    pass
-elif params["runtype"] == -4:
-    fFile = params["featFile"]
-    eFile = params["engyFile"]
-    if params["genValidationFeats"]:
+    if params["validationSet"] != "":
         params["featFile"] = "v" + fFile
         params["engyFile"] = "v" + eFile
-    elif params["genTestFeats"]:
-        params["featFile"] = "f" + fFile
-        params["engyFile"] = "f" + eFile
-    pyf.outputFeatures(params)
+        params["inputData"] = params["validationSet"]
+        pyf.outputFeatures(params)
+        
+    if params["testSet"] != "":
+        params["featFile"] = "t" + fFile
+        params["engyFile"] = "t" + eFile
+        params["inputData"] = params["testSet"]
+        pyf.outputFeatures(params)
+    
     params["featFile"] = fFile
     params["engyFile"] = eFile
+    params["inputData"] = dFile
+    pyf.outputFeatures(params)
+elif params["runtype"] == -2:
+    if params["validate"] >= 0:
+        if (not os.path.exists("v"+str(params["featFile"]))) or \
+           (not os.path.exists("v"+str(params["engyFile"]))):
+            print("There are no features files for the validation set")
+    
+    if params["test"] >= 0:
+        if (not os.path.exists("t"+str(params["featFile"]))) or \
+           (not os.path.exists("t"+str(params["engyFile"]))):
+            print("There are no features files for the test set")
+            
+    print(pyf.trainEngy(params))
+    
+elif params["runtype"] == -3:
+    if (params["validate"] >= 0) & (not os.path.exists(str(params["validationSet"]))):
+        print("You need to specify the validation set using --validationSet")
+        
+    if (params["validate"] < 0) & (os.path.exists(str(params["validationSet"]))):
+        print("You might want to specify how frequent to calculate the errors \
+              on the validation set using --validate")
+        
+    if (params["test"] >= 0) & (not os.path.exists(str(params["testSet"]))):
+        print("You need to specify the test set using --testSet")
+        
+    if (params["test"] < 0) & (os.path.exists(str(params["testSet"]))):
+        print("You might want to specify how frequent to calculate the errors \
+              on the test set using --test")
+    
+    print(pyf.trainEF(params))
 else:
     print("Unrecognized runtype: ", params["runtype"])
     

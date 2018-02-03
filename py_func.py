@@ -142,13 +142,13 @@ def trainEngy(params):
     def getError(fFile, eFile):
         featDF = pd.read_csv(fFile, header=None, index_col=False).values
         engyDF = pd.read_csv(eFile, header=None, index_col=False).values
-        feedDict = {tfFeat: featDF * params['featScalerA'] + params['featScalerB'], \
-                    tfEngy: engyDF * params['engyScalerA'] + params['engyScalerB']}
-        Ep = sess.run(tfEs, feed_dict=feedDict)
-        Ep = (Ep - params['engyScalerB'])/params['engyScalerA']
+        feedDict2 = {tfFeat: featDF * params['featScalerA'] + params['featScalerB'], \
+                     tfEngy: engyDF * params['engyScalerA'] + params['engyScalerB']}
+        Ep2 = sess.run(tfEs, feed_dict=feedDict2)
+        Ep2 = (Ep2 - params['engyScalerB'])/params['engyScalerA']
         
-        Ermse = np.sqrt(np.mean((Ep-engyDF)**2))
-        Emae = np.mean(np.abs(Ep - engyDF))
+        Ermse = np.sqrt(np.mean((Ep2-engyDF)**2))
+        Emae = np.mean(np.abs(Ep2 - engyDF))
         print("Ermse is: ", Ermse)
         print("Emae is : ", Emae)
 
@@ -193,14 +193,12 @@ def trainEngy(params):
             Ermse = np.sqrt(np.mean((Ep - dfEngy)**2))
             print(iEpoch, loss, Ermse)
             
-        if params["validate"] > 0:
-            if iEpoch % params["validate"] == 0:
-                print(str(iEpoch)+"th epoch")
-                getError('v'+str(params['featFile']), 'v'+str(params['engyFile']))
-        if params["test"] > 0:
-            if iEpoch % params["test"] == 0:
-                print(str(iEpoch)+"th epoch")
-                getError('t'+str(params['featFile']), 't'+str(params['engyFile']))
+        if (params["validate"] > 0) & (iEpoch % params["validate"] == 0):
+            print(str(iEpoch)+"th epoch")
+            getError('v'+str(params['featFile']), 'v'+str(params['engyFile']))
+        if (params["test"] > 0) & (iEpoch % params["test"] == 0):
+            print(str(iEpoch)+"th epoch")
+            getError('t'+str(params['featFile']), 't'+str(params['engyFile']))
             
     if params["validate"] == 0:
         getError('v'+str(params['featFile']), 'v'+str(params['engyFile']))
@@ -396,24 +394,18 @@ def trainEF(params):
             if "Iteration" in line:
                 nCase += 1
     vCase = 0
-    if params["validate"] >= 0:
-        if params["validationSet"] != "":
-            with open(str(params["validationSet"]), 'r') as datafile:
-                for line in datafile:
-                    if "Iteration" in line:
-                        vCase += 1
-        else:
-            print("Please use --validationSet to specify the test set")
+    if (params["validate"] >= 0) & (params["validationSet"] != ""):
+        with open(str(params["validationSet"]), 'r') as datafile:
+            for line in datafile:
+                if "Iteration" in line:
+                    vCase += 1
             
     tCase = 0
-    if params["test"] >= 0:
-        if params["testSet"] != "":
-            with open(str(params["testSet"]), 'r') as datafile:
-                for line in datafile:
-                    if "Iteration" in line:
-                        tCase += 1
-        else:
-            print("Please use --testSet to specify the test set")
+    if (params["test"] >= 0) & (params["testSet"] != ""):
+        with open(str(params["testSet"]), 'r') as datafile:
+            for line in datafile:
+                if "Iteration" in line:
+                    tCase += 1
 
     for iEpoch in range(params["epoch"]):
         file = open(str(params["inputData"]), 'r')
@@ -443,14 +435,13 @@ def trainEF(params):
         print(iEpoch, "Ermse:", Ermse)
         print(iEpoch, "Frmse:", Frmse)
         
-        if params["validate"] > 0:
-            if iEpoch % params["validate"] == 0:
-                print(str(iEpoch)+"th epoch")
-                getError(vCase, str(params['validationSet']))
-        if params["test"] > 0:
-            if iEpoch % params["test"] == 0:
-                print(str(iEpoch)+"th epoch")
-                getError(tCase, str(params['testSet']))
+        if (params["validate"] > 0) & (iEpoch % params["validate"] == 0):
+            print(str(iEpoch)+"th epoch")
+            getError(vCase, str(params['validationSet']))
+        if (params["test"] > 0) & (iEpoch % params["test"] == 0):
+            print(str(iEpoch)+"th epoch")
+            getError(tCase, str(params['testSet']))
+            
     if params["validate"] == 0:
         getError(vCase, str(params['validationSet']))
     if params["test"] == 0:
