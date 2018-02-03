@@ -383,7 +383,7 @@ def trainEF(params):
                 Ese += np.sum((Ep - engy)**2)
                 Eae += np.sum(np.abs(Ep-engy))
                 
-                Fse1 += np.sum((np.sum(f**2,1) - np.sum(Fp**2,1))**2)
+                Fse1 += np.sum((np.sqrt(np.sum(f**2,1)) - np.sqrt(np.sum(Fp**2,1)))**2)
                 Fse2 += np.sum((f-Fp)**2)
                 
                 n += len(engy)
