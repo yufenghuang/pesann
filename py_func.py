@@ -9,6 +9,7 @@ import re
 import numpy as np
 import tensorflow as tf
 import tf_func as tff
+import sys
 
 def getData(dataFile):
     line = dataFile.readline()
@@ -151,6 +152,7 @@ def trainEngy(params):
         Emae = np.mean(np.abs(Ep2 - engyDF))
         print("Ermse is: ", Ermse)
         print("Emae is : ", Emae)
+        sys.stdout.flush()
 
     if params["restart"]:
         saver.restore(sess, str(params['logDir'])+"/tf.chpt")
@@ -192,6 +194,7 @@ def trainEngy(params):
             Ep = (Ep - params['engyScalerB'])/params['engyScalerA']
             Ermse = np.sqrt(np.mean((Ep - dfEngy)**2))
             print(iEpoch, loss, Ermse)
+            sys.stdout.flush()
             
         if params["validate"] > 0:
             if iEpoch % params["validate"] == 0:
@@ -201,7 +204,7 @@ def trainEngy(params):
             if iEpoch % params["test"] == 0:
                 print(str(iEpoch)+"th epoch")
                 getError('t'+str(params['featFile']), 't'+str(params['engyFile']))
-            
+        
     if params["validate"] == 0:
         getError('v'+str(params['featFile']), 'v'+str(params['engyFile']))
     if params["test"] == 0:
@@ -365,6 +368,8 @@ def trainEF(params):
         Ese = 0
         Eae = 0
         EseTot = 0
+        Fse1 = 0
+        Fse2 = 0
         with open(tfileName) as tfile:
             for jCase in range(mCase):
                 nAtoms, iIter, lattice, R, f, v, e = getData(tfile)
@@ -377,14 +382,23 @@ def trainEF(params):
                 EseTot += (np.sum(Ep) - np.sum(engy))**2
                 Ese += np.sum((Ep - engy)**2)
                 Eae += np.sum(np.abs(Ep-engy))
+                
+                Fse1 += np.sum((np.sum(f**2,1) - np.sum(Fp**2,1))**2)
+                Fse2 += np.sum((f-Fp)**2)
+                
                 n += len(engy)
         ErmseTot = np.sqrt(EseTot/mCase)
         Ermse = np.sqrt(Ese/n)
         Emae = Eae/n
+        Frmse1 = np.sqrt(Fse1/n)
+        Frmse2 = np.sqrt(Fse2/(3*n))
         print("Total Ermse: ", ErmseTot)
+        print("Total Ermse per atom:", ErmseTot/nAtoms)
         print("Ermse: ", Ermse)
         print("Emae : ", Emae)
-        pass
+        print("Frmse (magnitude): ", Frmse1)
+        print("Frmse (component): ", Frmse2)
+        sys.stdout.flush()
     
     if params["restart"]:
         saver.restore(sess, str(params['logDir'])+"/tf.chpt")
@@ -436,6 +450,7 @@ def trainEF(params):
         Frmse = np.sqrt(np.mean((Fi-f)**2))
         print(iEpoch, "Ermse:", Ermse)
         print(iEpoch, "Frmse:", Frmse)
+        sys.stdout.flush()
         
         if params["validate"] > 0:
             if iEpoch % params["validate"] == 0:
