@@ -33,6 +33,7 @@ params={
     "validationSet": "",
     "testSet": "",
     "feRatio": 1.0,
+    "dt": 1.0, #picosecond
     }
 
 parser = argparse.ArgumentParser()
@@ -65,6 +66,7 @@ parser.add_argument("--nL1Nodes", type=int)
 parser.add_argument("--nL2Nodes", type=int)
 parser.add_argument("--validate", type=int)
 parser.add_argument("--test", type=int)
+parser.add_argument("--dt", type=float)
 
 args = parser.parse_args()
 
@@ -119,7 +121,7 @@ if params["runtype"] == 2:
 elif params["runtype"] == 1:
     Ep = pyf.getEngy(params)
 elif params["runtype"] == 0:
-    pass
+    pyf.NVE(params)
 elif params["runtype"] == -1:
     fFile = str(params["featFile"])
     eFile = str(params["engyFile"])
@@ -172,4 +174,3 @@ elif params["runtype"] == -3:
     print(pyf.trainEF(params))
 else:
     print("Unrecognized runtype: ", params["runtype"])
-    
