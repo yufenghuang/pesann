@@ -287,7 +287,7 @@ def NVE(params):
         Vpos = 0.5*Fp/mSi*dt * constA
         R1 = R0 + Vpos * dt
 
-        for iStep in range(1,epoch):
+        for iStep in range(1,params["epoch"]):
             R0 = R1
             Vneg = Vpos
             R = np.linalg.solve(lattice, R0.T).T
