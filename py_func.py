@@ -297,7 +297,7 @@ def NVE(params):
             R1 = R0 + Vpos * dt
 
             print(nAtoms)
-            print(Ep)
+            print(np.sum(Ep))
             for iAtom in range(len(R1)):
                 print("Si",R1[iAtom,0], R1[iAtom,1],R1[iAtom,2])
 
