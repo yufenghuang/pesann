@@ -290,6 +290,11 @@ def NVE(params):
             R0 = R1
             Vneg = Vpos
             R = np.linalg.solve(lattice, R0.T).T
+
+            R[R > 1] = R[R > 1] - np.floor(R[R > 1])
+            R[R < 0] = R[R < 0] - np.floor(R[R < 0])
+            R0 = R.dot(lattice.T)
+
             feedDict = {tfCoord: R, tfLattice: lattice}
             Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
             V0 = Vneg + 0.5*Fp/mSi*dt * constA
