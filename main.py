@@ -34,6 +34,7 @@ params={
     "testSet": "",
     "feRatio": 1.0,
     "dt": 1.0, #picosecond
+    "nstep":100, # print every 100 steps
     }
 
 parser = argparse.ArgumentParser()
@@ -67,6 +68,7 @@ parser.add_argument("--nL2Nodes", type=int)
 parser.add_argument("--validate", type=int)
 parser.add_argument("--test", type=int)
 parser.add_argument("--dt", type=float)
+parser.add_argument("--nstep", type=int)
 
 args = parser.parse_args()
 

@@ -287,6 +287,12 @@ def NVE(params):
         Vpos = 0.5*Fp/mSi*dt * constA
         R1 = R0 + Vpos * dt
 
+        print(nAtoms)
+        print(np.sum(Ep))
+        for iAtom in range(len(R1)):
+            print("Si", R1[iAtom, 0], R1[iAtom, 1], R1[iAtom, 2])
+        sys.stdout.flush()
+
         for iStep in range(1,params["epoch"]):
             R0 = R1
             Vneg = Vpos
@@ -303,11 +309,19 @@ def NVE(params):
             Vpos = Vneg + Fp/mSi*dt * constA
             R1 = R0 + Vpos * dt
 
-            print(nAtoms)
-            print(np.sum(Ep))
-            for iAtom in range(len(R1)):
-                print("Si",R1[iAtom,0], R1[iAtom,1],R1[iAtom,2])
-            sys.stdout.flush()
+            if iStep % int(params["nstep"]) == 0:
+                print(nAtoms)
+                print(np.sum(Ep))
+                for iAtom in range(len(R1)):
+                    print("Si",R1[iAtom,0], R1[iAtom,1],R1[iAtom,2])
+                sys.stdout.flush()
+
+            if (iStep % int(params["nstep"]) != 0) & (iStep==epoch-1):
+                print(nAtoms)
+                print(np.sum(Ep))
+                for iAtom in range(len(R1)):
+                    print("Si", R1[iAtom, 0], R1[iAtom, 1], R1[iAtom, 2])
+                sys.stdout.flush()
 
 def getEngyFors(params):
     
