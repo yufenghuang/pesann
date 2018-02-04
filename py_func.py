@@ -282,6 +282,7 @@ def NVE(params):
         sess.run(tf.global_variables_initializer())
         saver.restore(sess, str(params['logDir']) + "/tf.chpt")
         Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
+        Fp = -Fp
 
         Vpos = 0.5*Fp/mSi*dt * constA
         R1 = R0 + Vpos * dt
@@ -297,6 +298,7 @@ def NVE(params):
 
             feedDict = {tfCoord: R, tfLattice: lattice}
             Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
+            Fp = -Fp
             V0 = Vneg + 0.5*Fp/mSi*dt * constA
             Vpos = Vneg + Fp/mSi*dt * constA
             R1 = R0 + Vpos * dt
