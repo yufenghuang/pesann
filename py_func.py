@@ -316,7 +316,7 @@ def NVE(params):
                     print("Si",R1[iAtom,0], R1[iAtom,1],R1[iAtom,2])
                 sys.stdout.flush()
 
-            if (iStep % int(params["nstep"]) != 0) & (iStep==epoch-1):
+            if (iStep % int(params["nstep"]) != 0) & (iStep==params["epoch"]-1):
                 print(nAtoms)
                 print(np.sum(Ep))
                 for iAtom in range(len(R1)):
