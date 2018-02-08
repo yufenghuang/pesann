@@ -13,7 +13,7 @@ import sys
 import argparse
 
 params={
-    "runtype":1,
+    "task":1,
     "chunkSize": 0,
     "epoch": 5000,
     "restart": False,
@@ -39,8 +39,8 @@ params={
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--runtype", choices=[-3,-2,-1,0,1,2], type=int,\
-                    help="Runtype.  2=get energy and forces, \
+parser.add_argument("--task", choices=[-3,-2,-1,0,1,2], type=int,\
+                    help="task.  2=get energy and forces, \
                                     1=get energy (default), \
                                     0=MD, \
                                    -1=generate features, \
@@ -118,34 +118,41 @@ else:
 
 print("Initialization done")
 
-if params["runtype"] == 2:
+if params["task"] == 2:
     Ep,Fp = pyf.getEngyFors(params)
-elif params["runtype"] == 1:
+elif params["task"] == 1:
     Ep = pyf.getEngy(params)
-elif params["runtype"] == 0:
+elif params["task"] == 0:
     pyf.NVE(params)
-elif params["runtype"] == -1:
-    fFile = str(params["featFile"])
-    eFile = str(params["engyFile"])
-    dFile = str(params["inputData"])
-    
+elif params["task"] == -1:
     if params["validationSet"] != "":
-        params["featFile"] = "v" + fFile
-        params["engyFile"] = "v" + eFile
-        params["inputData"] = params["validationSet"]
-        pyf.outputFeatures(params)
-        
+        pyf.outputFeatures("v"+params["engyFile"], "v"+params["featFile"], params["validationSet"], params)
+
     if params["testSet"] != "":
-        params["featFile"] = "t" + fFile
-        params["engyFile"] = "t" + eFile
-        params["inputData"] = params["testSet"]
-        pyf.outputFeatures(params)
-    
-    params["featFile"] = fFile
-    params["engyFile"] = eFile
-    params["inputData"] = dFile
-    pyf.outputFeatures(params)
-elif params["runtype"] == -2:
+        pyf.outputFeatures("t"+params["engyFile"], "t"+params["featFile"], params["testSet"], params)
+
+    pyf.outputFeatures(str(params["engyFile"]), str(params["featFile"]), str(params["inputData"]), params)
+    # fFile = str(params["featFile"])
+    # eFile = str(params["engyFile"])
+    # dFile = str(params["inputData"])
+    #
+    # if params["validationSet"] != "":
+    #     params["featFile"] = "v" + fFile
+    #     params["engyFile"] = "v" + eFile
+    #     params["inputData"] = params["validationSet"]
+    #     pyf.outputFeatures(params)
+    #
+    # if params["testSet"] != "":
+    #     params["featFile"] = "t" + fFile
+    #     params["engyFile"] = "t" + eFile
+    #     params["inputData"] = params["testSet"]
+    #     pyf.outputFeatures(params)
+    #
+    # params["featFile"] = fFile
+    # params["engyFile"] = eFile
+    # params["inputData"] = dFile
+    # pyf.outputFeatures(params)
+elif params["task"] == -2:
     if params["validate"] >= 0:
         if (not os.path.exists("v"+str(params["featFile"]))) or \
            (not os.path.exists("v"+str(params["engyFile"]))):
@@ -158,7 +165,7 @@ elif params["runtype"] == -2:
             
     print(pyf.trainEngy(params))
     
-elif params["runtype"] == -3:
+elif params["task"] == -3:
     if (params["validate"] >= 0) & (not os.path.exists(str(params["validationSet"]))):
         print("You need to specify the validation set using --validationSet")
         
@@ -175,4 +182,4 @@ elif params["runtype"] == -3:
     
     print(pyf.trainEF(params))
 else:
-    print("Unrecognized runtype: ", params["runtype"])
+    print("Unrecognized task: ", params["task"])

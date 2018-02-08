@@ -392,35 +392,35 @@ def initialize(params):
     np.savez(paramFile,**params)
     return params
 
-def outputFeatures(params):
+def outputFeatures(engyFile, featFile, inputData, params):
     import os
     import pandas as pd
     
-    if os.path.exists(str(params["featFile"])):
-        os.remove(str(params["featFile"]))
-    if os.path.exists(str(params["engyFile"])):
-        os.remove(str(params["engyFile"]))
+    if os.path.exists(featFile):
+        os.remove(featFile)
+    if os.path.exists(engyFile):
+        os.remove(engyFile)
         
     tfR = tf.placeholder(tf.float32, shape=(None,3))
     tfL = tf.placeholder(tf.float32, shape=(3,3))
     
     nCase = 0
-    with open(str(params["inputData"]), 'r') as datafile:
+    with open(inputData, 'r') as datafile:
         for line in datafile:
             if "Iteration" in line:
                 nCase += 1
-    
+
     sess = tf.Session()
-    with open(params["inputData"], 'r') as datafile:
+    with open(inputData, 'r') as datafile:
         for i in range(nCase):
             nAtoms, iIter, lattice, R, f, v, e = getData(datafile)
             feedDict = {tfR: R, tfL:lattice}
             feat = sess.run(
-                    tff.tf_getFeatsFromR(tfR,tfL,float(params['dcut']), params['n2bBasis'],params['n3bBasis']), \
+                    tff.tf_getFeatsFromR(tfR, tfL, float(params['dcut']), params['n2bBasis'],params['n3bBasis']),
                     feed_dict=feedDict)
             engy = e.reshape([-1,1])
-            pd.DataFrame(feat).to_csv(params["featFile"],mode='a',header=False,index=False)
-            pd.DataFrame(engy).to_csv(params["engyFile"],mode='a',header=False,index=False)
+            pd.DataFrame(feat).to_csv(featFile, mode='a', header=False, index=False)
+            pd.DataFrame(engy).to_csv(engyFile, mode='a', header=False, index=False)
 
 def trainEF(params):
     tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
