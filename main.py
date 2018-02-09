@@ -39,7 +39,7 @@ params={
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--task", choices=[-3,-2,-1,0,1,2], type=int,\
+parser.add_argument("--task", choices=[-3,-2,-1,0,1,2], type=int,
                     help="task.  2=get energy and forces, \
                                     1=get energy (default), \
                                     0=MD, \
@@ -52,23 +52,28 @@ parser.add_argument("--testSet", type=str)
 
 parser.add_argument("--inputFile", type=str, help="Input file specifying the calculation. \
                                                    Keys will be overwritten by command line arguments")
-parser.add_argument("--restart", action="store_true", help="Restart calculation by loading saved data  in the logDir directory. \
+parser.add_argument("--restart", action="store_true",
+                    help="Restart calculation by loading saved data  in the logDir directory. \
                     Seting this flag will ignore --dcut, --n2bBasis, --n3bBasis, --nL1Nodes and --nL2Nodes")
 parser.add_argument("--chunkSize", type=int, help="default: chuckSize="+str(params["chunkSize"]))
 parser.add_argument("--epoch", type=int, help="default: epoch="+str(params["epoch"]))
 parser.add_argument("--logDir", type=str, help="default: logDir="+params["logDir"])
-parser.add_argument("--iGPU", type=int)
-parser.add_argument("--feRatio", type=float)
-parser.add_argument("--learningRate", type=float)
-parser.add_argument("--dcut", type=float)
-parser.add_argument("--n2bBasis", type=int)
-parser.add_argument("--n3bBasis", type=int)
-parser.add_argument("--nL1Nodes", type=int)
-parser.add_argument("--nL2Nodes", type=int)
-parser.add_argument("--validate", type=int)
-parser.add_argument("--test", type=int)
-parser.add_argument("--dt", type=float)
-parser.add_argument("--nstep", type=int)
+parser.add_argument("--iGPU", type=int, help="species which GPU to run the calculations")
+parser.add_argument("--feRatio", type=float, help="the ratio between the energy term and the force term \
+                                                   in the total loss function")
+parser.add_argument("--learningRate", type=float, help="learning rate(step size) in the gradient descent optimization")
+parser.add_argument("--dcut", type=float, help="cutoff radius for the calculation (Angstrom)")
+parser.add_argument("--n2bBasis", metavar="N2B", type=int, help="number of basis for the 2D term")
+parser.add_argument("--n3bBasis", metavar="N3B", type=int,
+                    help="number of basis in each dimension for the 3D term, total number of basis equals N3B^3")
+parser.add_argument("--nL1Nodes", type=int, help="number of nodes in the first hidden layer of the neural network")
+parser.add_argument("--nL2Nodes", type=int, help="number of nodes in the second hidden layer of the neural network")
+parser.add_argument("--validate", metavar="N_VALIDATE", type=int,
+                    help="evaluate the errors on the validation set after every N_VALIDATE epochs")
+parser.add_argument("--test", metavar="N_TEST", type=int,
+                    help="evaluate the errors on the test set after every N_TEST epochs")
+parser.add_argument("--dt", type=float, help="delta t, time step for the MD simulation. Unit is ps")
+parser.add_argument("--nstep", type=int, help="dumping the geometry in xyz format in every NSTEP of MD simulations")
 
 args = parser.parse_args()
 

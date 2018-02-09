@@ -540,11 +540,13 @@ def trainEF(params):
         
         if params["validate"] > 0:
             if iEpoch % params["validate"] == 0:
-                print(str(iEpoch)+"th epoch")
+                print("Epoch", iEpoch)
+                # print(str(iEpoch)+"th epoch")
                 getError(vCase, str(params['validationSet']))
         if params["test"] > 0:
             if iEpoch % params["test"] == 0:
-                print(str(iEpoch)+"th epoch")
+                print("Epoch", iEpoch)
+                # print(str(iEpoch)+"th epoch")
                 getError(tCase, str(params['testSet']))
             
     if params["validate"] == 0:
