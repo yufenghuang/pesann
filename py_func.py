@@ -288,7 +288,7 @@ def NVE(params):
         R1 = R0 + Vpos * dt
 
         print(nAtoms)
-        print(np.sum(Ep), 0, np.sum(Ep))
+        print(0,"Epot=", np.sum(Ep), "Ekin=",0, "Etot=",np.sum(Ep))
         for iAtom in range(len(R1)):
             print("Si", R1[iAtom, 0], R1[iAtom, 1], R1[iAtom, 2], 0, 0, 0)
         sys.stdout.flush()
@@ -316,7 +316,7 @@ def NVE(params):
             if (iStep % int(params["nstep"]) == 0) or \
                 ((iStep % int(params["nstep"]) != 0) & (iStep==params["epoch"]-1)):
                 print(nAtoms)
-                print("Epot=", Epot, "Ekin=",Ekin, "Etot=",Etot)
+                print(iStep,"Epot=", Epot, "Ekin=",Ekin, "Etot=",Etot)
                 for iAtom in range(len(R1)):
                     print("Si",R1[iAtom,0], R1[iAtom,1],R1[iAtom,2], V0[iAtom,0], V0[iAtom,1], V0[iAtom,2])
                 sys.stdout.flush()
