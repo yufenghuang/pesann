@@ -32,7 +32,7 @@ def getRVmmt(mmtFile):
     mmtFile.readline()
     velocities = np.zeros((nAtoms,3))
     for i in range(nAtoms):
-        sptline = dataFile.readline().split()
+        sptline = mmtFile.readline().split()
         velocities[i,:] = np.array(sptline[1:4])
 
     R[R > 1] = R[R > 1] - np.floor(R[R > 1])
