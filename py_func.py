@@ -310,7 +310,7 @@ def NVE(params):
             R1 = R0 + Vpos * dt
             
             Epot = np.sum(Ep)
-            Ekin = 0.5*mSi*V0**2/constA
+            Ekin = np.sum(0.5*mSi*V0**2/constA)
             Etot = Epot + Ekin
 
             if (iStep % int(params["nstep"]) == 0) or \
