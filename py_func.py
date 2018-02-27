@@ -548,6 +548,7 @@ def trainEF(params):
                 print("Epoch", iEpoch)
                 # print(str(iEpoch)+"th epoch")
                 getError(tCase, str(params['testSet']))
+        sys.stdout.flush()
             
     if params["validate"] == 0:
         getError(vCase, str(params['validationSet']))
