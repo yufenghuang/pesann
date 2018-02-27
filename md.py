@@ -11,7 +11,7 @@ import sys
 import re
 
 
-def getRmmt(mmtFile):
+def getRVmmt(mmtFile):
     line = mmtFile.readline()
 
     sptline = line.split()
