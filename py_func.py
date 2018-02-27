@@ -295,7 +295,7 @@ def NVE(params):
         Etot = Epot + Ekin
 
         print(nAtoms)
-        print(0,"Epot=", Epot, "Ekin=",Ekin, "Etot=",Etot)
+        print(0,"Epot=", "{:.12f}".format(Epot), "Ekin=","{:.12f}".format(Ekin), "Etot=","{:.12f}".format(Etot))
         for iAtom in range(len(R1)):
             print("Si", R1[iAtom, 0], R1[iAtom, 1], R1[iAtom, 2], V0[iAtom, 0], V0[iAtom, 1], V0[iAtom, 2])
         sys.stdout.flush()
@@ -323,7 +323,7 @@ def NVE(params):
             if (iStep % int(params["nstep"]) == 0) or \
                 ((iStep % int(params["nstep"]) != 0) & (iStep==params["epoch"]-1)):
                 print(nAtoms)
-                print(iStep,"Epot=", Epot, "Ekin=",Ekin, "Etot=",Etot)
+                print(iStep,"Epot=", "{:.12f}".format(Epot), "Ekin=","{:.12f}".format(Ekin), "Etot=","{:.12f}".format(Etot))
                 for iAtom in range(len(R1)):
                     print("Si",R1[iAtom,0], R1[iAtom,1],R1[iAtom,2], V0[iAtom,0], V0[iAtom,1], V0[iAtom,2])
                 sys.stdout.flush()
