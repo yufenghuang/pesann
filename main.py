@@ -7,6 +7,7 @@ Created on Tue Jan 30 22:49:17 2018
 """
 import numpy as np
 import py_func as pyf
+import md
 import os
 import sys
 
@@ -39,7 +40,7 @@ params={
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--task", choices=[-3,-2,-1,0,1,2], type=int,
+parser.add_argument("--task", choices=[-3,-2,-1,0,1,2,100], type=int,
                     help="task.  2=get energy and forces, \
                                     1=get energy (default), \
                                     0=MD, \
@@ -186,5 +187,9 @@ elif params["task"] == -3:
               on the test set using --test")
     
     print(pyf.trainEF(params))
+    
+elif params["task"] == 100:
+    md.specialrun1(params)
+    
 else:
     print("Unrecognized task: ", params["task"])
