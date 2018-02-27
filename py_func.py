@@ -285,10 +285,16 @@ def NVE(params):
         Fp = -Fp
 
         Vpos = 0.5*Fp/mSi*dt * constA
+        V0 = Vneg + 0.5*Fp/mSi*dt * constA
+        
         R1 = R0 + Vpos * dt
+        
+        Epot = np.sum(Ep)
+        Ekin = np.sum(0.5*mSi*V0**2/constA)
+        Etot = Epot + Ekin
 
         print(nAtoms)
-        print(0,"Epot=", np.sum(Ep), "Ekin=",0, "Etot=",np.sum(Ep))
+        print(0,"Epot=", Epot, "Ekin=",Ekin, "Etot=",Etot)
         for iAtom in range(len(R1)):
             print("Si", R1[iAtom, 0], R1[iAtom, 1], R1[iAtom, 2], 0, 0, 0)
         sys.stdout.flush()
