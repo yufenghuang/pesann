@@ -290,7 +290,7 @@ def NVE(params):
         print(nAtoms)
         print(np.sum(Ep), 0, np.sum(Ep))
         for iAtom in range(len(R1)):
-            print("Si", R1[iAtom, 0], R1[iAtom, 1], R1[iAtom, 2])
+            print("Si", R1[iAtom, 0], R1[iAtom, 1], R1[iAtom, 2], 0, 0, 0)
         sys.stdout.flush()
 
         for iStep in range(1,params["epoch"]):
@@ -318,7 +318,7 @@ def NVE(params):
                 print(nAtoms)
                 print("Epot=", Epot, "Ekin=",Ekin, "Etot=",Etot)
                 for iAtom in range(len(R1)):
-                    print("Si",R1[iAtom,0], R1[iAtom,1],R1[iAtom,2])
+                    print("Si",R1[iAtom,0], R1[iAtom,1],R1[iAtom,2], V0[iAtom,0], V0[iAtom,1], V0[iAtom,2])
                 sys.stdout.flush()
 
 #            if (iStep % int(params["nstep"]) != 0) & (iStep==params["epoch"]-1):
