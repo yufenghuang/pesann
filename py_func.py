@@ -526,8 +526,9 @@ def trainEF(params):
             (Ei,Fi) = sess.run((tfEp,tfFp),feed_dict=feedDict)
             Ermse = np.sqrt(np.mean((Ei-engy)**2))
             Frmse = np.sqrt(np.mean((Fi-f)**2))
-            print(iEpoch, "Ermse:", Ermse)
-            print(iEpoch, "Frmse:", Frmse)
+            print(iEpoch, iCase, "Ermse:", Ermse)
+            print(iEpoch, iCase, "Frmse:", Frmse)
+            sys.stdout.flush()
     
         file.close()
         
