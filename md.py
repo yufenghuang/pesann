@@ -97,7 +97,7 @@ def specialrun1(params):
         print("Forces: ", Fp[iAtom, 0], Fp[iAtom, 1], Fp[iAtom, 2])
         sys.stdout.flush()
                 
-        for iStep in range(1,10):
+        for iStep in range(1,params["epoch"]):
             R0 = R1
             Vneg = Vpos
             R = np.linalg.solve(lattice, R0.T).T
