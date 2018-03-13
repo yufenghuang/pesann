@@ -80,10 +80,11 @@ def getRmmt(mmtFile):
     return nAtoms, lattice, R 
     
 
-def getFeats(R, lattice, dcut,n2bBasis, n3bBasis):
+def getFeats(R, lattice, dcut_in ,n2bBasis, n3bBasis):
 #    import tensorflow as tf
 #    import tf_func as tff
     
+    dcut = tf.constant(dcut_in, dtype=tf.float64)
     tfCoord = tf.placeholder(tf.float64, shape=(None,3))
     tfLattice = tf.placeholder(tf.float64, shape=(3,3))
     tfIdxNb, tfRNb,tfMaxNb, tfNAtoms= tff.tf_getNb(tfCoord,tfLattice,dcut)
