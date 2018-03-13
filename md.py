@@ -89,7 +89,8 @@ def specialrun1(params):
         Vneg[iAtom, 0] = V0[iAtom, 0] - 0.5*Fp[iAtom, 0]/mSi*dt * constA
         Vpos[iAtom, 0] = V0[iAtom, 0] + 0.5*Fp[iAtom, 0]/mSi*dt * constA
         
-        R1 = R0 + Vpos * dt
+#        R1 = R0 + Vpos * dt
+        R1 = R0 + dt
         
         print(nAtoms)
         print(0,"Epot=", Epot, "Ekin=",Ekin, "Etot=",Etot)
@@ -116,7 +117,8 @@ def specialrun1(params):
             Etot = Epot + Ekin
 
             Vpos[iAtom, 0] = V0[iAtom, 0] + 0.5*Fp[iAtom, 0]/mSi*dt * constA
-            R1 = R0 + Vpos * dt
+#            R1 = R0 + Vpos * dt
+            R1 = R0 + dt
             
             print(nAtoms)
             print(iStep,"Epot=", Epot, "Ekin=",Ekin, "Etot=",Etot)
