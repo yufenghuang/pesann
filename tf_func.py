@@ -9,7 +9,7 @@ Created on Tue Jan 30 22:45:42 2018
 import tensorflow as tf
 import numpy as np
 
-def tf_getNb(tf_R, tf_lattice, tf_dcut):
+def tf_getNb(tf_R, tf_lattice, dcut):
     # getNb: get neighbors
     # Inputs:
     #   tf_R [nAtoms x 3]:  the fractional coordinates of all atoms inside a unit cell
@@ -24,6 +24,8 @@ def tf_getNb(tf_R, tf_lattice, tf_dcut):
     #                               the indices of all the atoms within dcut of atom i+1.
     #                               Note, row 0 as in Tensorflow or Numpy corresponds to atom 1
     #   tf_RNb [nAtoms x maxNb x 3]: 
+    
+    tf_dcut = tf.constant(dcut, dtype=tf.float64)
     
     tf_Rd = tf.expand_dims(tf_R,0) - tf.expand_dims(tf_R,1)
     
