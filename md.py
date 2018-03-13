@@ -53,11 +53,11 @@ def specialrun1(params):
 
     dt = float(params["dt"])
 
-    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
-    tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
+    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float64)
+    tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float64)
 
-    tfCoord = tf.placeholder(tf.float32, shape=(None, 3))
-    tfLattice = tf.placeholder(tf.float32, shape=(3, 3))
+    tfCoord = tf.placeholder(tf.float64, shape=(None, 3))
+    tfLattice = tf.placeholder(tf.float64, shape=(3, 3))
 
     tfEs, tfFs = tff.tf_getEF(tfCoord, tfLattice, params)
     tfEp = (tfEs - tfEngyB) / tfEngyA
