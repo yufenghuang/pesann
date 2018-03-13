@@ -116,27 +116,27 @@ def tf_getdCos(tf_X,tf_nBasis):
 
 def tf_engyFromFeats(tfFeats, nFeat, nL1, nL2):
     with tf.variable_scope('layer1', reuse=tf.AUTO_REUSE):
-        W = tf.get_variable("weights", shape=[nFeat,nL1],\
+        W = tf.get_variable("weights", shape=[nFeat,nL1], dtype=tf.float64, 
               initializer=tf.contrib.layers.xavier_initializer())
-        B = tf.get_variable("biases",shape=[nL1],\
+        B = tf.get_variable("biases",shape=[nL1], dtype=tf.float64,
              initializer=tf.zeros_initializer())
         L1out = tf.nn.sigmoid(tf.matmul(tfFeats, W)+B)
         tf.add_to_collection("saved_params", W)
         tf.add_to_collection("saved_params", B)
         
     with tf.variable_scope('layer2', reuse=tf.AUTO_REUSE):
-        W = tf.get_variable("weights", shape=[nL1,nL2],\
+        W = tf.get_variable("weights", shape=[nL1,nL2], dtype=tf.float64, 
               initializer=tf.contrib.layers.xavier_initializer())
-        B = tf.get_variable("biases",shape=[nL2],\
+        B = tf.get_variable("biases",shape=[nL2], dtype=tf.float64,
              initializer=tf.zeros_initializer())
         L2out = tf.nn.sigmoid(tf.matmul(L1out, W)+B)
         tf.add_to_collection("saved_params", W)
         tf.add_to_collection("saved_params", B)
         
     with tf.variable_scope('layer3', reuse=tf.AUTO_REUSE):
-        W = tf.get_variable("weights", shape=[nL2,1],\
+        W = tf.get_variable("weights", shape=[nL2,1], dtype=tf.float64,
               initializer=tf.contrib.layers.xavier_initializer())
-        B = tf.get_variable("biases",shape=[1],\
+        B = tf.get_variable("biases",shape=[1], dtype=tf.float64,
              initializer=tf.zeros_initializer())
         tf.add_to_collection("saved_params", W)
         tf.add_to_collection("saved_params", B)
@@ -146,21 +146,21 @@ def tf_engyFromFeats(tfFeats, nFeat, nL1, nL2):
 
 def tf_get_dEldXi(tfFeats, nFeat, nL1, nL2):
     with tf.variable_scope('layer1', reuse=tf.AUTO_REUSE):
-        W1 = tf.get_variable("weights", shape=[nFeat,nL1],\
+        W1 = tf.get_variable("weights", shape=[nFeat,nL1],dtype=tf.float64,
               initializer=tf.contrib.layers.xavier_initializer())
-        B = tf.get_variable("biases",shape=[nL1],\
+        B = tf.get_variable("biases",shape=[nL1],dtype=tf.float64,
              initializer=tf.zeros_initializer())
         L1out = tf.nn.sigmoid(tf.matmul(tfFeats, W1)+B)
         
     with tf.variable_scope('layer2', reuse=tf.AUTO_REUSE):
-        W2 = tf.get_variable("weights", shape=[nL1,nL2],\
+        W2 = tf.get_variable("weights", shape=[nL1,nL2],dtype=tf.float64,
               initializer=tf.contrib.layers.xavier_initializer())
-        B = tf.get_variable("biases",shape=[nL2],\
+        B = tf.get_variable("biases",shape=[nL2],dtype=tf.float64,
              initializer=tf.zeros_initializer())
         L2out = tf.nn.sigmoid(tf.matmul(L1out, W2)+B)
         
     with tf.variable_scope('layer3', reuse=tf.AUTO_REUSE):
-        W3 = tf.get_variable("weights", shape=[nL2,1],\
+        W3 = tf.get_variable("weights", shape=[nL2,1], dtype=tf.float64,
               initializer=tf.contrib.layers.xavier_initializer())
         
     w_j = tf.reduce_sum(tf.expand_dims(L2out*(1-L2out),1) * \
