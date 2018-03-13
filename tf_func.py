@@ -88,7 +88,7 @@ def tf_getCos(tf_X,tf_nBasis):
     tf_pi = tf.constant(np.pi, tf.float64)
 #    tf_X = tf.placeholder(tf.float64,[None])
 #    tf_nBasis = tf.placeholder(tf.int32)
-    tf_Y = tf.expand_dims(tf_X,1) - tf.linspace(-1.,1.,tf_nBasis)
+    tf_Y = tf.expand_dims(tf_X,1) - tf.linspace(-1.,1.,tf_nBasis, dtype=tf.float64)
     tf_h = tf.cast(2/(tf_nBasis-1),tf.float64)
     tf_zeroMask = tf.equal(tf_Y, 0.)
     tf_Y = tf.reshape(tf.where(tf.abs(tf_Y) < tf_h, tf_Y, tf.zeros_like(tf_Y)),[-1,tf_nBasis])
