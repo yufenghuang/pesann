@@ -45,7 +45,7 @@ def tf_getNb(tf_R, tf_lattice, tf_dcut):
     tf_Rd = tf.scatter_nd(tf.where(tf_dcutMask), tf.boolean_mask(tf_Rd, tf_dcutMask), tf_RdShape)
     
     tf_idxMask = tf.reduce_sum(tf_Rd**2, axis=2) > 0
-    tf_numNb = tf.reduce_sum(tf.cast(tf_idxMask, tf.float32),axis=1)
+    tf_numNb = tf.reduce_sum(tf.cast(tf_idxMask, tf.float64),axis=1)
     tf_maxNb = tf.cast(tf.reduce_max(tf_numNb),tf.int64)
     
     tf_idx = tf.transpose(tf.where(tf_idxMask))
@@ -72,24 +72,24 @@ def tf_getNb(tf_R, tf_lattice, tf_dcut):
 def tf_getStruct(tfCoord):
     tfRi = tf.sqrt(tf.reduce_sum(tfCoord**2,axis=2))
     tfDc = tf.sqrt(tf.reduce_sum((tf.expand_dims(tfCoord,2)-tf.expand_dims(tfCoord,1))**2,axis=3))
-    idxRi = tf.where(tf.greater(tfRi, tf.constant(0.000000,dtype=tf.float32)))
-    tfDc1 = tf.boolean_mask(tfDc, tf.greater(tfRi, tf.constant(0.000000,dtype=tf.float32)))
+    idxRi = tf.where(tf.greater(tfRi, tf.constant(0.000000,dtype=tf.float64)))
+    tfDc1 = tf.boolean_mask(tfDc, tf.greater(tfRi, tf.constant(0.000000,dtype=tf.float64)))
     tfDc2 = tf.scatter_nd(idxRi, tfDc1, tf.shape(tfDc,out_type=tf.int64))
-    tfDc3 = tf.boolean_mask(tf.transpose(tfDc2, [0,2,1]),tf.greater(tfRi, tf.constant(0.000000,dtype=tf.float32)))
+    tfDc3 = tf.boolean_mask(tf.transpose(tfDc2, [0,2,1]),tf.greater(tfRi, tf.constant(0.000000,dtype=tf.float64)))
     tfDc4 = tf.scatter_nd(idxRi, tfDc3, tf.shape(tfDc,out_type=tf.int64))
     
-    tfRi_masked = tf.boolean_mask(tfRi, tf.greater(tfRi, tf.constant(0.000000,dtype=tf.float32)))
-    tfCoord_masked = tf.boolean_mask(tfCoord, tf.greater(tfRi, tf.constant(0.000000,dtype=tf.float32)))
+    tfRi_masked = tf.boolean_mask(tfRi, tf.greater(tfRi, tf.constant(0.000000,dtype=tf.float64)))
+    tfCoord_masked = tf.boolean_mask(tfCoord, tf.greater(tfRi, tf.constant(0.000000,dtype=tf.float64)))
     tfRhat1 = tfCoord_masked/tf.expand_dims(tfRi_masked,1)
     tfRhat2 = tf.scatter_nd(idxRi, tfRhat1, tf.shape(tfCoord,out_type=tf.int64))
     return tfRhat2, tfRi, tfDc4
 
 def tf_getCos(tf_X,tf_nBasis):
-    tf_pi = tf.constant(np.pi, tf.float32)
-#    tf_X = tf.placeholder(tf.float32,[None])
+    tf_pi = tf.constant(np.pi, tf.float64)
+#    tf_X = tf.placeholder(tf.float64,[None])
 #    tf_nBasis = tf.placeholder(tf.int32)
     tf_Y = tf.expand_dims(tf_X,1) - tf.linspace(-1.,1.,tf_nBasis)
-    tf_h = tf.cast(2/(tf_nBasis-1),tf.float32)
+    tf_h = tf.cast(2/(tf_nBasis-1),tf.float64)
     tf_zeroMask = tf.equal(tf_Y, 0.)
     tf_Y = tf.reshape(tf.where(tf.abs(tf_Y) < tf_h, tf_Y, tf.zeros_like(tf_Y)),[-1,tf_nBasis])
     tf_Ynot0 = tf.not_equal(tf_Y, 0.)
@@ -101,11 +101,11 @@ def tf_getCos(tf_X,tf_nBasis):
     return tf_Y
 
 def tf_getdCos(tf_X,tf_nBasis):
-    tf_pi = tf.constant(np.pi, tf.float32)
-#    tf_X = tf.placeholder(tf.float32,[None])
+    tf_pi = tf.constant(np.pi, tf.float64)
+#    tf_X = tf.placeholder(tf.float64,[None])
 #    tf_nBasis = tf.placeholder(tf.int32)
     tf_Y = tf.expand_dims(tf_X,1) - tf.linspace(-1.,1.,tf_nBasis)
-    tf_h = tf.cast(2/(tf_nBasis-1),tf.float32)
+    tf_h = tf.cast(2/(tf_nBasis-1),tf.float64)
     tf_Y = tf.reshape(tf.where(tf.abs(tf_Y) < tf_h, tf_Y, tf.zeros_like(tf_Y)),[-1,tf_nBasis])
     tf_Ynot0 = tf.not_equal(tf_Y, 0.)
     tf_Y = tf.scatter_nd(tf.where(tf_Ynot0), \
@@ -170,8 +170,8 @@ def tf_get_dEldXi(tfFeats, nFeat, nL1, nL2):
     return dEldXi
 
 def tf_getEF(tfCoord, tfLattice,params):
-    tfFeatA = tf.constant(params['featScalerA'], dtype=tf.float32)
-    tfFeatB = tf.constant(params['featScalerB'], dtype=tf.float32)
+    tfFeatA = tf.constant(params['featScalerA'], dtype=tf.float64)
+    tfFeatB = tf.constant(params['featScalerB'], dtype=tf.float64)
     numFeat = params['n2bBasis'] + params['n3bBasis']**3
         
     tfIdxNb, tfRNb,tfMaxNb, tfNAtoms= tf_getNb(tfCoord,tfLattice,float(params['dcut']))
@@ -212,8 +212,8 @@ def tf_getEF(tfCoord, tfLattice,params):
     return tfEs, tfFs
 
 def tf_getE(tfCoord, tfLattice,params):
-    tfFeatA = tf.constant(params['featScalerA'], dtype=tf.float32)
-    tfFeatB = tf.constant(params['featScalerB'], dtype=tf.float32)
+    tfFeatA = tf.constant(params['featScalerA'], dtype=tf.float64)
+    tfFeatB = tf.constant(params['featScalerB'], dtype=tf.float64)
     numFeat = params['n2bBasis'] + params['n3bBasis']**3
         
     tfIdxNb, tfRNb,tfMaxNb, tfNAtoms= tf_getNb(tfCoord,tfLattice,float(params['dcut']))
