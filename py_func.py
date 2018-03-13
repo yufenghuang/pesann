@@ -84,8 +84,8 @@ def getFeats(R, lattice, dcut,n2bBasis, n3bBasis):
 #    import tensorflow as tf
 #    import tf_func as tff
     
-    tfCoord = tf.placeholder(tf.float32, shape=(None,3))
-    tfLattice = tf.placeholder(tf.float32, shape=(3,3))
+    tfCoord = tf.placeholder(tf.float64, shape=(None,3))
+    tfLattice = tf.placeholder(tf.float64, shape=(3,3))
     tfIdxNb, tfRNb,tfMaxNb, tfNAtoms= tff.tf_getNb(tfCoord,tfLattice,dcut)
     tfRhat, tfRi, tfDc = tff.tf_getStruct(tfRNb)
     tfGR2 = tf.scatter_nd(tf.where(tfRi>0),\
@@ -131,9 +131,9 @@ def trainEngy(params):
 #    import tf_func as tff
     import pandas as pd
     numFeat = params['n2bBasis'] + params['n3bBasis']**3
-    tfFeat = tf.placeholder(tf.float32,shape=(None, numFeat))
-    tfEngy = tf.placeholder(tf.float32,shape=(None, 1))
-    tfLR = tf.placeholder(tf.float32)
+    tfFeat = tf.placeholder(tf.float64,shape=(None, numFeat))
+    tfEngy = tf.placeholder(tf.float64,shape=(None, 1))
+    tfLR = tf.placeholder(tf.float64)
     
     tfEs = tff.tf_engyFromFeats(tfFeat, numFeat, params['nL1Nodes'], params['nL2Nodes'])
     
@@ -220,11 +220,11 @@ def trainEngy(params):
     return save_path
 
 def getEngy(params):
-    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
-    tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
+    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float64)
+    tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float64)
 
-    tfCoord = tf.placeholder(tf.float32, shape=(None,3))
-    tfLattice = tf.placeholder(tf.float32, shape=(3,3))
+    tfCoord = tf.placeholder(tf.float64, shape=(None,3))
+    tfLattice = tf.placeholder(tf.float64, shape=(3,3))
     
     tfEs=tff.tf_getE(tfCoord, tfLattice,params)
     tfEi = (tfEs - tfEngyB)/tfEngyA
@@ -257,11 +257,11 @@ def NVE(params):
 
     dt = float(params["dt"])
 
-    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
-    tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
+    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float64)
+    tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float64)
 
-    tfCoord = tf.placeholder(tf.float32, shape=(None, 3))
-    tfLattice = tf.placeholder(tf.float32, shape=(3, 3))
+    tfCoord = tf.placeholder(tf.float64, shape=(None, 3))
+    tfLattice = tf.placeholder(tf.float64, shape=(3, 3))
 
     tfEs, tfFs = tff.tf_getEF(tfCoord, tfLattice, params)
     tfEp = (tfEs - tfEngyB) / tfEngyA
@@ -337,11 +337,11 @@ def NVE(params):
 
 def getEngyFors(params):
     
-    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
-    tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
+    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float64)
+    tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float64)
 
-    tfCoord = tf.placeholder(tf.float32, shape=(None,3))
-    tfLattice = tf.placeholder(tf.float32, shape=(3,3))
+    tfCoord = tf.placeholder(tf.float64, shape=(None,3))
+    tfLattice = tf.placeholder(tf.float64, shape=(3,3))
     
     tfEs,tfFs = tff.tf_getEF(tfCoord,tfLattice,params)
     tfEp = (tfEs - tfEngyB)/tfEngyA
@@ -413,8 +413,8 @@ def outputFeatures(engyFile, featFile, inputData, params):
     if os.path.exists(engyFile):
         os.remove(engyFile)
         
-    tfR = tf.placeholder(tf.float32, shape=(None,3))
-    tfL = tf.placeholder(tf.float32, shape=(3,3))
+    tfR = tf.placeholder(tf.float64, shape=(None,3))
+    tfL = tf.placeholder(tf.float64, shape=(3,3))
     
     nCase = 0
     with open(inputData, 'r') as datafile:
@@ -435,15 +435,15 @@ def outputFeatures(engyFile, featFile, inputData, params):
             pd.DataFrame(engy).to_csv(engyFile, mode='a', header=False, index=False)
 
 def trainEF(params):
-    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
-    tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
+    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float64)
+    tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float64)
     
     # Tensorflow placeholders
-    tfCoord = tf.placeholder(tf.float32, shape=(None,3))
-    tfLattice = tf.placeholder(tf.float32, shape=(3,3))
-    tfEngy = tf.placeholder(tf.float32, shape=(None))
-    tfFors = tf.placeholder(tf.float32, shape=(None,3))
-    tfLearningRate = tf.placeholder(tf.float32)
+    tfCoord = tf.placeholder(tf.float64, shape=(None,3))
+    tfLattice = tf.placeholder(tf.float64, shape=(3,3))
+    tfEngy = tf.placeholder(tf.float64, shape=(None))
+    tfFors = tf.placeholder(tf.float64, shape=(None,3))
+    tfLearningRate = tf.placeholder(tf.float64)
     
     
     tfEs,tfFs = tff.tf_getEF(tfCoord,tfLattice,params)
