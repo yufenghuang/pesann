@@ -46,7 +46,7 @@ def getData(dataFile):
         energies = np.zeros((nAtoms))
         for i in range(nAtoms):
             sptline = dataFile.readline().split()
-            energies[i] = float(sptline[1])
+            energies[i] = float(sptline[1])-271
 
         R[R > 1] = R[R > 1] - np.floor(R[R > 1])
         R[R < 0] = R[R < 0] - np.floor(R[R < 0])
