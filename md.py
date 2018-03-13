@@ -69,8 +69,11 @@ def specialrun1(params):
 
     R0 = R.dot(lattice.T)
     R1 = np.zeros_like(R0)
+    V0 = np.zeros_like(V0)
     Vpos = np.zeros_like(R0)
     Vneg = np.zeros_like(R0)
+    
+    iAtom=50
 
     with tf.Session() as sess:
         feedDict = {tfCoord: R, tfLattice: lattice}
@@ -78,48 +81,46 @@ def specialrun1(params):
         saver.restore(sess, str(params['logDir']) + "/tf.chpt")
         Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
         Fp = -Fp
-
-        Vpos = V0 + 0.5*Fp/mSi*dt * constA
-
-        # V0 = Vneg + 0.5*Fp/mSi*dt * constA
-        # Vneg = V0 - 0.5*Fp/mSi*dt * constA
-        
-        R1 = R0 + Vpos * dt
         
         Epot = np.sum(Ep)
         Ekin = np.sum(0.5*mSi*V0**2/constA)
         Etot = Epot + Ekin
-
+        
+        Vneg[iAtom, 0] = V0[iAtom, 0] - 0.5*Fp[iAtom, 0]/mSi*dt * constA
+        Vpos[iAtom, 0] = V0[iAtom, 0] + 0.5*Fp[iAtom, 0]/mSi*dt * constA
+        
+        R1 = R0 + Vpos * dt
+        
         print(nAtoms)
         print(0,"Epot=", Epot, "Ekin=",Ekin, "Etot=",Etot)
-        for iAtom in range(len(R1)):
-            print("Si", R1[iAtom, 0], R1[iAtom, 1], R1[iAtom, 2], V0[iAtom,0], V0[iAtom,1], V0[iAtom,2])
+        print("Si", R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2], V0[iAtom,0], V0[iAtom,1], V0[iAtom,2])
+        print("Forces: ", Fp[iAtom, 0], Fp[iAtom, 1], Fp[iAtom, 2])
         sys.stdout.flush()
-
-        for iStep in range(1,params["epoch"]):
+                
+        for iStep in range(1,10):
             R0 = R1
             Vneg = Vpos
             R = np.linalg.solve(lattice, R0.T).T
-
             R[R > 1] = R[R > 1] - np.floor(R[R > 1])
             R[R < 0] = R[R < 0] - np.floor(R[R < 0])
             R0 = R.dot(lattice.T)
-
+                
             feedDict = {tfCoord: R, tfLattice: lattice}
             Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
             Fp = -Fp
-            V0 = Vneg + 0.5*Fp/mSi*dt * constA
-            Vpos = Vneg + Fp/mSi*dt * constA
-            R1 = R0 + Vpos * dt
+        
+            V0[iAtom, 0] = Vneg[iAtom, 0] + 0.5*Fp[iAtom, 0]/mSi*dt * constA
             
             Epot = np.sum(Ep)
             Ekin = np.sum(0.5*mSi*V0**2/constA)
             Etot = Epot + Ekin
 
-            if (iStep % int(params["nstep"]) == 0) or \
-                ((iStep % int(params["nstep"]) != 0) & (iStep==params["epoch"]-1)):
-                print(nAtoms)
-                print(iStep,"Epot=", Epot, "Ekin=",Ekin, "Etot=",Etot)
-                for iAtom in range(len(R1)):
-                    print("Si",R1[iAtom,0], R1[iAtom,1],R1[iAtom,2], V0[iAtom,0], V0[iAtom,1], V0[iAtom,2])
-                sys.stdout.flush()
+            Vpos[iAtom, 0] = V0[iAtom, 0] + 0.5*Fp[iAtom, 0]/mSi*dt * constA
+            R1 = R0 + Vpos * dt
+            
+            print(nAtoms)
+            print(iStep,"Epot=", Epot, "Ekin=",Ekin, "Etot=",Etot)
+            print("Si", R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2], V0[iAtom,0], V0[iAtom,1], V0[iAtom,2])
+            print("Forces: ", Fp[iAtom, 0], Fp[iAtom, 1], Fp[iAtom, 2])
+            sys.stdout.flush()
+
