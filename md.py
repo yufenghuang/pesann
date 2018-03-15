@@ -214,7 +214,7 @@ def specialrun3(params):
         Ep, Fp, Xi, dXi, dEp = sess.run((tfEp, tfFp, tfXi, tfdXi, tfdEp), feed_dict=feedDict)
         Fp = -Fp
         
-        out = pd.DataFrame(np.concatenate((R0[atom, 0, None], Ep[atom], Xi[atom], dXi[atom].flatten(), dEp[atom])))
+        out = pd.DataFrame(np.concatenate((R0[atom, 0, None], Ep[atom], Xi[atom], dXi[atom].flatten(), dEp[atom]))[None,:])
         out.to_csv('pd_out.csv', mode='a',header=False,index=False)
         
         Epot = np.sum(Ep)
@@ -253,7 +253,7 @@ def specialrun3(params):
             Ep, Fp, Xi, dXi, dEp = sess.run((tfEp, tfFp, tfXi, tfdXi, tfdEp), feed_dict=feedDict)
             Fp = -Fp
             
-            out = pd.DataFrame(np.concatenate((R0[atom, 0, None], Ep[atom], Xi[atom], dXi[atom].flatten(), dEp[atom])))
+            out = pd.DataFrame(np.concatenate((R0[atom, 0, None], Ep[atom], Xi[atom], dXi[atom].flatten(), dEp[atom]))[None,:])
             out.to_csv('pd_out.csv', mode='a',header=False,index=False)
         
             V0[atom, 0] = Vneg[atom, 0] + 0.5*Fp[atom, 0]/mSi*dt / constA
