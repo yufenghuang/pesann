@@ -189,7 +189,7 @@ elif params["task"] == -3:
     print(pyf.trainEF(params))
     
 elif params["task"] == 100:
-    md.specialrun3(params)
+    md.specialrun4(params)
     
 else:
     print("Unrecognized task: ", params["task"])

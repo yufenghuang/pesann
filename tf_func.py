@@ -197,7 +197,7 @@ def tf_getEF(tfCoord, tfLattice,params):
                           tf_getCos(tf.boolean_mask(tfDc,tfDc>0)*3/float(params['dcut'])-2,params['n3bBasis']),\
                           [tfNAtoms,tfMaxNb, tfMaxNb,params['n3bBasis']])
     
-    tfdXi, tfdXin = tf_get_dXidRl(tfGR2,tfGR2d,tfGR3,tfGR3d,tfGD3,tfRhat)
+    tfdXi, tfdXin = tf_get_dXidRl(tfGR2,tfGR2d,tfGR3,tfGR3d,tfGD3,tfRhat*3/params['dcut'])
     tfdXi =  tf.expand_dims(tfFeatA,2) * tfdXi 
     tfdXin =  tf.expand_dims(tfFeatA,2) * tfdXin
     
