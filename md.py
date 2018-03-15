@@ -79,8 +79,10 @@ def specialrun1(params):
         feedDict = {tfCoord: R, tfLattice: lattice}
         sess.run(tf.global_variables_initializer())
         saver.restore(sess, str(params['logDir']) + "/tf.chpt")
-        Ep, Fp, Fll, Fln = sess.run((tfEp, tfFp), feed_dict=feedDict)
+        Ep, Fp, Fll, Fln = sess.run((tfEs, tfFs, fll, fln), feed_dict=feedDict)
         Fp = -Fp
+        Fll = -Fll
+        Fln = -Fln
         
         Epot = np.sum(Ep)
         Ekin = np.sum(0.5*mSi*V0**2*constA)
@@ -127,8 +129,10 @@ def specialrun1(params):
             R0 = R.dot(lattice.T)
                 
             feedDict = {tfCoord: R, tfLattice: lattice}
-            Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
+            Ep, Fp, Fll, Fln = sess.run((tfEs, tfFs, fll, fln), feed_dict=feedDict)
             Fp = -Fp
+            Fll = -Fll
+            Fln = -Fln
         
             V0[atom, 0] = Vneg[atom, 0] + 0.5*Fp[atom, 0]/mSi*dt / constA
             
