@@ -59,7 +59,7 @@ def specialrun1(params):
     tfCoord = tf.placeholder(tf.float64, shape=(None, 3))
     tfLattice = tf.placeholder(tf.float64, shape=(3, 3))
 
-    tfEs, tfFs = tff.tf_getEF(tfCoord, tfLattice, params)
+    tfEs, tfFs, fll, fln = tff.tf_getEF2(tfCoord, tfLattice, params)
     tfEp = (tfEs - tfEngyB) / tfEngyA
     tfFp = tfFs / tfEngyA
 
@@ -73,30 +73,50 @@ def specialrun1(params):
     Vpos = np.zeros_like(R0)
     Vneg = np.zeros_like(R0)
     
-    iAtom=50
+    atom=50
 
     with tf.Session() as sess:
         feedDict = {tfCoord: R, tfLattice: lattice}
         sess.run(tf.global_variables_initializer())
         saver.restore(sess, str(params['logDir']) + "/tf.chpt")
-        Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
+        Ep, Fp, Fll, Fln = sess.run((tfEp, tfFp), feed_dict=feedDict)
         Fp = -Fp
         
         Epot = np.sum(Ep)
-        Ekin = np.sum(0.5*mSi*V0**2/constA)
+        Ekin = np.sum(0.5*mSi*V0**2*constA)
         Etot = Epot + Ekin
         
-        Vneg[iAtom, 0] = V0[iAtom, 0] - 0.5*Fp[iAtom, 0]/mSi*dt * constA
-        Vpos[iAtom, 0] = V0[iAtom, 0] + 0.5*Fp[iAtom, 0]/mSi*dt * constA
+        Vneg[atom, 0] = V0[atom, 0] - 0.5*Fp[atom, 0]/mSi*dt / constA
+        Vpos[atom, 0] = V0[atom, 0] + 0.5*Fp[atom, 0]/mSi*dt / constA
         
         R1 = R0 + Vpos * dt
 #        R1 = R0 + dt
         
         print(nAtoms)
         print(0,"Epot=", Epot, "Ekin=",Ekin, "Etot=",Etot)
-        print("Si", R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2], V0[iAtom,0], V0[iAtom,1], V0[iAtom,2])
-        print("Forces: ", Fp[iAtom, 0], Fp[iAtom, 1], Fp[iAtom, 2])
-        sys.stdout.flush()
+        for iAtom in range(nAtoms):
+            print("Si"+str(iAtom), R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2], V0[iAtom,0], V0[iAtom,1], V0[iAtom,2])
+            
+        print("Energies:")
+        for iAtom in range(nAtoms):
+            print("Energy"+str(iAtom), Ep[iAtom])
+
+        print("Forces:")
+        for iAtom in range(nAtoms):
+            print("Force"+str(iAtom), Fp[iAtom, 0], Fp[iAtom, 1], Fp[iAtom, 2])
+            sys.stdout.flush()
+            
+        print("Fll:")
+        for iAtom in range(nAtoms):
+            print("Fll"+str(iAtom), Fll[iAtom, 0], Fll[iAtom, 1], Fll[iAtom, 2])
+            sys.stdout.flush()
+            
+        print("Fln:")
+        for iAtom in range(nAtoms):
+            print("Fln"+str(iAtom), Fln[iAtom, 0], Fln[iAtom, 1], Fln[iAtom, 2])
+            sys.stdout.flush()
+
+
                 
         for iStep in range(1,params["epoch"]):
             R0 = R1
@@ -110,19 +130,37 @@ def specialrun1(params):
             Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
             Fp = -Fp
         
-            V0[iAtom, 0] = Vneg[iAtom, 0] + 0.5*Fp[iAtom, 0]/mSi*dt * constA
+            V0[atom, 0] = Vneg[atom, 0] + 0.5*Fp[atom, 0]/mSi*dt / constA
             
             Epot = np.sum(Ep)
-            Ekin = np.sum(0.5*mSi*V0**2/constA)
+            Ekin = np.sum(0.5*mSi*V0**2*constA)
             Etot = Epot + Ekin
 
-            Vpos[iAtom, 0] = V0[iAtom, 0] + 0.5*Fp[iAtom, 0]/mSi*dt * constA
+            Vpos[atom, 0] = V0[atom, 0] + 0.5*Fp[atom, 0]/mSi*dt / constA
             R1 = R0 + Vpos * dt
 #            R1 = R0 + dt
             
             print(nAtoms)
-            print(iStep,"Epot=", Epot, "Ekin=",Ekin, "Etot=",Etot)
-            print("Si", R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2], V0[iAtom,0], V0[iAtom,1], V0[iAtom,2])
-            print("Forces: ", Fp[iAtom, 0], Fp[iAtom, 1], Fp[iAtom, 2])
-            sys.stdout.flush()
+            print(0,"Epot=", Epot, "Ekin=",Ekin, "Etot=",Etot)
+            for iAtom in range(nAtoms):
+                print("Si"+str(iAtom), R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2], V0[iAtom,0], V0[iAtom,1], V0[iAtom,2])
+                
+            print("Energies:")
+            for iAtom in range(nAtoms):
+                print("Energy"+str(iAtom), Ep[iAtom])
+    
+            print("Forces:")
+            for iAtom in range(nAtoms):
+                print("Force"+str(iAtom), Fp[iAtom, 0], Fp[iAtom, 1], Fp[iAtom, 2])
+                sys.stdout.flush()
+                
+            print("Fll:")
+            for iAtom in range(nAtoms):
+                print("Fll"+str(iAtom), Fll[iAtom, 0], Fll[iAtom, 1], Fll[iAtom, 2])
+                sys.stdout.flush()
+                
+            print("Fln:")
+            for iAtom in range(nAtoms):
+                print("Fln"+str(iAtom), Fln[iAtom, 0], Fln[iAtom, 1], Fln[iAtom, 2])
+                sys.stdout.flush()
 
