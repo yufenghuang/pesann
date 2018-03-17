@@ -56,17 +56,17 @@ params["engyScalerB"] = loadParams["engyScalerB"]
 
 numFeat = params['n2bBasis'] + params['n3bBasis']**3
 
-tfCoord = tf.placeholder(tf.float64, shape=(None, 3))
-tfLattice = tf.placeholder(tf.float64, shape=(3, 3))
+tfCoord = tf.placeholder(tf.float32, shape=(None, 3))
+tfLattice = tf.placeholder(tf.float32, shape=(3, 3))
 
 tfIdxNb, tfRNb,tfMaxNb, tfNAtoms= tff.tf_getNb(tfCoord,tfLattice,float(params['dcut']))
 tfRhat, tfRi, tfDc = tff.tf_getStruct(tfRNb)
 
-#tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float64)
-#tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float64)
+#tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
+#tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
 #
-#tfFeatA = tf.constant(params['featScalerA'], dtype=tf.float64)
-#tfFeatB = tf.constant(params['featScalerB'], dtype=tf.float64)
+#tfFeatA = tf.constant(params['featScalerA'], dtype=tf.float32)
+#tfFeatB = tf.constant(params['featScalerB'], dtype=tf.float32)
 #
 #
 #

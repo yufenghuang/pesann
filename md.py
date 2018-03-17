@@ -55,11 +55,11 @@ def specialrun1(params):
 
     dt = float(params["dt"])
 
-#    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float64)
-#    tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float64)
+#    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
+#    tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
 
-    tfCoord = tf.placeholder(tf.float64, shape=(None, 3))
-    tfLattice = tf.placeholder(tf.float64, shape=(3, 3))
+    tfCoord = tf.placeholder(tf.float32, shape=(None, 3))
+    tfLattice = tf.placeholder(tf.float32, shape=(3, 3))
 
     tfEs, tfFs, fll, fln = tff.tf_getEF2(tfCoord, tfLattice, params)
 #    tfEp = (tfEs - tfEngyB) / tfEngyA
@@ -183,11 +183,11 @@ def specialrun3(params):
 
     dt = float(params["dt"])
 
-    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float64)
-    tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float64)
+    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
+    tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
 
-    tfCoord = tf.placeholder(tf.float64, shape=(None, 3))
-    tfLattice = tf.placeholder(tf.float64, shape=(3, 3))
+    tfCoord = tf.placeholder(tf.float32, shape=(None, 3))
+    tfLattice = tf.placeholder(tf.float32, shape=(3, 3))
 
     tfEs, tfFs, tfXi, tfdXi, tfdEdXi = tff.tf_getEF3(tfCoord, tfLattice, params)
     
@@ -293,11 +293,11 @@ def specialrun4(params):
 
     dt = float(params["dt"])
 
-    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float64)
-    tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float64)
+    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
+    tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
 
-    tfCoord = tf.placeholder(tf.float64, shape=(None, 3))
-    tfLattice = tf.placeholder(tf.float64, shape=(3, 3))
+    tfCoord = tf.placeholder(tf.float32, shape=(None, 3))
+    tfLattice = tf.placeholder(tf.float32, shape=(3, 3))
 
     tfEs, tfFs = tff.tf_getEF(tfCoord, tfLattice, params)
     
