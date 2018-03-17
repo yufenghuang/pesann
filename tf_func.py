@@ -25,7 +25,7 @@ def tf_getNb(tf_R, tf_lattice, dcut):
     #                               Note, row 0 as in Tensorflow or Numpy corresponds to atom 1
     #   tf_RNb [nAtoms x maxNb x 3]: 
     
-    tf_dcut = tf.constant(dcut, dtype=tf.float32)
+#    tf_dcut = tf.constant(dcut, dtype=tf.float32)
     
     tf_Rd = tf.expand_dims(tf_R,0) - tf.expand_dims(tf_R,1)
     
@@ -43,7 +43,7 @@ def tf_getNb(tf_R, tf_lattice, dcut):
     
     tf_Rd = tf.reshape(tf.tensordot(tf_Rd, tf.transpose(tf_lattice),1), tf_RdShape)
     
-    tf_dcutMask = tf.reduce_sum(tf_Rd**2, axis=2) < tf.reshape(tf_dcut,[1])**2
+    tf_dcutMask = tf.reduce_sum(tf_Rd**2, axis=2) < tf.reshape(dcut,[1])**2
     tf_Rd = tf.scatter_nd(tf.where(tf_dcutMask), tf.boolean_mask(tf_Rd, tf_dcutMask), tf_RdShape)
     
     tf_idxMask = tf.reduce_sum(tf_Rd**2, axis=2) > 0
