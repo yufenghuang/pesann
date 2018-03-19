@@ -438,9 +438,9 @@ def specialrun5(params):
         Vneg[atom, 0] = V0[atom, 0] - 0.5*Fp[atom, 0]/mSi*dt / constA
         Vpos[atom, 0] = V0[atom, 0] + 0.5*Fp[atom, 0]/mSi*dt / constA
         
-        R1 = R0
+        R1 = R0.copy()
 #        R1[atom,0] = R0[atom,0] + dt
-        R1[atom,0] = R0[atom,0] + dt
+        R1[atom,0] = R0[atom,0] - dt
         
         print(nAtoms)
         print(0,"Epot=", Epot, "Ekin=",Ekin, "Etot=",Etot)
@@ -476,7 +476,7 @@ def specialrun5(params):
 
             Vpos[atom, 0] = V0[atom, 0] + 0.5*Fp[atom, 0]/mSi*dt / constA
 #            R1 = R0 + Vpos * dt
-            R1[atom,0] = R0[atom,0] + dt
+            R1[atom,0] = R0[atom,0] - dt
             
             print(nAtoms)
             print(0,"Epot=", Epot, "Ekin=",Ekin, "Etot=",Etot)
