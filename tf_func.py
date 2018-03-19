@@ -123,9 +123,9 @@ def tf_getCos2(tf_X,tf_nBasis):
     # Cosine basis functions with no discontinuing basis functions at the boundary
     
     tf_pi = tf.constant(np.pi, tf.float32)
-    tf_h = tf.cast(2/(tf_nBasis+1),tf.float32)
+    tf_h = tf.cast(2/(tf_nBasis),tf.float32)
     
-    tf_Y = tf.expand_dims(tf_X,1) - tf.linspace(tf.constant(-1.,dtype=tf.float32)+tf_h,
+    tf_Y = tf.expand_dims(tf_X,1) - tf.linspace(tf.constant(-1.,dtype=tf.float32),
                           tf.constant(1., dtype=tf.float32)-tf_h,tf_nBasis)
         
     tf_zeroMask = tf.equal(tf_Y, 0.)
@@ -135,15 +135,15 @@ def tf_getCos2(tf_X,tf_nBasis):
                          tf.cos(tf.boolean_mask(tf_Y, tf_Ynot0)/tf_h*tf_pi)/2+0.5, \
                          tf.shape(tf_Y, out_type=tf.int64))
     tf_Y = tf.where(tf_zeroMask, tf.ones_like(tf_Y), tf_Y)
-    tf_Y = tf.where(tf.abs(tf_X)>1., tf.zeros_like(tf_Y), tf_Y)
+#    tf_Y = tf.where(tf.abs(tf_X)>1., tf.zeros_like(tf_Y), tf_Y)
     return tf_Y
 
 def tf_getdCos2(tf_X,tf_nBasis):
     # Derivative of the sosine basis functions with no discontinuing basis functions at the boundary
     tf_pi = tf.constant(np.pi, tf.float32)
     
-    tf_h = tf.cast(2/(tf_nBasis+1),tf.float32)
-    tf_Y = tf.expand_dims(tf_X,1) - tf.linspace(tf.constant(-1.,dtype=tf.float32)+tf_h,
+    tf_h = tf.cast(2/(tf_nBasis),tf.float32)
+    tf_Y = tf.expand_dims(tf_X,1) - tf.linspace(tf.constant(-1.,dtype=tf.float32),
                           tf.constant(1., dtype=tf.float32)-tf_h,tf_nBasis)
 
     tf_Y = tf.reshape(tf.where(tf.abs(tf_Y) < tf_h, tf_Y, tf.zeros_like(tf_Y)),[-1,tf_nBasis])
@@ -151,7 +151,7 @@ def tf_getdCos2(tf_X,tf_nBasis):
     tf_Y = tf.scatter_nd(tf.where(tf_Ynot0), \
                          -tf.sin(tf.boolean_mask(tf_Y, tf_Ynot0)/tf_h*tf_pi)*0.5*tf_pi/tf_h, \
                          tf.shape(tf_Y, out_type=tf.int64))
-    tf_Y = tf.where(tf.abs(tf_X)>1, tf.zeros_like(tf_Y), tf_Y)
+#    tf_Y = tf.where(tf.abs(tf_X)>1, tf.zeros_like(tf_Y), tf_Y)
     return tf_Y
 
 
