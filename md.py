@@ -479,7 +479,7 @@ def specialrun5(params):
             R1[atom,0] = R0[atom,0] - dt
             
             print(nAtoms)
-            print(0,"Epot=", Epot, "Ekin=",Ekin, "Etot=",Etot)
+            print(iStep,"Epot=", Epot, "Ekin=",Ekin, "Etot=",Etot)
             for iAtom in range(nAtoms):
                 print("Si"+str(iAtom), R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2], V0[iAtom,0], V0[iAtom,1], V0[iAtom,2])
                 
