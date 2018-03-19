@@ -118,6 +118,43 @@ def tf_getdCos(tf_X,tf_nBasis):
     tf_Y = tf.where(tf.abs(tf_X)>1, tf.zeros_like(tf_Y), tf_Y)
     return tf_Y
 
+
+def tf_getCos2(tf_X,tf_nBasis):
+    # Cosine basis functions with no discontinuing basis functions at the boundary
+    
+    tf_pi = tf.constant(np.pi, tf.float32)
+    tf_h = tf.cast(2/(tf_nBasis+1),tf.float32)
+    
+    tf_Y = tf.expand_dims(tf_X,1) - tf.linspace(tf.constant(-1.,dtype=tf.float32)+tf_h,
+                          tf.constant(1., dtype=tf.float32)-tf_h,tf_nBasis)
+        
+    tf_zeroMask = tf.equal(tf_Y, 0.)
+    tf_Y = tf.reshape(tf.where(tf.abs(tf_Y) < tf_h, tf_Y, tf.zeros_like(tf_Y)),[-1,tf_nBasis])
+    tf_Ynot0 = tf.not_equal(tf_Y, 0.)
+    tf_Y = tf.scatter_nd(tf.where(tf_Ynot0), \
+                         tf.cos(tf.boolean_mask(tf_Y, tf_Ynot0)/tf_h*tf_pi)/2+0.5, \
+                         tf.shape(tf_Y, out_type=tf.int64))
+    tf_Y = tf.where(tf_zeroMask, tf.ones_like(tf_Y), tf_Y)
+    tf_Y = tf.where(tf.abs(tf_X)>1., tf.zeros_like(tf_Y), tf_Y)
+    return tf_Y
+
+def tf_getdCos2(tf_X,tf_nBasis):
+    # Derivative of the sosine basis functions with no discontinuing basis functions at the boundary
+    tf_pi = tf.constant(np.pi, tf.float32)
+    
+    tf_h = tf.cast(2/(tf_nBasis+1),tf.float32)
+    tf_Y = tf.expand_dims(tf_X,1) - tf.linspace(tf.constant(-1.,dtype=tf.float32)+tf_h,
+                          tf.constant(1., dtype=tf.float32)-tf_h,tf_nBasis)
+
+    tf_Y = tf.reshape(tf.where(tf.abs(tf_Y) < tf_h, tf_Y, tf.zeros_like(tf_Y)),[-1,tf_nBasis])
+    tf_Ynot0 = tf.not_equal(tf_Y, 0.)
+    tf_Y = tf.scatter_nd(tf.where(tf_Ynot0), \
+                         -tf.sin(tf.boolean_mask(tf_Y, tf_Ynot0)/tf_h*tf_pi)*0.5*tf_pi/tf_h, \
+                         tf.shape(tf_Y, out_type=tf.int64))
+    tf_Y = tf.where(tf.abs(tf_X)>1, tf.zeros_like(tf_Y), tf_Y)
+    return tf_Y
+
+
 def tf_engyFromFeats(tfFeats, nFeat, nL1, nL2):
     with tf.variable_scope('layer1', reuse=tf.AUTO_REUSE):
         W = tf.get_variable("weights", shape=[nFeat,nL1], dtype=tf.float32, 
@@ -182,19 +219,19 @@ def tf_getEF(tfCoord, tfLattice,params):
     tfRhat, tfRi, tfDc = tf_getStruct(tfRNb)
     
     tfGR2 = tf.scatter_nd(tf.where(tfRi>0),\
-                          tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*3/float(params['dcut'])-2,params['n2bBasis']),\
+                          tf_getCos2(tf.boolean_mask(tfRi,tfRi>0)*3/float(params['dcut'])-2,params['n2bBasis']),\
                           [tfNAtoms,tfMaxNb,params['n2bBasis']])
     tfGR2d = tf.scatter_nd(tf.where(tfRi>0),\
-                           tf_getdCos(tf.boolean_mask(tfRi,tfRi>0)*3/float(params['dcut'])-2,params['n2bBasis']),\
+                           tf_getdCos2(tf.boolean_mask(tfRi,tfRi>0)*3/float(params['dcut'])-2,params['n2bBasis']),\
                            [tfNAtoms,tfMaxNb,params['n2bBasis']])
     tfGR3 = tf.scatter_nd(tf.where(tfRi>0),\
-                          tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*3/float(params['dcut'])-2,params['n3bBasis']),\
+                          tf_getCos2(tf.boolean_mask(tfRi,tfRi>0)*3/float(params['dcut'])-2,params['n3bBasis']),\
                           [tfNAtoms,tfMaxNb,params['n3bBasis']])
     tfGR3d = tf.scatter_nd(tf.where(tfRi>0),\
-                           tf_getdCos(tf.boolean_mask(tfRi,tfRi>0)*3/float(params['dcut'])-2,params['n3bBasis']),\
+                           tf_getdCos2(tf.boolean_mask(tfRi,tfRi>0)*3/float(params['dcut'])-2,params['n3bBasis']),\
                            [tfNAtoms,tfMaxNb,params['n3bBasis']])
     tfGD3 = tf.scatter_nd(tf.where(tfDc>0),\
-                          tf_getCos(tf.boolean_mask(tfDc,tfDc>0)*3/float(params['dcut'])-2,params['n3bBasis']),\
+                          tf_getCos2(tf.boolean_mask(tfDc,tfDc>0)*3/float(params['dcut'])-2,params['n3bBasis']),\
                           [tfNAtoms,tfMaxNb, tfMaxNb,params['n3bBasis']])
     
     tfdXi, tfdXin = tf_get_dXidRl(tfGR2,tfGR2d,tfGR3,tfGR3d,tfGD3,tfRhat*3/params['dcut'])
@@ -309,13 +346,13 @@ def tf_getE(tfCoord, tfLattice,params):
     tfRhat, tfRi, tfDc = tf_getStruct(tfRNb)
     
     tfGR2 = tf.scatter_nd(tf.where(tfRi>0),\
-                          tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*3/float(params['dcut'])-2,params['n2bBasis']),\
+                          tf_getCos2(tf.boolean_mask(tfRi,tfRi>0)*3/float(params['dcut'])-2,params['n2bBasis']),\
                           [tfNAtoms,tfMaxNb,params['n2bBasis']])
     tfGR3 = tf.scatter_nd(tf.where(tfRi>0),\
-                          tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*3/float(params['dcut'])-2,params['n3bBasis']),\
+                          tf_getCos2(tf.boolean_mask(tfRi,tfRi>0)*3/float(params['dcut'])-2,params['n3bBasis']),\
                           [tfNAtoms,tfMaxNb,params['n3bBasis']])
     tfGD3 = tf.scatter_nd(tf.where(tfDc>0),\
-                          tf_getCos(tf.boolean_mask(tfDc,tfDc>0)*3/float(params['dcut'])-2,params['n3bBasis']),\
+                          tf_getCos2(tf.boolean_mask(tfDc,tfDc>0)*3/float(params['dcut'])-2,params['n3bBasis']),\
                           [tfNAtoms,tfMaxNb, tfMaxNb,params['n3bBasis']])
         
     tfFeats = tfFeatA*tf_getFeats(tfGR2,tfGR3,tfGD3)+tfFeatB
@@ -372,13 +409,13 @@ def tf_getFeatsFromR(tfCoord, tfLattice, dcut,n2bBasis, n3bBasis):
     tfIdxNb, tfRNb,tfMaxNb, tfNAtoms= tf_getNb(tfCoord,tfLattice,dcut)
     tfRhat, tfRi, tfDc = tf_getStruct(tfRNb)
     tfGR2 = tf.scatter_nd(tf.where(tfRi>0),\
-                          tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*3/dcut-2,n2bBasis),\
+                          tf_getCos2(tf.boolean_mask(tfRi,tfRi>0)*3/dcut-2,n2bBasis),\
                           [tfNAtoms,tfMaxNb,n2bBasis])
     tfGR3 = tf.scatter_nd(tf.where(tfRi>0),\
-                          tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*3/dcut-2,n3bBasis),\
+                          tf_getCos2(tf.boolean_mask(tfRi,tfRi>0)*3/dcut-2,n3bBasis),\
                           [tfNAtoms,tfMaxNb,n3bBasis])
     tfGD3 = tf.scatter_nd(tf.where(tfDc>0),\
-                          tf_getCos(tf.boolean_mask(tfDc,tfDc>0)*3/dcut-2,n3bBasis),\
+                          tf_getCos2(tf.boolean_mask(tfDc,tfDc>0)*3/dcut-2,n3bBasis),\
                           [tfNAtoms,tfMaxNb, tfMaxNb,n3bBasis])
     tfFeats = tf_getFeats(tfGR2,tfGR3,tfGD3)
     return tfFeats
