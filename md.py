@@ -447,14 +447,14 @@ def specialrun5(params):
         for iAtom in range(nAtoms):
             print("Si"+str(iAtom), R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2], V0[iAtom,0], V0[iAtom,1], V0[iAtom,2])
             
-        print("Energies:")
-        for iAtom in range(nAtoms):
-            print("Energy"+str(iAtom), Ep[iAtom])
-
-        print("Forces:")
-        for iAtom in range(nAtoms):
-            print("Force"+str(iAtom), Fp[iAtom, 0], Fp[iAtom, 1], Fp[iAtom, 2])
-            sys.stdout.flush()
+#        print("Energies:")
+#        for iAtom in range(nAtoms):
+#            print("Energy"+str(iAtom), Ep[iAtom])
+#
+#        print("Forces:")
+#        for iAtom in range(nAtoms):
+#            print("Force"+str(iAtom), Fp[iAtom, 0], Fp[iAtom, 1], Fp[iAtom, 2])
+#            sys.stdout.flush()
         
         for iStep in range(1,params["epoch"]):
             R0 = R1
@@ -483,13 +483,13 @@ def specialrun5(params):
             for iAtom in range(nAtoms):
                 print("Si"+str(iAtom), R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2], V0[iAtom,0], V0[iAtom,1], V0[iAtom,2])
                 
-            print("Energies:")
-            for iAtom in range(nAtoms):
-                print("Energy"+str(iAtom), Ep[iAtom])
-    
-            print("Forces:")
-            for iAtom in range(nAtoms):
-                print("Force"+str(iAtom), Fp[iAtom, 0], Fp[iAtom, 1], Fp[iAtom, 2])
-                sys.stdout.flush()
+#            print("Energies:")
+#            for iAtom in range(nAtoms):
+#                print("Energy"+str(iAtom), Ep[iAtom])
+#    
+#            print("Forces:")
+#            for iAtom in range(nAtoms):
+#                print("Force"+str(iAtom), Fp[iAtom, 0], Fp[iAtom, 1], Fp[iAtom, 2])
+#                sys.stdout.flush()
 
 
