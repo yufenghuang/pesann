@@ -445,7 +445,7 @@ def specialrun5(params):
         print(nAtoms)
         print(0,"Epot=", Epot, "Ekin=",Ekin, "Etot=",Etot)
         for iAtom in range(nAtoms):
-            print("Si"+str(iAtom), R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2])
+            print("Si", R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2])
 
 #        for iAtom in range(nAtoms):
 #            print("Si"+str(iAtom), R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2], V0[iAtom,0], V0[iAtom,1], V0[iAtom,2])
@@ -484,7 +484,7 @@ def specialrun5(params):
             print(nAtoms)
             print(iStep,"Epot=", Epot, "Ekin=",Ekin, "Etot=",Etot)
             for iAtom in range(nAtoms):
-                print("Si"+str(iAtom), R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2])
+                print("Si", R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2])
 
             
 #            for iAtom in range(nAtoms):
