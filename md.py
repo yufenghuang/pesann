@@ -500,3 +500,45 @@ def specialrun5(params):
 #                sys.stdout.flush()
 
 
+def specialrun6(params):
+    # fixing the moving distances and printing the xyz's for Lin-Wang
+    # dt is the ∆x for each step
+
+    mmtFile = "MOVEMENT.dms"
+
+    nCase = 0
+    with open(mmtFile, 'r') as datafile:
+        for line in datafile:
+            if "Iteration" in line:
+                nCase += 1
+
+    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
+    tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
+
+    tfCoord = tf.placeholder(tf.float32, shape=(None, 3))
+    tfLattice = tf.placeholder(tf.float32, shape=(3, 3))
+
+    tfEs, tfFs = tff.tf_getEF(tfCoord, tfLattice, params)
+
+    tfEp = (tfEs - tfEngyB) / tfEngyA
+    tfFp = tfFs / tfEngyA
+
+    saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
+
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        saver.restore(sess, str(params['logDir']) + "/tf.chpt")
+        with open(mmtFile, 'r') as datafile:
+            for i in range(nCase):
+                nAtoms, iIter, lattice, R, f, v, e = pyf.getData(datafile)
+                feedDict = {tfCoord: R, tfLattice: lattice}
+                Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
+
+                R0 = R.dot(lattice.T)
+
+                print(nAtoms)
+                print("Epot(DFT):", np.sum(e), "Epot(NN):", np.sum(Ep))
+                for iAtom in range(nAtoms):
+                    print("Coord Si"+str(iAtom), R0[iAtom, 0], R0[iAtom, 1], R0[iAtom,2])
+                for iAtom in range(nAtoms):
+                    print("Force Si"+str(iAtom), -f[iAtom, 0], -f[iAtom, 1], -f[iAtom, 2], Fp[iAtom, 0], Fp[iAtom, 1], Fp[iAtom, 2])
