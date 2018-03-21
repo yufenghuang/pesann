@@ -135,7 +135,10 @@ def tf_getCos2(tf_X,tf_nBasis):
                          tf.cos(tf.boolean_mask(tf_Y, tf_Ynot0)/tf_h*tf_pi)/2+0.5, \
                          tf.shape(tf_Y, out_type=tf.int64))
     tf_Y = tf.where(tf_zeroMask, tf.ones_like(tf_Y), tf_Y)
-    tf_Y = tf.where(tf.abs(tf_X)>1., tf.zeros_like(tf_Y), tf_Y)
+    
+    tf_Y = tf.where(tf_X>1., tf.zeros_like(tf_Y), tf_Y)
+    tf_Y = tf.where(tf_X<(-1.-tf_h), tf.zeros_like(tf_Y), tf_Y)
+#    tf_Y = tf.where(tf.abs(tf_X)>1, tf.zeros_like(tf_Y), tf_Y)
     return tf_Y
 
 def tf_getdCos2(tf_X,tf_nBasis):
@@ -151,7 +154,9 @@ def tf_getdCos2(tf_X,tf_nBasis):
     tf_Y = tf.scatter_nd(tf.where(tf_Ynot0), \
                          -tf.sin(tf.boolean_mask(tf_Y, tf_Ynot0)/tf_h*tf_pi)*0.5*tf_pi/tf_h, \
                          tf.shape(tf_Y, out_type=tf.int64))
-    tf_Y = tf.where(tf.abs(tf_X)>1, tf.zeros_like(tf_Y), tf_Y)
+#    tf_Y = tf.where(tf.abs(tf_X)>1, tf.zeros_like(tf_Y), tf_Y)
+    tf_Y = tf.where(tf_X>1., tf.zeros_like(tf_Y), tf_Y)
+    tf_Y = tf.where(tf_X<(-1.-tf_h), tf.zeros_like(tf_Y), tf_Y)
     return tf_Y
 
 
