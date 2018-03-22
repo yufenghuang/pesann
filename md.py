@@ -577,7 +577,7 @@ def specialrun7(params):
         Fse2 = 0
         with open(tfileName, "r") as tfile:
             for jCase in range(mCase):
-                nAtoms, iIter, lattice, R, f, v, e = getData(tfile)
+                nAtoms, iIter, lattice, R, f, v, e = pyf.getData(tfile)
                 engy = e.reshape([-1, 1])
                 feedDict = {
                     tfCoord: R,
@@ -631,7 +631,7 @@ def specialrun7(params):
     for iEpoch in range(params["epoch"]):
         file = open(str(params["inputData"]), 'r')
         for iCase in range(nCase):
-            nAtoms, iIter, lattice, R, f, v, e = getData(file)
+            nAtoms, iIter, lattice, R, f, v, e = pyf.getData(file)
             engy = e.reshape([-1, 1])
             feedDict = {
                 tfCoord: R,
