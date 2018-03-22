@@ -447,17 +447,17 @@ def specialrun5(params):
         # for iAtom in range(nAtoms):
         #     print("Si", R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2])
 
-       for iAtom in range(nAtoms):
-           print("Si"+str(iAtom), R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2], V0[iAtom,0], V0[iAtom,1], V0[iAtom,2])
+        for iAtom in range(nAtoms):
+            print("Si"+str(iAtom), R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2], V0[iAtom,0], V0[iAtom,1], V0[iAtom,2])
             
-       print("Energies:")
-       for iAtom in range(nAtoms):
-           print("Energy"+str(iAtom), Ep[iAtom])
+        print("Energies:")
+        for iAtom in range(nAtoms):
+            print("Energy"+str(iAtom), Ep[iAtom])
 
-       print("Forces:")
-       for iAtom in range(nAtoms):
-           print("Force"+str(iAtom), Fp[iAtom, 0], Fp[iAtom, 1], Fp[iAtom, 2])
-           sys.stdout.flush()
+        print("Forces:")
+        for iAtom in range(nAtoms):
+            print("Force"+str(iAtom), Fp[iAtom, 0], Fp[iAtom, 1], Fp[iAtom, 2])
+            sys.stdout.flush()
         
         for iStep in range(1,params["epoch"]):
             R0 = R1
@@ -466,19 +466,19 @@ def specialrun5(params):
             R[R > 1] = R[R > 1] - np.floor(R[R > 1])
             R[R < 0] = R[R < 0] - np.floor(R[R < 0])
             R0 = R.dot(lattice.T)
-                
+
             feedDict = {tfCoord: R, tfLattice: lattice}
             Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
             Fp = -Fp
-                    
+
             V0[atom, 0] = Vneg[atom, 0] + 0.5*Fp[atom, 0]/mSi*dt / constA
-            
+
             Epot = np.sum(Ep)
             Ekin = np.sum(0.5*mSi*V0**2*constA)
             Etot = Epot + Ekin
 
             Vpos[atom, 0] = V0[atom, 0] + 0.5*Fp[atom, 0]/mSi*dt / constA
-#            R1 = R0 + Vpos * dt
+            #            R1 = R0 + Vpos * dt
             R1[atom,0] = R0[atom,0] - dt
             
             print(nAtoms)
@@ -486,17 +486,17 @@ def specialrun5(params):
             # for iAtom in range(nAtoms):
             #     print("Si", R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2])
 
-           for iAtom in range(nAtoms):
-               print("Si"+str(iAtom), R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2], V0[iAtom,0], V0[iAtom,1], V0[iAtom,2])
-                
-           print("Energies:")
-           for iAtom in range(nAtoms):
-               print("Energy"+str(iAtom), Ep[iAtom])
+        for iAtom in range(nAtoms):
+            print("Si"+str(iAtom), R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2], V0[iAtom,0], V0[iAtom,1], V0[iAtom,2])
 
-           print("Forces:")
-           for iAtom in range(nAtoms):
-               print("Force"+str(iAtom), Fp[iAtom, 0], Fp[iAtom, 1], Fp[iAtom, 2])
-               sys.stdout.flush()
+        print("Energies:")
+        for iAtom in range(nAtoms):
+            print("Energy"+str(iAtom), Ep[iAtom])
+
+        print("Forces:")
+        for iAtom in range(nAtoms):
+            print("Force"+str(iAtom), Fp[iAtom, 0], Fp[iAtom, 1], Fp[iAtom, 2])
+            sys.stdout.flush()
 
 
 def specialrun6(params):
