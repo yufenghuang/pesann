@@ -739,8 +739,7 @@ def specialrun8(params):
                 crossF = np.sum(Fp * f2) / np.sqrt(np.sum(Fp ** 2) * np.sum(f2 ** 2))
 
                 print(nAtoms2)
-                print("Epot(DFT)", np.sum(e2), "Epot(NN)", np.sum(Ep), "F(DFT)", np.sum(f2 * v), "F(NN)",
-                      np.sum(Fp * v),
+                print("Epot(DFT)", np.sum(e2), "Epot(NN)", np.sum(Ep), "F(DFT)", np.sum(f2 * v), "F(NN)", np.sum(Fp * v),
                       "Ei(RMSE)", EiRMSE, "Fi(RMSE)", FiRMSE, "Fnn.Fdft", crossF)
 
                 for iAtom in range(nAtoms2):
