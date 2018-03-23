@@ -21,4 +21,4 @@ dy = sess.run(tfdY, feed_dict={tfX: x})
 
 plt.figure()
 plt.plot(x, y)
-plt.plot(x, dy)
+#plt.plot(x, dy)

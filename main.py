@@ -201,5 +201,10 @@ elif params["task"] == 107:
 
     md.specialrun7(params)
 
+elif params["task"] == 108:
+
+    md.specialrun8(params)
+
+
 else:
     print("Unrecognized task: ", params["task"])

@@ -677,3 +677,111 @@ def specialrun7(params):
 
     save_path = saver.save(sess, str(params['logDir']) + "/tf.chpt")
     return save_path
+
+def specialrun8(params):
+    # fixing the moving distances and printing the xyz's for Lin-Wang
+    # dt is the ∆x for each step
+
+    mmtFile = "MOVEMENT.Oct.17"
+
+    # nCase = 0
+    # with open(mmtFile, 'r') as datafile:
+    #     for line in datafile:
+    #         if "Iteration" in line:
+    #             nCase += 1
+
+    nCase = 100
+
+    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
+    tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
+
+    tfCoord = tf.placeholder(tf.float32, shape=(None, 3))
+    tfLattice = tf.placeholder(tf.float32, shape=(3, 3))
+
+    tfEs, tfFs = tff.tf_getEF(tfCoord, tfLattice, params)
+
+    tfEp = (tfEs - tfEngyB) / tfEngyA
+    tfFp = tfFs / tfEngyA
+
+    saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
+
+
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        saver.restore(sess, str(params['logDir']) + "/tf.chpt")
+        with open(mmtFile, 'r') as datafile:
+            nAtoms1, iIter1, lattice1, R1, f1, v1, e1 = pyf.getData(datafile)
+            R0 = R1.dot(lattice1.T)
+            x1 = R0
+
+            nAtoms2, iIter2, lattice2, R2, f2, v2, e2 = pyf.getData(datafile)
+            R0 = R2.dot(lattice2.T)
+            x2 = R0
+
+            # nAtoms3, iIter3, lattice3, R3, f3, v3, e3 = pyf.getData(datafile)
+            # R0 = R3.dot(lattice3.T)
+            # x3 = R0
+            #
+            # v = R3 - R1 + 0.5
+            # v = v - np.floor(v) - 0.5
+            # v = v.dot(lattice2.T)
+            # v = v / np.sqrt(np.sum(v**2))
+            #
+            # feedDict = {tfCoord: R2, tfLattice: lattice2}
+            # Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
+            #
+            # EiRMSE = np.sqrt(np.sum((Ep - e2)**2)/(nAtoms2*3))
+            # FiRMSE = np.sqrt(np.sum((Fp - f2)**2)/(nAtoms2*3))
+            # crossF = np.sum(Fp * f2)/np.sqrt(np.sum(Fp**2) * np.sum(f2**2))
+            #
+            # print(nAtoms2)
+            # print("Epot(DFT)", np.sum(e2), "Epot(NN)", np.sum(Ep), "F(DFT)", np.sum(f2*v), "F(NN)", np.sum(Fp*v),
+            #       "Ei(RMSE)", EiRMSE, "Fi(RMSE)", FiRMSE, "Fnn.Fdft", crossF)
+            #
+            # nAtoms2 = nAtoms3
+            # lattice2 = lattice3
+            # R2 = R3
+            # f2 = f3
+            # e2 = e3
+
+            for i in range(nCase):
+
+                nAtoms3, iIter3, lattice3, R3, f3, v3, e3 = pyf.getData(datafile)
+                R0 = R3.dot(lattice3.T)
+                x3 = R0
+
+                v = R3 - R1 + 0.5
+                v = v - np.floor(v) - 0.5
+                v = v.dot(lattice2.T)
+                v = v / np.sqrt(np.sum(v ** 2))
+
+                feedDict = {tfCoord: R2, tfLattice: lattice2}
+                Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
+
+                EiRMSE = np.sqrt(np.sum((Ep - e2) ** 2) / (nAtoms2 * 3))
+                FiRMSE = np.sqrt(np.sum((Fp - f2) ** 2) / (nAtoms2 * 3))
+                crossF = np.sum(Fp * f2) / np.sqrt(np.sum(Fp ** 2) * np.sum(f2 ** 2))
+
+                print(nAtoms2)
+                print("Epot(DFT)", np.sum(e2), "Epot(NN)", np.sum(Ep), "F(DFT)", np.sum(f2 * v), "F(NN)",
+                      np.sum(Fp * v),
+                      "Ei(RMSE)", EiRMSE, "Fi(RMSE)", FiRMSE, "Fnn.Fdft", crossF)
+
+                nAtoms2 = nAtoms3
+                lattice2 = lattice3
+                R2 = R3
+                f2 = f3
+                e2 = e3
+
+                # nAtoms, iIter, lattice, R, f, v, e = pyf.getData(datafile)
+                # feedDict = {tfCoord: R, tfLattice: lattice}
+                # Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
+                #
+                # R0 = R.dot(lattice.T)
+                #
+                # print(nAtoms)
+                # print("Epot(DFT):", np.sum(e), "Epot(NN):", np.sum(Ep))
+                # for iAtom in range(nAtoms):
+                #     print("Coord Si"+str(iAtom), R0[iAtom, 0], R0[iAtom, 1], R0[iAtom,2])
+                # for iAtom in range(nAtoms):
+                #     print("Force Si"+str(iAtom), -f[iAtom, 0], -f[iAtom, 1], -f[iAtom, 2], Fp[iAtom, 0], Fp[iAtom, 1], Fp[iAtom, 2])
