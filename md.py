@@ -734,7 +734,7 @@ def specialrun8(params):
                 feedDict = {tfCoord: R2, tfLattice: lattice2}
                 Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
 
-                EiRMSE = np.sqrt(np.sum((Ep - e2[:None]) ** 2) / nAtoms2)
+                EiRMSE = np.sqrt(np.sum((Ep - e2[:,None]) ** 2) / nAtoms2)
                 FiRMSE = np.sqrt(np.sum((Fp - f2) ** 2) / (nAtoms2 * 3))
                 crossF = np.sum(Fp * f2) / np.sqrt(np.sum(Fp ** 2) * np.sum(f2 ** 2))
 
