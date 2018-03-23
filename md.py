@@ -718,33 +718,9 @@ def specialrun8(params):
             R0 = R2.dot(lattice2.T)
             x2 = R0
 
-            # nAtoms3, iIter3, lattice3, R3, f3, v3, e3 = pyf.getData(datafile)
-            # R0 = R3.dot(lattice3.T)
-            # x3 = R0
-            #
-            # v = R3 - R1 + 0.5
-            # v = v - np.floor(v) - 0.5
-            # v = v.dot(lattice2.T)
-            # v = v / np.sqrt(np.sum(v**2))
-            #
-            # feedDict = {tfCoord: R2, tfLattice: lattice2}
-            # Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
-            #
-            # EiRMSE = np.sqrt(np.sum((Ep - e2)**2)/(nAtoms2*3))
-            # FiRMSE = np.sqrt(np.sum((Fp - f2)**2)/(nAtoms2*3))
-            # crossF = np.sum(Fp * f2)/np.sqrt(np.sum(Fp**2) * np.sum(f2**2))
-            #
-            # print(nAtoms2)
-            # print("Epot(DFT)", np.sum(e2), "Epot(NN)", np.sum(Ep), "F(DFT)", np.sum(f2*v), "F(NN)", np.sum(Fp*v),
-            #       "Ei(RMSE)", EiRMSE, "Fi(RMSE)", FiRMSE, "Fnn.Fdft", crossF)
-            #
-            # nAtoms2 = nAtoms3
-            # lattice2 = lattice3
-            # R2 = R3
-            # f2 = f3
-            # e2 = e3
-
             for i in range(nCase):
+
+                R20 = R0
 
                 nAtoms3, iIter3, lattice3, R3, f3, v3, e3 = pyf.getData(datafile)
                 R0 = R3.dot(lattice3.T)
@@ -767,21 +743,13 @@ def specialrun8(params):
                       np.sum(Fp * v),
                       "Ei(RMSE)", EiRMSE, "Fi(RMSE)", FiRMSE, "Fnn.Fdft", crossF)
 
+                for iAtom in range(nAtoms2):
+                    print("Coord Si"+str(iAtom), R20[iAtom, 0], R20[iAtom, 1], R20[iAtom,2])
+
+                sys.stdout.flush()
+
                 nAtoms2 = nAtoms3
                 lattice2 = lattice3
                 R2 = R3
                 f2 = f3
                 e2 = e3
-
-                # nAtoms, iIter, lattice, R, f, v, e = pyf.getData(datafile)
-                # feedDict = {tfCoord: R, tfLattice: lattice}
-                # Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
-                #
-                # R0 = R.dot(lattice.T)
-                #
-                # print(nAtoms)
-                # print("Epot(DFT):", np.sum(e), "Epot(NN):", np.sum(Ep))
-                # for iAtom in range(nAtoms):
-                #     print("Coord Si"+str(iAtom), R0[iAtom, 0], R0[iAtom, 1], R0[iAtom,2])
-                # for iAtom in range(nAtoms):
-                #     print("Force Si"+str(iAtom), -f[iAtom, 0], -f[iAtom, 1], -f[iAtom, 2], Fp[iAtom, 0], Fp[iAtom, 1], Fp[iAtom, 2])
