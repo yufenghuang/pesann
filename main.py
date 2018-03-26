@@ -40,7 +40,7 @@ params={
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--task", choices=[-3,-2,-1,0,1,2,100,105,106, 107, 108], type=int,
+parser.add_argument("--task", choices=[-3,-2,-1,0,1,2,100,105,106, 107, 108, 109], type=int,
                     help="task.  2=get energy and forces, \
                                     1=get energy (default), \
                                     0=MD, \
@@ -205,6 +205,9 @@ elif params["task"] == 108:
 
     md.specialrun8(params)
 
+elif params["task"] == 109:
+
+    md.specialrun9(params)
 
 else:
     print("Unrecognized task: ", params["task"])

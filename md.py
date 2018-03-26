@@ -753,3 +753,104 @@ def specialrun8(params):
                 R2 = R3
                 f2 = f3
                 e2 = e3
+
+def specialrun9(params):
+    import pandas as pd
+    numFeat = params['n2bBasis'] + params['n3bBasis'] ** 3
+    tfFeat = tf.placeholder(tf.float32, shape=(None, numFeat))
+    tfEngy = tf.placeholder(tf.float32, shape=(None, 1))
+    tfLR = tf.placeholder(tf.float32)
+
+    tfEs = tff.tf_engyFromFeats(tfFeat, numFeat, params['nL1Nodes'], params['nL2Nodes'])
+
+    tfEs_tot = tf.reduce_sum(tf.reshape(tfEs, shape=[-1,256]), axis=1)
+    tfEngy_tot = tf.reduce_sum(tf.reshape(tfEngy, shape=[-1,256]), axis=1)
+
+    tfLoss = tf.reduce_mean((tfEs_tot - tfEngy_tot) ** 2)
+
+    with tf.variable_scope("Adam", reuse=tf.AUTO_REUSE):
+        tfOptimizer = tf.train.AdamOptimizer(tfLR).minimize(tfLoss)
+
+    saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
+    sess = tf.Session()
+    sess.run(tf.global_variables_initializer())
+
+    def getError(fFile, eFile):
+        featDF = pd.read_csv(fFile, header=None, index_col=False).values
+        engyDF = pd.read_csv(eFile, header=None, index_col=False).values
+        feedDict2 = {tfFeat: featDF * params['featScalerA'] + params['featScalerB'],
+                     tfEngy: engyDF * params['engyScalerA'] + params['engyScalerB']}
+        Ep2 = sess.run(tfEs, feed_dict=feedDict2)
+        Ep2 = (Ep2 - params['engyScalerB']) / params['engyScalerA']
+
+        Ep2 = np.sum(Ep2.reshape((-1,256)),axis=1)
+        engyDF = np.sum(engyDF.reshape((-1,256)),axis=1)
+
+        Ermse = np.sqrt(np.mean((Ep2 - engyDF) ** 2))
+        Emae = np.mean(np.abs(Ep2 - engyDF))
+        print("Ermse is: ", Ermse)
+        print("Ermse/atom is", Ermse/256)
+        print("Emae is : ", Emae)
+        sys.stdout.flush()
+
+    if params["restart"]:
+        saver.restore(sess, str(params['logDir']) + "/tf.chpt")
+        print("Model restored")
+
+    if params['chunkSize'] == 0:
+        dfFeat = pd.read_csv(str(params['featFile']), header=None, index_col=False).values
+        dfEngy = pd.read_csv(str(params['engyFile']), header=None, index_col=False).values
+
+    for iEpoch in range(params['epoch']):
+        if params['chunkSize'] > 0:
+            pdFeat = pd.read_csv(str(params['featFile']), header=None, index_col=False,
+                                 chunksize=int(params['chunkSize']), iterator=True)
+            pdEngy = pd.read_csv(str(params['engyFile']), header=None, index_col=False,
+                                 chunksize=int(params['chunkSize']), iterator=True)
+
+            for pdF in pdFeat:
+                pdE = next(pdEngy)
+                dfFeat = pdF.values
+                dfEngy = pdE.values
+                feedDict = {tfFeat: dfFeat * params['featScalerA'] + params['featScalerB'],
+                            tfEngy: dfEngy * params['engyScalerA'] + params['engyScalerB'],
+                            tfLR: params['learningRate']}
+
+                sess.run(tfOptimizer, feed_dict=feedDict)
+        #                print("running",iEpoch)
+
+        elif params['chunkSize'] == 0:
+            feedDict = {tfFeat: dfFeat * params['featScalerA'] + params['featScalerB'],
+                        tfEngy: dfEngy * params['engyScalerA'] + params['engyScalerB'],
+                        tfLR: params['learningRate']}
+
+            sess.run(tfOptimizer, feed_dict=feedDict)
+        else:
+            print("Invalid chunkSize, not within [0,inf]. chunkSize=", params['chunkSize'])
+
+        if iEpoch % 10 == 0:
+            Ep, loss = sess.run((tfEs, tfLoss), feed_dict=feedDict)
+            Ep = (Ep - params['engyScalerB']) / params['engyScalerA']
+            Ep2 = np.sum(Ep.reshape((-1,256)),axis=1)
+            dfEngy2 = np.sum(dfEngy.reshape((-1,256)),axis=1)
+            Ermse = np.sqrt(np.mean((Ep2 - dfEngy2) ** 2))
+            # Ermse = np.sqrt(np.mean((Ep - dfEngy) ** 2))
+            print(iEpoch, loss, Ermse)
+            sys.stdout.flush()
+
+        if params["validate"] > 0:
+            if iEpoch % params["validate"] == 0:
+                print(str(iEpoch) + "th epoch")
+                getError('v' + str(params['featFile']), 'v' + str(params['engyFile']))
+        if params["test"] > 0:
+            if iEpoch % params["test"] == 0:
+                print(str(iEpoch) + "th epoch")
+                getError('t' + str(params['featFile']), 't' + str(params['engyFile']))
+
+    if params["validate"] == 0:
+        getError('v' + str(params['featFile']), 'v' + str(params['engyFile']))
+    if params["test"] == 0:
+        getError('t' + str(params['featFile']), 't' + str(params['engyFile']))
+
+    save_path = saver.save(sess, str(params['logDir']) + "/tf.chpt")
+    return save_path
