@@ -890,7 +890,7 @@ def specialrun10(params):
         Fse2 = 0
         with open(tfileName, "r") as tfile:
             for jCase in range(mCase):
-                nAtoms, iIter, lattice, R, f, v, e = getData(tfile)
+                nAtoms, iIter, lattice, R, f, v, e = pyf.getData(tfile)
                 engy = e.reshape([-1, 1])
                 feedDict = {
                     tfCoord: R,
