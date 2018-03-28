@@ -779,7 +779,8 @@ def specialrun8(params):
                       "Ei(RMSE)", EiRMSE, "Fi(RMSE)", FiRMSE, "Fnn.Fdft", crossF)
 
                 for iAtom in range(nAtoms2):
-                    print("Si"+str(iAtom), R20[iAtom, 0], R20[iAtom, 1], R20[iAtom,2])
+                    print("Si"+str(iAtom+1), R20[iAtom, 0], R20[iAtom, 1], R20[iAtom,2], Fp[iAtom, 0], Fp[iAtom, 0], Fp[iAtom, 0],
+                          f2[iAtom,0], f2[iAtom,1], f2[iAtom,2])
 
                 sys.stdout.flush()
 
