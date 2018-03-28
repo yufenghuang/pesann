@@ -1034,16 +1034,16 @@ def specialrun11(params):
 
         # Vpos = 0.5 * Fp / mSi * dt * constA
 
-        Vneg = V0 - 0.5*Fp/mSi*dt * constA
+        Vneg = V0 - 0.5*Fp/mSi*dt / constA
 
-        Vpos = Vneg + Fp/mSi*dt * constA
+        Vpos = Vneg + Fp/mSi*dt / constA
 
         # V0 = Vneg + 0.5*Fp/mSi*dt * constA
 
         R1 = R0 + Vpos * dt
 
         Epot = np.sum(Ep)
-        Ekin = np.sum(0.5 * mSi * V0 ** 2 / constA)
+        Ekin = np.sum(0.5 * mSi * V0 ** 2 * constA)
         Etot = Epot + Ekin
 
         print(nAtoms)
@@ -1064,12 +1064,12 @@ def specialrun11(params):
             feedDict = {tfCoord: R, tfLattice: lattice}
             Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
             Fp = -Fp
-            V0 = Vneg + 0.5 * Fp / mSi * dt * constA
-            Vpos = Vneg + Fp / mSi * dt * constA
+            V0 = Vneg + 0.5 * Fp / mSi * dt / constA
+            Vpos = Vneg + Fp / mSi * dt / constA
             R1 = R0 + Vpos * dt
 
             Epot = np.sum(Ep)
-            Ekin = np.sum(0.5 * mSi * V0 ** 2 / constA)
+            Ekin = np.sum(0.5 * mSi * V0 ** 2 * constA)
             Etot = Epot + Ekin
 
             if (iStep % int(params["nstep"]) == 0) or \
