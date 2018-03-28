@@ -1054,7 +1054,8 @@ def specialrun11(params):
 
     saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
     with open(params["inputData"], 'r') as mmtFile:
-        nAtoms, lattice, R, F0, V0 = getRFVmmt(mmtFile)
+        # nAtoms, lattice, R, F0, V0 = getRFVmmt(mmtFile)
+        nAtoms, iIter, lattice, R, F0, V0, E0 = pyf.getData(mmtFile)
 
     V0 = V0*1000
     print(V0)
