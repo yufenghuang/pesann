@@ -1057,10 +1057,14 @@ def specialrun11(params):
         # nAtoms, lattice, R, F0, V0 = getRFVmmt(mmtFile)
         nAtoms, iIter, lattice, R, F0, V0, E0 = pyf.getData(mmtFile)
 
+
+    print("Initial Kinetic Energy: V0", np.sum(0.5 * mSi * V0 ** 2 * constA))
+    V0 = V0 * 1000
+    print("Initial Kinetic Energy: V0*1000", np.sum(0.5 * mSi * V0 ** 2 * constA))
     # V0 = V0*1000
     # print(V0)
 
-    # V0 = V0*0
+    V0 = V0*0
 
     R0 = R.dot(lattice.T)
     R1 = np.zeros_like(R0)
