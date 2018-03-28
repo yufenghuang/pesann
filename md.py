@@ -1060,7 +1060,7 @@ def specialrun11(params):
     # V0 = V0*1000
     # print(V0)
 
-    V0 = V0*0
+    # V0 = V0*0
 
     R0 = R.dot(lattice.T)
     R1 = np.zeros_like(R0)
@@ -1074,7 +1074,7 @@ def specialrun11(params):
         saver.restore(sess, str(params['logDir']) + "/tf.chpt")
         Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
         Fp = -Fp
-        
+
         # for iAtom in range(len(R1)):
         #     print("Si", Fp[iAtom, 0], Fp[iAtom, 1], Fp[iAtom, 2], F0[iAtom, 0], F0[iAtom,1], F0[iAtom,2])
 
