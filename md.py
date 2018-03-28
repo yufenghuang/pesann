@@ -1087,7 +1087,7 @@ def specialrun11(params):
         print(nAtoms)
         print(0, "Epot=", "{:.12f}".format(Epot), "Ekin=", "{:.12f}".format(Ekin), "Etot=", "{:.12f}".format(Etot))
         for iAtom in range(len(R1)):
-            print("Si", R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2], V0[iAtom, 0], V0[iAtom, 1], V0[iAtom, 2])
+            print("Si", R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2], V0[iAtom, 0], V0[iAtom, 1], V0[iAtom, 2], Fp[iAtom, 0], Fp[iAtom, 1], Fp[iAtom, 2])
         sys.stdout.flush()
 
         for iStep in range(1, params["epoch"]):
@@ -1116,5 +1116,5 @@ def specialrun11(params):
                 print(iStep, "Epot=", "{:.12f}".format(Epot), "Ekin=", "{:.12f}".format(Ekin), "Etot=",
                       "{:.12f}".format(Etot))
                 for iAtom in range(len(R1)):
-                    print("Si", R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2], V0[iAtom, 0], V0[iAtom, 1], V0[iAtom, 2])
+                    print("Si", R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2], V0[iAtom, 0], V0[iAtom, 1], V0[iAtom, 2], Fp[iAtom, 0], Fp[iAtom, 1], Fp[iAtom, 2])
                 sys.stdout.flush()
