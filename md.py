@@ -1055,6 +1055,7 @@ def specialrun11(params):
     with open(params["inputData"], 'r') as mmtFile:
         nAtoms, lattice, R, F0, V0 = getRFVmmt(mmtFile)
 
+    V0 = V0*1000
     print(V0)
 
     R0 = R.dot(lattice.T)
