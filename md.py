@@ -42,6 +42,42 @@ def getRVmmt(mmtFile):
 
     return nAtoms, lattice, R, velocities
 
+def getRFVmmt(mmtFile):
+    line = mmtFile.readline()
+
+    sptline = line.split()
+    nAtoms = int(sptline[0])
+
+    mmtFile.readline()
+    lattice = np.zeros((3, 3))
+    lattice[0, :] = np.array(mmtFile.readline().split(), dtype=float)
+    lattice[1, :] = np.array(mmtFile.readline().split(), dtype=float)
+    lattice[2, :] = np.array(mmtFile.readline().split(), dtype=float)
+
+    mmtFile.readline()
+    R = np.zeros((nAtoms, 3))
+    for i in range(nAtoms):
+        sptline = mmtFile.readline().split()
+        R[i, :] = np.array(sptline[1:4])
+
+    mmtFile.readline()
+    forces = np.zeros((nAtoms,3))
+    for i in range(nAtoms):
+        sptline = mmtFile.readline().split()
+        forces[i,:] = np.array(sptline[1:4])
+
+    mmtFile.readline()
+    velocities = np.zeros((nAtoms,3))
+    for i in range(nAtoms):
+        sptline = mmtFile.readline().split()
+        velocities[i,:] = np.array(sptline[1:4])
+
+    R[R > 1] = R[R > 1] - np.floor(R[R > 1])
+    R[R < 0] = R[R < 0] - np.floor(R[R < 0])
+
+    return nAtoms, lattice, R, forces, velocities
+
+
 def specialrun1(params):
     J = 1/1.602177e-19 # eV
     meter = 1e10 # Angstroms
@@ -1017,13 +1053,13 @@ def specialrun11(params):
 
     saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
     with open(params["inputData"], 'r') as mmtFile:
-        nAtoms, lattice, R, V = getRVmmt(mmtFile)
+        nAtoms, lattice, R, F0, V0 = getRFVmmt(mmtFile)
 
     R0 = R.dot(lattice.T)
     R1 = np.zeros_like(R0)
-    V0 = V
-    Vpos = np.zeros_like(R0)
-    Vneg = np.zeros_like(R0)
+    # V0 = V
+    # Vpos = np.zeros_like(R0)
+    # Vneg = np.zeros_like(R0)
 
     with tf.Session() as sess:
         feedDict = {tfCoord: R, tfLattice: lattice}
