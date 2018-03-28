@@ -1057,8 +1057,10 @@ def specialrun11(params):
         # nAtoms, lattice, R, F0, V0 = getRFVmmt(mmtFile)
         nAtoms, iIter, lattice, R, F0, V0, E0 = pyf.getData(mmtFile)
 
-    V0 = V0*1000
-    print(V0)
+    # V0 = V0*1000
+    # print(V0)
+
+    V0 = V0*0
 
     R0 = R.dot(lattice.T)
     R1 = np.zeros_like(R0)
@@ -1072,9 +1074,9 @@ def specialrun11(params):
         saver.restore(sess, str(params['logDir']) + "/tf.chpt")
         Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
         Fp = -Fp
-
-        for iAtom in range(len(R1)):
-            print("Si", Fp[iAtom, 0], Fp[iAtom, 1], Fp[iAtom, 2], F0[iAtom, 0], F0[iAtom,1], F0[iAtom,2])
+        
+        # for iAtom in range(len(R1)):
+        #     print("Si", Fp[iAtom, 0], Fp[iAtom, 1], Fp[iAtom, 2], F0[iAtom, 0], F0[iAtom,1], F0[iAtom,2])
 
         # Vpos = 0.5 * Fp / mSi * dt * constA
 
