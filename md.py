@@ -1080,6 +1080,8 @@ def specialrun11(params):
 
     constA = J / (kg * meter ** 2 / s ** 2)
 
+    bohr = 0.529177249
+
     dt = float(params["dt"])
 
     tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
@@ -1104,7 +1106,7 @@ def specialrun11(params):
     # V0 = V0*1000
     # print(V0)
 
-    V0 = V0*1000
+    V0 = V0*1000*bohr
 
     R0 = R.dot(lattice.T)
     R1 = np.zeros_like(R0)
