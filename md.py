@@ -1064,7 +1064,7 @@ def specialrun11(params):
     # V0 = V0*1000
     # print(V0)
 
-    V0 = V0*100
+    V0 = V0*1000
 
     R0 = R.dot(lattice.T)
     R1 = np.zeros_like(R0)
