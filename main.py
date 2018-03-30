@@ -219,7 +219,7 @@ elif params["task"] == 111:
 
 elif params["task"] == 112:
 
-    md.specialrun11(params)
+    md.specialrun12(params)
 
 
 else:
