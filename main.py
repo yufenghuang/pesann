@@ -41,7 +41,7 @@ params={
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--task", choices=[-3,-2,-1,0,1,2,100,105,106, 107, 108, 109,110,111, 112], type=int,
+parser.add_argument("--task", choices=[-3,-2,-1,0,1,2,100,105,106, 107, 108, 109,110,111, 112, 113], type=int,
                     help="task.  2=get energy and forces, \
                                     1=get energy (default), \
                                     0=MD, \
