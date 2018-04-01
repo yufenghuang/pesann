@@ -571,3 +571,4 @@ def trainEF(params):
         
     save_path = saver.save(sess, str(params['logDir'])+"/tf.chpt")
     return save_path
+

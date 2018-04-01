@@ -425,3 +425,118 @@ def tf_getFeatsFromR(tfCoord, tfLattice, dcut,n2bBasis, n3bBasis):
     tfFeats = tf_getFeats(tfGR2,tfGR3,tfGD3)
     return tfFeats
 
+def tf_getFc(Ri, Rc):
+    return 0.5*(tf.cos(np.pi*Ri/Rc)+1)
+
+def tf_getdFc(Ri, Rc):
+    return -0.5*np.pi/Rc*tf.sin(np.pi*Ri/Rc)
+
+def tf_getEa(Ri, Rc, Rci):
+    alpha = Rci**12/tf_getFc(Rci,Rc)
+    return alpha*tf_getFc(Ri, Rc)/Ri**12
+
+def tf_getdEa(Ri, Rc, Rci):
+    alpha = Rci**12/tf_getFc(Rci,Rc)
+    return -12*alpha*tf_getFc(Rci, Rc)/Ri**13 + alpha*tf_getdFc(Ri, Rc)/Ri**12
+
+def tf_getEb(Ri, Rc, Rci):
+    alpha = Rci/tf_getFc(Rci, Rc)
+    return alpha*tf_getFc(Ri, Rc)/Ri
+
+def tf_getdEb(Ri, Rc, Rci):
+    alpha = Rci/tf_getFc(Rci,Rc)
+    return -alpha*tf_getFc(Ri, Rc)/Ri**2 + alpha*tf_getdFc(Ri, Rc)/Ri
+
+def tf_getEc(Ri, Rc, Rci):
+    alpha = tf.exp(1.)/tf_getFc(Rci, Rc)
+    return alpha * tf.exp(-Ri/Rci)*tf_getFc(Ri, Rc)
+
+def tf_getdEc(Ri, Rc, Rci):
+    alpha = tf.exp(1.)/tf_getFc(Rci, Rc)
+    return -alpha/Rci*tf.exp(-Ri/Rci)*tf_getFc(Ri, Rc) + alpha * tf.exp(-Ri/Rci)*tf_getdFc(Ri, Rc)
+
+def tf_getVi(tfRi, Rc, Rci, params):
+    if params["Repulsion"] == "None":
+        return tfRi*0
+    elif params["Repulsion"] == "1/R12":
+        return tf.scatter_nd(tf.where(tfRi > 0), tf_getEa(tf.boolean_mask(tfRi, tfRi > 0), Rc, Rci),
+                             tf.shape(tfRi, outtype=tf.int64))
+    elif params["Repulsoin"] == "1/R":
+        return tf.scatter_nd(tf.where(tfRi > 0), tf_getEb(tf.boolean_mask(tfRi, tfRi > 0), Rc, Rci),
+                             tf.shape(tfRi, outtype=tf.int64))
+    elif params["Repulsion"] == "exp(-R)":
+        return tf.scatter_nd(tf.where(tfRi > 0), tf_getEc(tf.boolean_mask(tfRi, tfRi > 0), Rc, Rci),
+                             tf.shape(tfRi, outtype=tf.int64))
+    else:
+        print("Unknown repulsion term. Ignoring repulsion...")
+        return tfRi*0
+
+def tf_getdVi(tfRi, tfRhat, Rc, Rci, params):
+    if params["Repulsion"] == "None":
+        return tf.reduce_sum(tfRi, axis=1)*0
+    elif params["Repulsion"] == "1/R12":
+        dEa = tf.scatter_nd(tf.where(tfRi > 0), tf_getdEa(tf.boolean_mask(tfRi, tfRi > 0), Rc, Rci),
+                             tf.shape(tfRi, outtype=tf.int64))
+        return tf.reduce_sum(tf.expand_dims(dEa, 2) * (-tfRhat), axis=1)
+    elif params["Repulsoin"] == "1/R":
+        dEb =  tf.scatter_nd(tf.where(tfRi > 0), tf_getdEb(tf.boolean_mask(tfRi, tfRi > 0), Rc, Rci),
+                             tf.shape(tfRi, outtype=tf.int64))
+        return tf.reduce_sum(tf.expand_dims(dEb, 2) * (-tfRhat), axis=1)
+    elif params["Repulsion"] == "exp(-R)":
+        dEc =  tf.scatter_nd(tf.where(tfRi > 0), tf_getdEc(tf.boolean_mask(tfRi, tfRi > 0), Rc, Rci),
+                             tf.shape(tfRi, outtype=tf.int64))
+        return tf.reduce_sum(tf.expand_dims(dEc, 2) * (-tfRhat), axis=1)
+    else:
+        print("Unknown repulsion term. Ignoring repulsion...")
+        return tf.reduce_sum(tfRi, axis=1)*0
+
+def tf_getEF_repulsion(tfCoord, tfLattice, params):
+    tfFeatA = tf.constant(params['featScalerA'], dtype=tf.float32)
+    tfFeatB = tf.constant(params['featScalerB'], dtype=tf.float32)
+    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
+
+    numFeat = params['n2bBasis'] + params['n3bBasis'] ** 3
+
+    tfIdxNb, tfRNb, tfMaxNb, tfNAtoms = tf_getNb(tfCoord, tfLattice, float(params['dcut']))
+    tfRhat, tfRi, tfDc = tf_getStruct(tfRNb)
+
+    tfGR2 = tf.scatter_nd(tf.where(tfRi > 0),
+                          tf_getCos2(tf.boolean_mask(tfRi, tfRi > 0) * 3 / float(params['dcut']) - 2,
+                                     params['n2bBasis']),
+                          [tfNAtoms, tfMaxNb, params['n2bBasis']])
+    tfGR2d = tf.scatter_nd(tf.where(tfRi > 0),
+                           tf_getdCos2(tf.boolean_mask(tfRi, tfRi > 0) * 3 / float(params['dcut']) - 2,
+                                       params['n2bBasis']),
+                           [tfNAtoms, tfMaxNb, params['n2bBasis']])
+    tfGR3 = tf.scatter_nd(tf.where(tfRi > 0),
+                          tf_getCos2(tf.boolean_mask(tfRi, tfRi > 0) * 3 / float(params['dcut']) - 2,
+                                     params['n3bBasis']),
+                          [tfNAtoms, tfMaxNb, params['n3bBasis']])
+    tfGR3d = tf.scatter_nd(tf.where(tfRi > 0),
+                           tf_getdCos2(tf.boolean_mask(tfRi, tfRi > 0) * 3 / float(params['dcut']) - 2,
+                                       params['n3bBasis']),
+                           [tfNAtoms, tfMaxNb, params['n3bBasis']])
+    tfGD3 = tf.scatter_nd(tf.where(tfDc > 0),
+                          tf_getCos2(tf.boolean_mask(tfDc, tfDc > 0) * 3 / float(params['dcut']) - 2,
+                                     params['n3bBasis']),
+                          [tfNAtoms, tfMaxNb, tfMaxNb, params['n3bBasis']])
+
+    tfdXi, tfdXin = tf_get_dXidRl(tfGR2, tfGR2d, tfGR3, tfGR3d, tfGD3, tfRhat * 3 / params['dcut'])
+    tfdXi = tf.expand_dims(tfFeatA, 2) * tfdXi
+    tfdXin = tf.expand_dims(tfFeatA, 2) * tfdXin
+
+    tfFeats = tfFeatA * tf_getFeats(tfGR2, tfGR3, tfGD3) + tfFeatB
+    tfEs = tf_engyFromFeats(tfFeats, numFeat, params['nL1Nodes'], params['nL2Nodes']) + \
+           tf.reduce_sum(tf_getVi(tfRi, params['dcut'], params['dcut']/3, params),axis=1) * tfEngyA
+
+    dEldXi = tf_get_dEldXi(tfFeats, numFeat, params['nL1Nodes'], params['nL2Nodes'])
+    Fll = tf.reduce_sum(tf.expand_dims(dEldXi, 2) * tfdXi, axis=1)
+
+    dENldXi = tf.gather_nd(dEldXi,
+                           tf.expand_dims(tf.transpose(tf.boolean_mask(tfIdxNb, tf.greater(tfIdxNb, 0)) - 1), 1))
+    dEnldXin = tf.scatter_nd(tf.where(tf.greater(tfIdxNb, 0)), dENldXi, [tfNAtoms, tfMaxNb, numFeat])
+    Fln = tf.reduce_sum(tf.expand_dims(dEnldXin, 3) * tfdXin, axis=[1, 2])
+
+    tfFs = Fln + Fll + 2 * tfEngyA * tf_getdVi(tfRi, tfRhat, params['dcut'], params['dcut']/3, params)
+
+    return tfEs, tfFs
