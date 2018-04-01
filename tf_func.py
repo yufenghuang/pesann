@@ -424,3 +424,4 @@ def tf_getFeatsFromR(tfCoord, tfLattice, dcut,n2bBasis, n3bBasis):
                           [tfNAtoms,tfMaxNb, tfMaxNb,n3bBasis])
     tfFeats = tf_getFeats(tfGR2,tfGR3,tfGD3)
     return tfFeats
+

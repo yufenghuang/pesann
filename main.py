@@ -36,6 +36,7 @@ params={
     "feRatio": 1.0,
     "dt": 1.0, #picosecond
     "nstep":100, # print every 100 steps
+    "Repulsion":"None",
     }
 
 parser = argparse.ArgumentParser()
@@ -75,6 +76,8 @@ parser.add_argument("--test", metavar="N_TEST", type=int,
                     help="evaluate the errors on the test set after every N_TEST epochs")
 parser.add_argument("--dt", type=float, help="delta t, time step for the MD simulation. Unit is ps")
 parser.add_argument("--nstep", type=int, help="dumping the geometry in xyz format in every NSTEP of MD simulations")
+
+parser.add_argument("--repulsion", type=str, help="additional repulsion energy", choices=["None", "1/R12", "1/R","exp(-R)"])
 
 args = parser.parse_args()
 
