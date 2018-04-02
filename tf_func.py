@@ -456,15 +456,15 @@ def tf_getdEc(Ri, Rc, Rci):
     return -alpha/Rci*tf.exp(-Ri/Rci)*tf_getFc(Ri, Rc) + alpha * tf.exp(-Ri/Rci)*tf_getdFc(Ri, Rc)
 
 def tf_getVi(tfRi, Rc, Rci, params):
-    if params["Repulsion"] == "None":
+    if params["repulsion"] == "None":
         return tfRi*0
-    elif params["Repulsion"] == "1/R12":
+    elif params["repulsion"] == "1/R12":
         return tf.scatter_nd(tf.where(tfRi > 0), tf_getEa(tf.boolean_mask(tfRi, tfRi > 0), Rc, Rci),
                              tf.shape(tfRi, outtype=tf.int64))
-    elif params["Repulsoin"] == "1/R":
+    elif params["repulsion"] == "1/R":
         return tf.scatter_nd(tf.where(tfRi > 0), tf_getEb(tf.boolean_mask(tfRi, tfRi > 0), Rc, Rci),
                              tf.shape(tfRi, outtype=tf.int64))
-    elif params["Repulsion"] == "exp(-R)":
+    elif params["repulsion"] == "exp(-R)":
         return tf.scatter_nd(tf.where(tfRi > 0), tf_getEc(tf.boolean_mask(tfRi, tfRi > 0), Rc, Rci),
                              tf.shape(tfRi, outtype=tf.int64))
     else:
@@ -472,17 +472,17 @@ def tf_getVi(tfRi, Rc, Rci, params):
         return tfRi*0
 
 def tf_getdVi(tfRi, tfRhat, Rc, Rci, params):
-    if params["Repulsion"] == "None":
+    if params["repulsion"] == "None":
         return tf.reduce_sum(tfRhat, axis=1)*0
-    elif params["Repulsion"] == "1/R12":
+    elif params["repulsion"] == "1/R12":
         dEa = tf.scatter_nd(tf.where(tfRi > 0), tf_getdEa(tf.boolean_mask(tfRi, tfRi > 0), Rc, Rci),
                              tf.shape(tfRi, outtype=tf.int64))
         return tf.reduce_sum(tf.expand_dims(dEa, 2) * (-tfRhat), axis=1)
-    elif params["Repulsion"] == "1/R":
+    elif params["repulsion"] == "1/R":
         dEb =  tf.scatter_nd(tf.where(tfRi > 0), tf_getdEb(tf.boolean_mask(tfRi, tfRi > 0), Rc, Rci),
                              tf.shape(tfRi, outtype=tf.int64))
         return tf.reduce_sum(tf.expand_dims(dEb, 2) * (-tfRhat), axis=1)
-    elif params["Repulsion"] == "exp(-R)":
+    elif params["repulsion"] == "exp(-R)":
         dEc =  tf.scatter_nd(tf.where(tfRi > 0), tf_getdEc(tf.boolean_mask(tfRi, tfRi > 0), Rc, Rci),
                              tf.shape(tfRi, outtype=tf.int64))
         return tf.reduce_sum(tf.expand_dims(dEc, 2) * (-tfRhat), axis=1)
