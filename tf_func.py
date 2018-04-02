@@ -537,7 +537,7 @@ def tf_getEF_repulsion(tfCoord, tfLattice, params):
 
     tfFeats = tfFeatA * tf_getFeats(tfGR2, tfGR3, tfGD3) + tfFeatB
     tfEs = tf_engyFromFeats(tfFeats, numFeat, params['nL1Nodes'], params['nL2Nodes']) + \
-           tf_getVi(tfRi, params['dcut'], params['dcut']/3, params) * tfEngyA
+           tf.expand_dims(tfRi, params['dcut'], params['dcut']/3, params, 1) * tfEngyA
 
     dEldXi = tf_get_dEldXi(tfFeats, numFeat, params['nL1Nodes'], params['nL2Nodes'])
     Fll = tf.reduce_sum(tf.expand_dims(dEldXi, 2) * tfdXi, axis=1)
