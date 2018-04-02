@@ -1090,7 +1090,10 @@ def specialrun11(params):
     tfCoord = tf.placeholder(tf.float32, shape=(None, 3))
     tfLattice = tf.placeholder(tf.float32, shape=(3, 3))
 
-    tfEs, tfFs = tff.tf_getEF(tfCoord, tfLattice, params)
+    if (params["repulsion"] == "1/R") or (params["repulsion"] == "1/R12") or (params["repulsion"] == "exp(-R)"):
+        tfEs, tfFs = tff.tf_getEF_repulsion(tfCoord, tfLattice, params)
+    else:
+        tfEs, tfFs = tff.tf_getEF(tfCoord, tfLattice, params)
     tfEp = (tfEs - tfEngyB) / tfEngyA
     tfFp = tfFs / tfEngyA
 
