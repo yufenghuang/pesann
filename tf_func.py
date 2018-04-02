@@ -463,19 +463,23 @@ def tf_getdEc(Ri, Rc, Rci):
 
 def tf_getVi(tfRi, Rc, Rci, params):
     if params["repulsion"] == "None":
-        return tfRi*0
+        return tf.reduce_sum(tfRi,axis=1)*0
     elif params["repulsion"] == "1/R12":
-        return tf.scatter_nd(tf.where(tfRi > 0), tf_getEa(tf.boolean_mask(tfRi, tfRi > 0), Rc, Rci),
-                             tf.shape(tfRi, out_type=tf.int64))
+        Ea = tf.scatter_nd(tf.where(tfRi > 0), tf_getEa(tf.boolean_mask(tfRi, tfRi > 0), Rc, Rci),
+                           tf.shape(tfRi, out_type=tf.int64))
+        return tf.reduce_sum(Ea, axis=1)
+
     elif params["repulsion"] == "1/R":
-        return tf.scatter_nd(tf.where(tfRi > 0), tf_getEb(tf.boolean_mask(tfRi, tfRi > 0), Rc, Rci),
-                             tf.shape(tfRi, out_type=tf.int64))
+        Eb = tf.scatter_nd(tf.where(tfRi > 0), tf_getEb(tf.boolean_mask(tfRi, tfRi > 0), Rc, Rci),
+                           tf.shape(tfRi, out_type=tf.int64))
+        return tf.reduce_sum(Eb, axis=1)
     elif params["repulsion"] == "exp(-R)":
-        return tf.scatter_nd(tf.where(tfRi > 0), tf_getEc(tf.boolean_mask(tfRi, tfRi > 0), Rc, Rci),
-                             tf.shape(tfRi, out_type=tf.int64))
+        Ec = tf.scatter_nd(tf.where(tfRi > 0), tf_getEc(tf.boolean_mask(tfRi, tfRi > 0), Rc, Rci),
+                           tf.shape(tfRi, out_type=tf.int64))
+        return tf.reduce_sum(Ec, axis=1)
     else:
         print("Unknown repulsion term. Ignoring repulsion...")
-        return tfRi*0
+        return tf.reduce_sum(tfRi,axis=1)*0
 
 def tf_getdVi(tfRi, tfRhat, Rc, Rci, params):
     if params["repulsion"] == "None":
@@ -533,7 +537,7 @@ def tf_getEF_repulsion(tfCoord, tfLattice, params):
 
     tfFeats = tfFeatA * tf_getFeats(tfGR2, tfGR3, tfGD3) + tfFeatB
     tfEs = tf_engyFromFeats(tfFeats, numFeat, params['nL1Nodes'], params['nL2Nodes']) + \
-           tf.reduce_sum(tf_getVi(tfRi, params['dcut'], params['dcut']/3, params),axis=1) * tfEngyA
+           tf_getVi(tfRi, params['dcut'], params['dcut']/3, params) * tfEngyA
 
     dEldXi = tf_get_dEldXi(tfFeats, numFeat, params['nL1Nodes'], params['nL2Nodes'])
     Fll = tf.reduce_sum(tf.expand_dims(dEldXi, 2) * tfdXi, axis=1)
