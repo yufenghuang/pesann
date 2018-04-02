@@ -473,12 +473,12 @@ def tf_getVi(tfRi, Rc, Rci, params):
 
 def tf_getdVi(tfRi, tfRhat, Rc, Rci, params):
     if params["Repulsion"] == "None":
-        return tf.reduce_sum(tfRi, axis=1)*0
+        return tf.reduce_sum(tfRhat, axis=1)*0
     elif params["Repulsion"] == "1/R12":
         dEa = tf.scatter_nd(tf.where(tfRi > 0), tf_getdEa(tf.boolean_mask(tfRi, tfRi > 0), Rc, Rci),
                              tf.shape(tfRi, outtype=tf.int64))
         return tf.reduce_sum(tf.expand_dims(dEa, 2) * (-tfRhat), axis=1)
-    elif params["Repulsoin"] == "1/R":
+    elif params["Repulsion"] == "1/R":
         dEb =  tf.scatter_nd(tf.where(tfRi > 0), tf_getdEb(tf.boolean_mask(tfRi, tfRi > 0), Rc, Rci),
                              tf.shape(tfRi, outtype=tf.int64))
         return tf.reduce_sum(tf.expand_dims(dEb, 2) * (-tfRhat), axis=1)
@@ -488,7 +488,7 @@ def tf_getdVi(tfRi, tfRhat, Rc, Rci, params):
         return tf.reduce_sum(tf.expand_dims(dEc, 2) * (-tfRhat), axis=1)
     else:
         print("Unknown repulsion term. Ignoring repulsion...")
-        return tf.reduce_sum(tfRi, axis=1)*0
+        return tf.reduce_sum(tfRhat, axis=1)*0
 
 def tf_getEF_repulsion(tfCoord, tfLattice, params):
     tfFeatA = tf.constant(params['featScalerA'], dtype=tf.float32)
