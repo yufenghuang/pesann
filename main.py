@@ -36,7 +36,7 @@ params={
     "feRatio": 1.0,
     "dt": 1.0, #picosecond
     "nstep":100, # print every 100 steps
-    "Repulsion":"None",
+    "repulsion":"None",
     }
 
 parser = argparse.ArgumentParser()
