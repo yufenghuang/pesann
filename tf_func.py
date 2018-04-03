@@ -432,32 +432,32 @@ def tf_getdFc(Ri, Rc):
     return -0.5*np.pi/Rc*tf.sin(np.pi*Ri/Rc)
 
 def tf_getEa(Ri, Rc, Rci):
-    E0 = 0.1
+    E0 = 0.001
     alpha = E0*Rci**12/tf_getFc(Rci,Rc)
     return alpha*tf_getFc(Ri, Rc)/Ri**12
 
 def tf_getdEa(Ri, Rc, Rci):
-    E0 = 0.1
+    E0 = 0.001
     alpha = E0*Rci**12/tf_getFc(Rci,Rc)
     return -12*alpha*tf_getFc(Ri, Rc)/Ri**13 + alpha*tf_getdFc(Ri, Rc)/Ri**12
 
 def tf_getEb(Ri, Rc, Rci):
-    E0 = 0.1
+    E0 = 0.001
     alpha = E0 * Rci/tf_getFc(Rci, Rc)
     return alpha*tf_getFc(Ri, Rc)/Ri
 
 def tf_getdEb(Ri, Rc, Rci):
-    E0 = 0.1
+    E0 = 0.001
     alpha = E0 * Rci/tf_getFc(Rci,Rc)
     return -alpha*tf_getFc(Ri, Rc)/Ri**2 + alpha*tf_getdFc(Ri, Rc)/Ri
 
 def tf_getEc(Ri, Rc, Rci):
-    E0 = 0.1
+    E0 = 0.001
     alpha = E0 * tf.exp(1.)/tf_getFc(Rci, Rc)
     return alpha * tf.exp(-Ri/Rci)*tf_getFc(Ri, Rc)
 
 def tf_getdEc(Ri, Rc, Rci):
-    E0 = 0.1
+    E0 = 0.001
     alpha = E0 * tf.exp(1.)/tf_getFc(Rci, Rc)
     return -alpha/Rci*tf.exp(-Ri/Rci)*tf_getFc(Ri, Rc) + alpha * tf.exp(-Ri/Rci)*tf_getdFc(Ri, Rc)
 
