@@ -439,7 +439,7 @@ def tf_getEa(Ri, Rc, Rci):
 def tf_getdEa(Ri, Rc, Rci):
     E0 = 0.1
     alpha = E0*Rci**12/tf_getFc(Rci,Rc)
-    return -12*alpha*tf_getFc(Rci, Rc)/Ri**13 + alpha*tf_getdFc(Ri, Rc)/Ri**12
+    return -12*alpha*tf_getFc(Ri, Rc)/Ri**13 + alpha*tf_getdFc(Ri, Rc)/Ri**12
 
 def tf_getEb(Ri, Rc, Rci):
     E0 = 0.1
