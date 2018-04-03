@@ -1200,7 +1200,7 @@ def specialrun12(params):
         tfEs, tfFs = tff.tf_getEF_repulsion(tfCoord, tfLattice, params)
     else:
         tfEs, tfFs = tff.tf_getEF(tfCoord, tfLattice, params)
-        
+
     tfEp = (tfEs - tfEngyB) / tfEngyA
     tfFp = tfFs / tfEngyA
 
