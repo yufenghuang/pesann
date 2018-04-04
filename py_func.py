@@ -80,23 +80,30 @@ def getRmmt(mmtFile):
     return nAtoms, lattice, R 
     
 
-def getFeats(R, lattice, dcut_in ,n2bBasis, n3bBasis):
+def getFeats(R, lattice, Rcut, dcut ,n2bBasis, n3bBasis):
 #    import tensorflow as tf
 #    import tf_func as tff
     
-    dcut = tf.constant(dcut_in, dtype=tf.float32)
+    # dcut = tf.constant(dcut_in, dtype=tf.float32)
     tfCoord = tf.placeholder(tf.float32, shape=(None,3))
     tfLattice = tf.placeholder(tf.float32, shape=(3,3))
     tfIdxNb, tfRNb,tfMaxNb, tfNAtoms= tff.tf_getNb(tfCoord,tfLattice,dcut)
     tfRhat, tfRi, tfDc = tff.tf_getStruct(tfRNb)
-    tfGR2 = tf.scatter_nd(tf.where(tfRi>0),\
-                          tff.tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*3/dcut-2,n2bBasis),\
+
+    RcA = 2/(dcut - Rcut)
+    RcB = -(dcut+Rcut)/(dcut-Rcut)
+
+    # RcA = 2 / (float(params['dcut']) - float(params['Rcut']))
+    # RcB = - (float(params['dcut']) + float(params['Rcut'])) / (float(params['dcut']) - float(params['Rcut']))
+
+    tfGR2 = tf.scatter_nd(tf.where(tfRi>0),
+                          tff.tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*RcA+RcB,n2bBasis),
                           [tfNAtoms,tfMaxNb,n2bBasis])
-    tfGR3 = tf.scatter_nd(tf.where(tfRi>0),\
-                          tff.tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*3/dcut-2,n3bBasis),\
+    tfGR3 = tf.scatter_nd(tf.where(tfRi>0),
+                          tff.tf_getCos(tf.boolean_mask(tfRi,tfRi>0)*RcA+RcB,n3bBasis),
                           [tfNAtoms,tfMaxNb,n3bBasis])
-    tfGD3 = tf.scatter_nd(tf.where(tfDc>0),\
-                          tff.tf_getCos(tf.boolean_mask(tfDc,tfDc>0)*3/dcut-2,n3bBasis),\
+    tfGD3 = tf.scatter_nd(tf.where(tfDc>0),
+                          tff.tf_getCos(tf.boolean_mask(tfDc,tfDc>0)*RcA+RcB,n3bBasis),
                           [tfNAtoms,tfMaxNb, tfMaxNb,n3bBasis])
     tfFeats = tff.tf_getFeats(tfGR2,tfGR3,tfGD3)
 
@@ -389,7 +396,7 @@ def initialize(params):
     
     file = open(str(params["inputData"]), 'r')
     nAtoms, iIter, lattice, R, f, v, e = getData(file)
-    feat = getFeats(R, lattice, float(params['dcut']), params['n2bBasis'],params['n3bBasis'])
+    feat = getFeats(R, lattice, float(params['Rcut']), float(params['dcut']), params['n2bBasis'],params['n3bBasis'])
     engy = e.reshape([-1,1])
     file.close()
     
@@ -429,7 +436,7 @@ def outputFeatures(engyFile, featFile, inputData, params):
             nAtoms, iIter, lattice, R, f, v, e = getData(datafile)
             feedDict = {tfR: R, tfL:lattice}
             feat = sess.run(
-                    tff.tf_getFeatsFromR(tfR, tfL, float(params['dcut']), params['n2bBasis'],params['n3bBasis']),
+                    tff.tf_getFeatsFromR(tfR, tfL, float(params['Rcut']), float(params['dcut']), params['n2bBasis'],params['n3bBasis']),
                     feed_dict=feedDict)
             engy = e.reshape([-1,1])
             pd.DataFrame(feat).to_csv(featFile, mode='a', header=False, index=False)

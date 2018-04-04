@@ -24,6 +24,7 @@ params={
     "logDir": "log",
     "iGPU": 0,
     "dcut": 6.2,
+    "Rcut": 0,
     "learningRate": 0.0001,
     "n2bBasis": 100,
     "n3bBasis": 10,
@@ -64,7 +65,8 @@ parser.add_argument("--iGPU", type=int, help="species which GPU to run the calcu
 parser.add_argument("--feRatio", type=float, help="the ratio between the energy term and the force term \
                                                    in the total loss function")
 parser.add_argument("--learningRate", type=float, help="learning rate(step size) in the gradient descent optimization")
-parser.add_argument("--dcut", type=float, help="cutoff radius for the calculation (Angstrom)")
+parser.add_argument("--dcut", type=float, help="outer cutoff radius for the calculation (Angstrom)")
+parser.add_argument("--Rcut", type=float, help="inner cutoff radius for the calculation (Angstrom)")
 parser.add_argument("--n2bBasis", metavar="N2B", type=int, help="number of basis for the 2D term")
 parser.add_argument("--n3bBasis", metavar="N3B", type=int,
                     help="number of basis in each dimension for the 3D term, total number of basis equals N3B^3")
