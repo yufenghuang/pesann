@@ -162,8 +162,8 @@ def trainEngy(params):
         Ep2 = sess.run(tfEs, feed_dict=feedDict2)
         Ep2 = (Ep2 - params['engyScalerB'])/params['engyScalerA']
 
-        print(Ep2[:,:])
-        print(engyDF[:,:])
+        # print(Ep2[:,:])
+        # print(engyDF[:,:])
         
         Ermse = np.sqrt(np.mean((Ep2.reshape(-1)-engyDF.reshape(-1))**2))
         Emae = np.mean(np.abs(Ep2.reshape(-1) - engyDF.reshape(-1)))
@@ -179,12 +179,12 @@ def trainEngy(params):
         dfFeat = pd.read_csv(str(params['featFile']), header=None, index_col=False).values
         dfEngy = pd.read_csv(str(params['engyFile']), header=None, index_col=False).values
 
-    if params["validate"] > 0:
-        print("Initial Validation Error:")
-        getError('v'+str(params['featFile']), 'v'+str(params['engyFile']))
-    if params["test"] > 0:
-        print("Initial Test Error:")
-        getError('t'+str(params['featFile']), 't'+str(params['engyFile']))
+    # if params["validate"] > 0:
+    #     print("Initial Validation Error:")
+    #     getError('v'+str(params['featFile']), 'v'+str(params['engyFile']))
+    # if params["test"] > 0:
+    #     print("Initial Test Error:")
+    #     getError('t'+str(params['featFile']), 't'+str(params['engyFile']))
 
     # print("Temporary testing:")
     # testFeat = (pd.read_csv(str(params['featFile']), header=None, index_col=False,
