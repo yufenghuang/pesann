@@ -178,7 +178,7 @@ def trainEngy(params):
     if params['chunkSize'] == 0:
         dfFeat = pd.read_csv(str(params['featFile']), header=None, index_col=False).values
         dfEngy = pd.read_csv(str(params['engyFile']), header=None, index_col=False).values
-
+'''
     if params["validate"] > 0:
         print("Initial Validation Error:")
         getError('v'+str(params['featFile']), 'v'+str(params['engyFile']))
@@ -202,7 +202,7 @@ def trainEngy(params):
     print("Ermse is: ", Ermse)
     print("Emae is : ", Emae)
     sys.stdout.flush()
-
+'''
     for iEpoch in range(params['epoch']):
         if params['chunkSize'] > 0:
             pdFeat = pd.read_csv(str(params['featFile']), header=None, index_col=False, \
