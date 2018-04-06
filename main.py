@@ -40,6 +40,12 @@ params={
     "repulsion":"None",
     }
 
+newParams={}
+
+floatParams={"duct", "Rcut"}
+intParams={"n2bBasis", "n3bBasis", "nL1Nodes", "nL2Nodes"}
+savedScaler={"featScalerA", "featScalerB", "engyScalerA", "engyScalerB"}
+
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--task", choices=[-3,-2,-1,0,1,2,100,105,106, 107, 108, 109,110,111, 112, 113], type=int,
@@ -102,31 +108,46 @@ if args.inputFile != None:
 
 for arg in vars(args):
     if getattr(args, arg) != None:
-#        print(arg, "=", getattr(args, arg))
+        # print(arg, "=", getattr(args, arg))
+        newParams[arg] = getattr(args, arg)
         params[arg] = getattr(args, arg)
-
-#print("==============")
-
-for p in params:
-    print(p, "=", params[p])
 
 os.environ["CUDA_VISIBLE_DEVICES"]=str(params['iGPU'])
 
 if params['restart']:
     paramFile = str(params['logDir'])+"/params"
     loadParams = np.load(paramFile+".npz")
-    params["duct"] = float(loadParams["dcut"])
-    params["Rcut"] = float(loadParams["Rcut"])
-    params["n2bBasis"] = int(loadParams["n2bBasis"])
-    params["n3bBasis"] = int(loadParams["n3bBasis"])
-    params["nL1Nodes"] = int(loadParams["nL1Nodes"])
-    params["nL2Nodes"] = int(loadParams["nL2Nodes"])
-    params["featScalerA"] = loadParams["featScalerA"]
-    params["featScalerB"] = loadParams["featScalerB"]
-    params["engyScalerA"] = loadParams["engyScalerA"]
-    params["engyScalerB"] = loadParams["engyScalerB"]
+
+    for param in floatParams:
+        params[param] = float(loadParams[param])
+        if param in set(newParams.keys()):
+            params[param] = float(newParams[param])
+
+    for param in intParams:
+        params[param] = int(loadParams[param])
+        if param in set(newParams.keys()):
+            params[param] = int(newParams[param])
+
+    for param in savedScaler:
+        params[param] = loadParams[param]
+
+    # params["duct"] = float(loadParams["dcut"])
+    # params["Rcut"] = float(loadParams["Rcut"])
+    # params["n2bBasis"] = int(loadParams["n2bBasis"])
+    # params["n3bBasis"] = int(loadParams["n3bBasis"])
+    # params["nL1Nodes"] = int(loadParams["nL1Nodes"])
+    # params["nL2Nodes"] = int(loadParams["nL2Nodes"])
+    # params["featScalerA"] = loadParams["featScalerA"]
+    # params["featScalerB"] = loadParams["featScalerB"]
+    # params["engyScalerA"] = loadParams["engyScalerA"]
+    # params["engyScalerB"] = loadParams["engyScalerB"]
 else:
     params = pyf.initialize(params)
+
+#print("==============")
+for p in params:
+    print(p, "=", params[p])
+
 
 print("Initialization done")
 
