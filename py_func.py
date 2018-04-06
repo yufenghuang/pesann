@@ -160,7 +160,7 @@ def trainEngy(params):
         feedDict2 = {tfFeat: featDF * params['featScalerA'] + params['featScalerB'], \
                      tfEngy: engyDF * params['engyScalerA'] + params['engyScalerB']}
         Ep2 = sess.run(tfEs, feed_dict=feedDict2)
-        # Ep2 = (Ep2 - params['engyScalerB'])/params['engyScalerA']
+        Ep2 = (Ep2 - params['engyScalerB'])/params['engyScalerA']
 
         print(Ep2[:10,:])
         print(engyDF[:10,:])
@@ -178,6 +178,14 @@ def trainEngy(params):
     if params['chunkSize'] == 0:
         dfFeat = pd.read_csv(str(params['featFile']), header=None, index_col=False).values
         dfEngy = pd.read_csv(str(params['engyFile']), header=None, index_col=False).values
+
+    if params["validate"] > 0:
+        print("Initial Validation Error:")
+        getError('v'+str(params['featFile']), 'v'+str(params['engyFile']))
+    if params["test"] > 0:
+        print("Initial Test Error:")
+        getError('t'+str(params['featFile']), 't'+str(params['engyFile']))
+
         
     for iEpoch in range(params['epoch']):
         if params['chunkSize'] > 0:
