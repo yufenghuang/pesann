@@ -162,8 +162,8 @@ def trainEngy(params):
         Ep2 = sess.run(tfEs, feed_dict=feedDict2)
         Ep2 = (Ep2 - params['engyScalerB'])/params['engyScalerA']
 
-        print(Ep2.shape, Ep2.reshape(-1).shape)
-        print(engyDF.shape, engyDF.reshape(-1).shape)
+        print(Ep2[:10,:])
+        print(engyDF[:10,:])
         
         Ermse = np.sqrt(np.mean((Ep2.reshape(-1)-engyDF.reshape(-1))**2))
         Emae = np.mean(np.abs(Ep2.reshape(-1) - engyDF.reshape(-1)))
