@@ -188,9 +188,9 @@ def trainEngy(params):
 
     print("Temporary testing:")
     testFeat = (pd.read_csv(str(params['featFile']), header=None, index_col=False,
-                         chunksize=100, iterator=True)).get_chunk()
+                         chunksize=100, iterator=True)).get_chunk().values
     testEngy = (pd.read_csv(str(params['engyFile']), header=None, index_col=False,
-                         chunksize=100, iterator=True)).get_chunk()
+                         chunksize=100, iterator=True)).get_chunk().values
     testFD = {tfFeat: testFeat * params['featScalerA'] + params['featScalerB'],
               tfEngy: testEngy * params['engyScalerA'] + params['engyScalerB']}
     Ep3 = sess.run(tfEs, feed_dict=testFD)
