@@ -160,7 +160,7 @@ def trainEngy(params):
         feedDict2 = {tfFeat: featDF * params['featScalerA'] + params['featScalerB'], \
                      tfEngy: engyDF * params['engyScalerA'] + params['engyScalerB']}
         Ep2 = sess.run(tfEs, feed_dict=feedDict2)
-        Ep2 = (Ep2 - params['engyScalerB'])/params['engyScalerA']
+        # Ep2 = (Ep2 - params['engyScalerB'])/params['engyScalerA']
 
         print(Ep2[:10,:])
         print(engyDF[:10,:])
