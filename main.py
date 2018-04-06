@@ -116,7 +116,7 @@ if params['restart']:
     paramFile = str(params['logDir'])+"/params"
     loadParams = np.load(paramFile+".npz")
     params["duct"] = float(loadParams["dcut"])
-    params["Rcut"] = float(loadParmas["Rcut"])
+    params["Rcut"] = float(loadParams["Rcut"])
     params["n2bBasis"] = int(loadParams["n2bBasis"])
     params["n3bBasis"] = int(loadParams["n3bBasis"])
     params["nL1Nodes"] = int(loadParams["nL1Nodes"])
