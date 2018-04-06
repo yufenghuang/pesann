@@ -42,7 +42,7 @@ params={
 
 newParams={}
 
-floatParams={"duct", "Rcut"}
+floatParams={"dcut", "Rcut"}
 intParams={"n2bBasis", "n3bBasis", "nL1Nodes", "nL2Nodes"}
 savedScaler={"featScalerA", "featScalerB", "engyScalerA", "engyScalerB"}
 
