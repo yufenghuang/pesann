@@ -162,8 +162,8 @@ def trainEngy(params):
         Ep2 = sess.run(tfEs, feed_dict=feedDict2)
         Ep2 = (Ep2 - params['engyScalerB'])/params['engyScalerA']
 
-        print(Ep2[:10,:])
-        print(engyDF[:10,:])
+        print(Ep2[:,:])
+        print(engyDF[:,:])
         
         Ermse = np.sqrt(np.mean((Ep2.reshape(-1)-engyDF.reshape(-1))**2))
         Emae = np.mean(np.abs(Ep2.reshape(-1) - engyDF.reshape(-1)))
@@ -178,7 +178,7 @@ def trainEngy(params):
     if params['chunkSize'] == 0:
         dfFeat = pd.read_csv(str(params['featFile']), header=None, index_col=False).values
         dfEngy = pd.read_csv(str(params['engyFile']), header=None, index_col=False).values
-'''
+
     if params["validate"] > 0:
         print("Initial Validation Error:")
         getError('v'+str(params['featFile']), 'v'+str(params['engyFile']))
@@ -186,23 +186,23 @@ def trainEngy(params):
         print("Initial Test Error:")
         getError('t'+str(params['featFile']), 't'+str(params['engyFile']))
 
-    print("Temporary testing:")
-    testFeat = (pd.read_csv(str(params['featFile']), header=None, index_col=False,
-                         chunksize=100, iterator=True)).get_chunk().values
-    testEngy = (pd.read_csv(str(params['engyFile']), header=None, index_col=False,
-                         chunksize=100, iterator=True)).get_chunk().values
-    testFD = {tfFeat: testFeat * params['featScalerA'] + params['featScalerB'],
-              tfEngy: testEngy * params['engyScalerA'] + params['engyScalerB']}
-    Ep3 = sess.run(tfEs, feed_dict=testFD)
-    Ep3 = (Ep3 - params['engyScalerB'])/params['engyScalerA']
-    print(Ep3[:10, :])
-    print(testEngy[:10, :])
-    Ermse = np.sqrt(np.mean((Ep3.reshape(-1) - testEngy.reshape(-1)) ** 2))
-    Emae = np.mean(np.abs(Ep3.reshape(-1) - testEngy.reshape(-1)))
-    print("Ermse is: ", Ermse)
-    print("Emae is : ", Emae)
-    sys.stdout.flush()
-'''
+    # print("Temporary testing:")
+    # testFeat = (pd.read_csv(str(params['featFile']), header=None, index_col=False,
+    #                      chunksize=100, iterator=True)).get_chunk().values
+    # testEngy = (pd.read_csv(str(params['engyFile']), header=None, index_col=False,
+    #                      chunksize=100, iterator=True)).get_chunk().values
+    # testFD = {tfFeat: testFeat * params['featScalerA'] + params['featScalerB'],
+    #           tfEngy: testEngy * params['engyScalerA'] + params['engyScalerB']}
+    # Ep3 = sess.run(tfEs, feed_dict=testFD)
+    # Ep3 = (Ep3 - params['engyScalerB'])/params['engyScalerA']
+    # print(Ep3[:10, :])
+    # print(testEngy[:10, :])
+    # Ermse = np.sqrt(np.mean((Ep3.reshape(-1) - testEngy.reshape(-1)) ** 2))
+    # Emae = np.mean(np.abs(Ep3.reshape(-1) - testEngy.reshape(-1)))
+    # print("Ermse is: ", Ermse)
+    # print("Emae is : ", Emae)
+    # sys.stdout.flush()
+
     for iEpoch in range(params['epoch']):
         if params['chunkSize'] > 0:
             pdFeat = pd.read_csv(str(params['featFile']), header=None, index_col=False, \
