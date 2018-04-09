@@ -29,7 +29,6 @@ def copyFile(nAtoms, inFile, outFile):
     for j in range(nLine):
         outFile.write(inFile.readline())
 
-
 nTestSet = 100       # test set
 nValidSet = 100      # validation set
 nTrainSet = -1       # training set
