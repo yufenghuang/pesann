@@ -34,7 +34,7 @@ nValidSet = 100      # validation set
 nTrainSet = -1       # training set
 
 numIter = 1000
-Etol = 0.1 #eV
+Etol = 0.2 #eV
 
 # fileName = "MOVEMENT"
 
