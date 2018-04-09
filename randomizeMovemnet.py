@@ -88,7 +88,7 @@ for i in range(numIter):
 file.close()
 
 eErr = np.mean(EpList - EiList)
-eMask = np.abs((EpList - EiList) - (eErr)) < 0.1
+eMask = np.abs((EpList - EiList) - (eErr)) < Etol
 eIdx = np.where(eMask)[0]
 np.random.shuffle(eIdx)
 
