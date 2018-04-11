@@ -38,6 +38,7 @@ params={
     "dt": 1.0, #picosecond
     "nstep":100, # print every 100 steps
     "repulsion":"None",
+    "mmtForces":"None",
     }
 
 newParams={}
@@ -86,6 +87,8 @@ parser.add_argument("--dt", type=float, help="delta t, time step for the MD simu
 parser.add_argument("--nstep", type=int, help="dumping the geometry in xyz format in every NSTEP of MD simulations")
 
 parser.add_argument("--repulsion", type=str, help="additional repulsion energy", choices=["None", "1/R12", "1/R","exp(-R)"])
+
+parser.add_argument("--mmtForces", type=str, help="MOVEMENT file to train with forces")
 
 args = parser.parse_args()
 
@@ -251,6 +254,10 @@ elif params["task"] == 112:
 elif params["task"] == 113:
 
     md.specialrun13(params)
+
+elif params["task"] == 114:
+
+    md.specialrun14(params)
 
 else:
     print("Unrecognized task: ", params["task"])
