@@ -1406,7 +1406,7 @@ def specialrun14(params):
     tfFors = tf.placeholder(tf.float32, shape=(None, 3))
     tfLearningRate = tf.placeholder(tf.float32)
 
-    tfEs, tfFs = tff.tf_getEF_repulsion(tfCoord, tfLattice, params)
+    tfEs, tfFs = tff.tf_getEF(tfCoord, tfLattice, params)
 
     tfEp = (tfEs - tfEngyB) / tfEngyA
     tfFp = tfFs / tfEngyA
