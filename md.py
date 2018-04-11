@@ -1515,11 +1515,11 @@ def specialrun14(params):
         file.close()
 
 
-        if params["mmtFile"] != "None":
+        if params["mmtForces"] != "None":
             print("Training with forces")
-            file = open(str(params["mmtFile"]), 'r')
+            file = open(str(params["mmtForces"]), 'r')
             nCase = 0
-            with open(str(params["mmtFile"]), 'r') as datafile:
+            with open(str(params["mmtForces"]), 'r') as datafile:
                 for line in datafile:
                     if "Iteration" in line:
                         nCase += 1
