@@ -68,7 +68,7 @@ def specialTask01(engyFile, featFile, inputData, params):
             nAtoms, iIter, lattice, R, f, v, e = pyf.getData(datafile)
             idxNb, coord, maxNb, nAtoms = npf.np_getNb(R, lattice, float(params["dcut"]))
             Rhat, Ri, Dc = npf.getStruct(coord)
-            Di = Ri[:,:,None] * np.ones(256)
+            Di = Ri[:,:,None] * np.ones(maxNb)
             Di[Dc == 0] = 0
             Dj = np.transpose(Di, [0,2,1])
             feat = getGaussianFeats(ll, eta, zeta, Rs, Ri, Di, Dj, Dc)
