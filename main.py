@@ -8,6 +8,7 @@ Created on Tue Jan 30 22:49:17 2018
 import numpy as np
 import py_func as pyf
 import md
+import specialTask
 import os
 import sys
 
@@ -49,7 +50,7 @@ savedScaler={"featScalerA", "featScalerB", "engyScalerA", "engyScalerB"}
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--task", choices=[-3,-2,-1,0,1,2,100,105,106, 107, 108, 109,110,111, 112, 113,114,115], type=int,
+parser.add_argument("--task", choices=[-3,-2,-1,0,1,2,100,105,106, 107, 108, 109,110,111, 112, 113,114,115, 201, 202], type=int,
                     help="task.  2=get energy and forces, \
                                     1=get energy (default), \
                                     0=MD, \
@@ -262,6 +263,30 @@ elif params["task"] == 114:
 elif params["task"] == 115:
 
     md.specialrun15(params)
+
+elif params["task"] == 201:
+
+    if params["validationSet"] != "":
+        specialTask.specialTask01("v"+params["engyFile"], "v"+params["featFile"], params["validationSet"], params)
+
+    if params["testSet"] != "":
+        specialTask.specialTask01("t"+params["engyFile"], "t"+params["featFile"], params["testSet"], params)
+
+    specialTask.specialTask01(str(params["engyFile"]), str(params["featFile"]), str(params["inputData"]), params)
+
+elif params["task"] == 202:
+
+    if params["validate"] >= 0:
+        if (not os.path.exists("v" + str(params["featFile"]))) or \
+                (not os.path.exists("v" + str(params["engyFile"]))):
+            print("There are no features files for the validation set")
+
+    if params["test"] >= 0:
+        if (not os.path.exists("t" + str(params["featFile"]))) or \
+                (not os.path.exists("t" + str(params["engyFile"]))):
+            print("There are no features files for the test set")
+
+    print(specialTask.specialTask02(params))
 
 else:
     print("Unrecognized task: ", params["task"])
