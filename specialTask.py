@@ -11,27 +11,27 @@ import sys
 
 import re
 
-def fc(Rij):
+def fc(Rij, Rc):
     Rij_ = np.array(Rij)
     R_ = np.zeros(Rij_.shape)
     R_[Rij_<Rc] = 0.5*(np.cos(Rij_[Rij_<Rc]*np.pi/Rc)+1)
     return R_
 
-def g1(Rij,Rs_,eta_):
-    return np.exp(-eta_*(Rij-Rs_)**2)*fc(Rij)
+def g1(Rij,Rs_,eta_, Rc):
+    return np.exp(-eta_*(Rij-Rs_)**2)*fc(Rij, Rc)
 
-def g2(Rij,Rik,Rjk,eta_,zeta_,ll_): ##ll: lambda
+def g2(Rij,Rik,Rjk,eta_,zeta_,ll_, Rc): ##ll: lambda
     cos = (Rij**2+Rik**2-Rjk**2)/(2*Rij*Rik)
     return 2.**(1-zeta_)*(1+ll_*cos)**zeta_ * np.exp(-eta_*(Rij**2+Rik**2+Rjk**2))* \
-            fc(Rij)*fc(Rik)*fc(Rjk)
+            fc(Rij, Rc)*fc(Rik, Rc)*fc(Rjk, Rc)
 
-def getGaussianFeats(ll, eta, zeta, Rs, Ri, Di, Dj, Dc):
+def getGaussianFeats(ll, eta, zeta, Rs, Rc, Ri, Di, Dj, Dc):
     feats = np.zeros((len(Ri), eta.size * Rs.size + ll.size * zeta.size * eta.size))
     for i in range(Rs.size):
         for j in range(eta.size):
             ifeat = i * eta.size + j
             G1 = np.zeros(Ri.shape)
-            G1[Ri > 0.] = g1(1 / Ri[Ri > 0.], Rs[i], eta[j])
+            G1[Ri > 0.] = g1(1 / Ri[Ri > 0.], Rs[i], eta[j], Rc)
             feats[:, ifeat] = G1.sum(axis=1)
 
     for i in range(ll.size):
@@ -39,14 +39,14 @@ def getGaussianFeats(ll, eta, zeta, Rs, Ri, Di, Dj, Dc):
             for k in range(zeta.size):
                 ifeat = Rs.size * eta.size + i * eta.size * zeta.size + j * zeta.size + k
                 G2 = np.zeros(Dc.shape)
-                G2[Dc > 0.] = g2(1 / Di[Dc > 0.], 1 / Dj[Dc > 0.], 1 / Dc[Dc > 0.], eta[j], zeta[k], ll[i])
+                G2[Dc > 0.] = g2(1 / Di[Dc > 0.], 1 / Dj[Dc > 0.], 1 / Dc[Dc > 0.], eta[j], zeta[k], ll[i], Rc)
                 feats[:, ifeat] = G2.sum(axis=2).sum(axis=1)
     return feats
 
 def specialTask01(engyFile, featFile, inputData, params):
     #   Generate features for the Gaussian symmetry functions
     #
-    Rc = 6.2
+    Rc = float(params["dcut"])
     ll = np.array([-1., 1])
     eta = np.arange(1, 6) ** 2 / Rc ** 2
     zeta = np.arange(0, 6)
@@ -71,13 +71,13 @@ def specialTask01(engyFile, featFile, inputData, params):
             Di = Ri[:,:,None] * np.ones(maxNb)
             Di[Dc == 0] = 0
             Dj = np.transpose(Di, [0,2,1])
-            feat = getGaussianFeats(ll, eta, zeta, Rs, Ri, Di, Dj, Dc)
+            feat = getGaussianFeats(ll, eta, zeta, Rs, Ri, Di, Dj, Dc, Rc)
             engy = e.reshape([-1, 1])
             pd.DataFrame(feat).to_csv(featFile, mode='a', header=False, index=False)
             pd.DataFrame(engy).to_csv(engyFile, mode='a', header=False, index=False)
             
 def specialTask02(params):
-    Rc = 6.2
+    Rc = float(params["dcut"])
     ll = np.array([-1., 1])
     eta = np.arange(1, 6) ** 2 / Rc ** 2
     zeta = np.arange(0, 6)
