@@ -71,7 +71,7 @@ def specialTask01(engyFile, featFile, inputData, params):
             Di = Ri[:,:,None] * np.ones(maxNb)
             Di[Dc == 0] = 0
             Dj = np.transpose(Di, [0,2,1])
-            feat = getGaussianFeats(ll, eta, zeta, Rs, Ri, Di, Dj, Dc, Rc)
+            feat = getGaussianFeats(ll, eta, zeta, Rs, Rc, Ri, Di, Dj, Dc)
             engy = e.reshape([-1, 1])
             pd.DataFrame(feat).to_csv(featFile, mode='a', header=False, index=False)
             pd.DataFrame(engy).to_csv(engyFile, mode='a', header=False, index=False)
