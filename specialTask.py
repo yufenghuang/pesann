@@ -31,7 +31,7 @@ def getGaussianFeats(ll, eta, zeta, Rs, Rc, Ri, Di, Dj, Dc):
         for j in range(eta.size):
             ifeat = i * eta.size + j
             G1 = np.zeros(Ri.shape)
-            G1[Ri > 0.] = g1(1 / Ri[Ri > 0.], Rs[i], eta[j], Rc)
+            G1[Ri > 0.] = g1(Ri[Ri > 0.], Rs[i], eta[j], Rc)
             feats[:, ifeat] = G1.sum(axis=1)
 
     for i in range(ll.size):
@@ -39,7 +39,7 @@ def getGaussianFeats(ll, eta, zeta, Rs, Rc, Ri, Di, Dj, Dc):
             for k in range(zeta.size):
                 ifeat = Rs.size * eta.size + i * eta.size * zeta.size + j * zeta.size + k
                 G2 = np.zeros(Dc.shape)
-                G2[Dc > 0.] = g2(1 / Di[Dc > 0.], 1 / Dj[Dc > 0.], 1 / Dc[Dc > 0.], eta[j], zeta[k], ll[i], Rc)
+                G2[Dc > 0.] = g2(Di[Dc > 0.], Dj[Dc > 0.], Dc[Dc > 0.], eta[j], zeta[k], ll[i], Rc)
                 feats[:, ifeat] = G2.sum(axis=2).sum(axis=1)
     return feats
 
