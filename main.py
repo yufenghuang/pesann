@@ -11,6 +11,7 @@ import md
 import specialTask
 import os
 import sys
+import pandas as pd
 
 import argparse
 
@@ -285,6 +286,19 @@ elif params["task"] == 202:
         if (not os.path.exists("t" + str(params["featFile"]))) or \
                 (not os.path.exists("t" + str(params["engyFile"]))):
             print("There are no features files for the test set")
+
+    if not params['restart']:
+        pdFeat = pd.read_csv(str(params['featFile']), header=None, index_col=False,
+                             chunksize=int(256), iterator=True)
+        pdEngy = pd.read_csv(str(params['engyFile']), header=None, index_col=False,
+                             chunksize=int(256), iterator=True)
+
+        feat = pdFeat.get_chunk()
+        engy = pdEngy.get_chunk()
+        engy = engy.reshape((-1,1))
+
+        params['featScalerA'], params['featScalerB'], params['engyScalerA'], params['engyScalerB'] = \
+        pyf.getFeatEngyScaler(feat, engy)
 
     print(specialTask.specialTask02(params))
 
