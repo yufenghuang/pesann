@@ -293,8 +293,8 @@ elif params["task"] == 202:
         pdEngy = pd.read_csv(str(params['engyFile']), header=None, index_col=False,
                              chunksize=int(256), iterator=True)
 
-        feat = pdFeat.get_chunk()
-        engy = pdEngy.get_chunk()
+        feat = pdFeat.get_chunk().values
+        engy = pdEngy.get_chunk().values
         engy = engy.reshape((-1,1))
 
         params['featScalerA'], params['featScalerB'], params['engyScalerA'], params['engyScalerB'] = \
