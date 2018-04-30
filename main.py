@@ -289,9 +289,9 @@ elif params["task"] == 202:
 
     if not params['restart']:
         pdFeat = pd.read_csv(str(params['featFile']), header=None, index_col=False,
-                             chunksize=int(256), iterator=True)
+                             chunksize=int(12800), iterator=True)
         pdEngy = pd.read_csv(str(params['engyFile']), header=None, index_col=False,
-                             chunksize=int(256), iterator=True)
+                             chunksize=int(12800), iterator=True)
 
         feat = pdFeat.get_chunk().values
         engy = pdEngy.get_chunk().values
