@@ -300,6 +300,9 @@ elif params["task"] == 202:
         params['featScalerA'], params['featScalerB'], params['engyScalerA'], params['engyScalerB'] = \
         pyf.getFeatEngyScaler(feat, engy)
 
+        paramFile = str(params['logDir']) + "/params"
+        np.savez(paramFile, **params)
+
     print(specialTask.specialTask02(params))
 
 else:
