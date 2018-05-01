@@ -51,7 +51,8 @@ savedScaler={"featScalerA", "featScalerB", "engyScalerA", "engyScalerB"}
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--task", choices=[-3,-2,-1,0,1,2,100,105,106, 107, 108, 109,110,111, 112, 113,114,115, 201, 202], type=int,
+parser.add_argument("--task", choices=[-3,-2,-1,0,1,2,100,105,106, 107, 108, 109,110,111, 112, 113,114,115,
+                                       201, 202,203, 204], type=int,
                     help="task.  2=get energy and forces, \
                                     1=get energy (default), \
                                     0=MD, \
@@ -304,6 +305,14 @@ elif params["task"] == 202:
         np.savez(paramFile, **params)
 
     print(specialTask.specialTask02(params))
+
+elif params["task"] == 203:
+
+    specialTask.specialTask03(params)
+
+elif params["task"] == 204:
+
+    specialTask.specialTask04(params)
 
 else:
     print("Unrecognized task: ", params["task"])
