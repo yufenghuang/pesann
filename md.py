@@ -576,8 +576,7 @@ def specialrun5(params):
 
 
 def specialrun6(params):
-    # fixing the moving distances and printing the xyz's for Lin-Wang
-    # dt is the ∆x for each step
+    # Calculating Ei and Fi and compare the NN and DFT values along a trajcetory
 
     mmtFile = "MOVEMENT.dms"
 
@@ -619,6 +618,7 @@ def specialrun6(params):
                     print("Force Si"+str(iAtom), -f[iAtom, 0], -f[iAtom, 1], -f[iAtom, 2], Fp[iAtom, 0], Fp[iAtom, 1], Fp[iAtom, 2])
 
 def specialrun7(params):
+    # some sort of training... no longer in use...
     tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
     tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
 
@@ -755,8 +755,7 @@ def specialrun7(params):
     return save_path
 
 def specialrun8(params):
-    # fixing the moving distances and printing the xyz's for Lin-Wang
-    # dt is the ∆x for each step
+    # Compare DFT and NN for a trajectory
 
     mmtFile = "MOVEMENT.Oct.17"
 
@@ -1177,7 +1176,7 @@ def specialrun11(params):
                 sys.stdout.flush()
 
 def specialrun12(params):
-    # similar to specialrun8
+    # similar to specialrun8 but with Repulsion
     #
 
     mmtFile = params["inputData"]
