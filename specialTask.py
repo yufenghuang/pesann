@@ -419,6 +419,76 @@ def specialTask04(params):
     save_path = saver.save(sess, str(params['logDir']) + "/tf.chpt")
     return save_path
 
+# Export the predicted values of Ei, Etot, and Fi from a given input.
+# The corresponding outputs are Ei_DFTvsNN, Etot_DFTvsNN, Fi_DFTvsNN.
+# There are two columns for each file, with the first corresponding to the DFT values
+# and the second corresponding to the NN values.
+def specialTask05(params):
+    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
+    tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
+
+    # Tensorflow placeholders
+    tfCoord = tf.placeholder(tf.float32, shape=(None, 3))
+    tfLattice = tf.placeholder(tf.float32, shape=(3, 3))
+    tfEngy = tf.placeholder(tf.float32, shape=(None))
+    tfFors = tf.placeholder(tf.float32, shape=(None, 3))
+    tfLearningRate = tf.placeholder(tf.float32)
+
+    tfEs, tfFs = tff.tf_getEF(tfCoord, tfLattice, params)
+
+    tfEp = (tfEs - tfEngyB) / tfEngyA
+    tfFp = tfFs / tfEngyA
+
+    tfLoss = tf.squared_difference(tf.reduce_sum(tfEs), tf.reduce_sum(tfEngy)) + \
+             float(params['feRatio']) * tf.reduce_mean(tf.squared_difference(tfFs, tfFors))
+
+    saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
+    sess = tf.Session()
+    sess.run(tf.global_variables_initializer())
+
+    if params["restart"]:
+        saver.restore(sess, str(params['logDir']) + "/tf.chpt")
+        print("Model restored")
+    else:
+        print("Need to use the restart keyword to load the NN model")
+        exit()
+
+    nCase = 0
+    with open(str(params["inputData"]), 'r') as datafile:
+        for line in datafile:
+            if "Iteration" in line:
+                nCase += 1
+
+    fileEi = open("Ei_DFTvsNN", 'w')
+    fileEtot = open("Etot_DFTvsNN", 'w')
+    fileFi = open("Fi_DFTvsNN", 'w')
+
+    with open(str(params["inputData"]), 'r') as file:
+        for iCase in range(nCase):
+            nAtoms, iIter, lattice, R, f, v, e = pyf.getData(file)
+            engy = e.reshape([-1, 1])
+            feedDict = {
+                tfCoord: R,
+                tfLattice: lattice,
+                tfEngy: engy * params['engyScalerA'] + params['engyScalerB'],
+                tfFors: f * params['engyScalerA'],
+                tfLearningRate: float(params['learningRate']),
+            }
+
+            (Ei, Fi) = sess.run((tfEp, tfFp), feed_dict=feedDict)
+
+            Ei=Ei.reshape(-1)
+            engy = engy.reshape(-1)
+
+            fileEtot.write(str(np.sum(engy)) + " " + str(np.sum(Ei)) + "\n")
+            for iAtom in range(nAtoms):
+                fileEi.write(str(engy[iAtom]) + " " + str(Ei[iAtom]) + "\n")
+                fileFi.write(" ".join(f[iAtom].astype(str)) + " " + " ".join(Fi[iAtom].astype(str)) + "\n")
+
+    fileEi.close()
+    fileEtot.close()
+    fileFi.close()
+
 
 
 '''
