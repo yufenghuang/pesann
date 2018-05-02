@@ -489,9 +489,8 @@ def specialTask05(params):
     fileEtot.close()
     fileFi.close()
 
+# Obtain DFT vs NN along an MD trajectory
 def specialTask06(params):
-    # similar to specialrun8 but with Repulsion
-    #
 
     mmtFile = params["inputData"]
 
