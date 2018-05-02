@@ -318,6 +318,10 @@ elif params["task"] == 205:
 
     specialTask.specialTask05(params)
 
+elif params["task"] == 206:
+
+    specialTask.specialTask06(params)
+
 
 else:
     print("Unrecognized task: ", params["task"])

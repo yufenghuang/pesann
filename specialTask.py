@@ -489,7 +489,85 @@ def specialTask05(params):
     fileEtot.close()
     fileFi.close()
 
+def specialTask06(params):
+    # similar to specialrun8 but with Repulsion
+    #
 
+    mmtFile = params["inputData"]
+
+    # nCase = 0
+    # with open(mmtFile, 'r') as datafile:
+    #     for line in datafile:
+    #         if "Iteration" in line:
+    #             nCase += 1
+
+    nCase = params['epoch']
+
+    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
+    tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
+
+    tfCoord = tf.placeholder(tf.float32, shape=(None, 3))
+    tfLattice = tf.placeholder(tf.float32, shape=(3, 3))
+
+    if (params["repulsion"] == "1/R") or (params["repulsion"] == "1/R12") or (params["repulsion"] == "exp(-R)"):
+        tfEs, tfFs = tff.tf_getEF_repulsion(tfCoord, tfLattice, params)
+    else:
+        tfEs, tfFs = tff.tf_getEF(tfCoord, tfLattice, params)
+
+    tfEp = (tfEs - tfEngyB) / tfEngyA
+    tfFp = tfFs / tfEngyA
+
+    saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
+
+
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        saver.restore(sess, str(params['logDir']) + "/tf.chpt")
+        with open(mmtFile, 'r') as datafile:
+            nAtoms1, iIter1, lattice1, R1, f1, v1, e1 = pyf.getData(datafile)
+            R0 = R1.dot(lattice1.T)
+            x1 = R0
+
+            nAtoms2, iIter2, lattice2, R2, f2, v2, e2 = pyf.getData(datafile)
+            R0 = R2.dot(lattice2.T)
+            x2 = R0
+
+            for i in range(nCase):
+
+                R20 = R0
+
+                nAtoms3, iIter3, lattice3, R3, f3, v3, e3 = pyf.getData(datafile)
+                R0 = R3.dot(lattice3.T)
+                x3 = R0
+
+                v = R3 - R1 + 0.5
+                v = v - np.floor(v) - 0.5
+                v = v.dot(lattice2.T)
+                v = v / np.sqrt(np.sum(v ** 2))
+
+                feedDict = {tfCoord: R2, tfLattice: lattice2}
+                Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
+
+                EiRMSE = np.sqrt(np.sum((Ep - e2[:,None]) ** 2) / nAtoms2)
+                FiRMSE = np.sqrt(np.sum((Fp - f2) ** 2) / (nAtoms2 * 3))
+                crossF = np.sum(Fp * f2) / np.sqrt(np.sum(Fp ** 2) * np.sum(f2 ** 2))
+
+                print(nAtoms2)
+                print("Epot(DFT)", np.sum(e2), "Epot(NN)", np.sum(Ep), "F(DFT)", np.sum(f2 * v), "F(NN)", np.sum(Fp * v),
+                      "Ei(RMSE)", EiRMSE, "Fi(RMSE)", FiRMSE, "Fnn.Fdft", crossF)
+
+                for iAtom in range(nAtoms2):
+                    print("Si"+str(iAtom+1), R20[iAtom, 0], R20[iAtom, 1], R20[iAtom,2], Fp[iAtom, 0], Fp[iAtom, 1], Fp[iAtom, 2],
+                          f2[iAtom,0], f2[iAtom,1], f2[iAtom,2])
+
+                sys.stdout.flush()
+
+                R1 = R2
+                nAtoms2 = nAtoms3
+                lattice2 = lattice3
+                R2 = R3
+                f2 = f3
+                e2 = e3
 
 '''
 
