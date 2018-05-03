@@ -568,6 +568,10 @@ def specialTask06(params):
                 f2 = f3
                 e2 = e3
 
+# Thermal conductivity:
+def specialTask07(params):
+    return 0
+
 '''
 
 def old_specialTask01(params):
