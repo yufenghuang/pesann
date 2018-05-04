@@ -8,6 +8,93 @@ Created on Tue Mar 13 14:19:55 2018
 
 import numpy as np
 
+
+def adjMat2adjList(adjMat, *values):
+    # adjacency matrix to adjacency list
+    # note: the indices are shifted by 1 in the adjacency lsit
+    for val in values:
+        assert val.shape[:2] == adjMat.shape, \
+            "The first 2 dimensions of the input values must be the same as the adjacency matrix"
+
+
+    idx1, idx2 = np.where(adjMat)
+    maxNb = np.array([list(idx1).count(item) for item in list(idx1)]).max()
+    idxNb = np.array(
+        [np.concatenate([idx2[idx1 == item] + 1, np.zeros(maxNb - list(idx1).count(item), dtype=int)]) for item in
+         list(set(idx1))])
+
+    if len(values) == 0:
+        return maxNb, idxNb
+    else:
+        outVal = [np.zeros([len(idxNb), maxNb] + list(val.shape)[2:], dtype=val.dtype) for val in values]
+
+        for iVal, val in enumerate(values):
+            (outVal[iVal])[idxNb > 0] = val[adjMat > 0]
+
+        return tuple([maxNb, idxNb] + outVal)
+
+
+def adjList2adjMat(adjList, *values):
+    # adjacency list to adjacency matrix
+    # note: adjacency list is shifted by 1
+    for val in values:
+        assert val.shape[:2] == adjList.shape, \
+            "The first 2 dimensions of the input values must be the same as the adjacency list"
+
+    adjMat = np.array([[1 if k + 1 in item[item > 0] else 0 for k in range(len(adjList))] for item in adjList])
+
+    if len(values) == 0:
+        return adjMat
+    else:
+        idx1, idx3 = np.where(adjMat)
+        idx2 = adjList[adjList > 0] - 1
+
+        outVal = [np.zeros(list(adjMat.shape) + list(val.shape)[2:], dtype=val.dtype) for val in values]
+
+        for iVal, val in enumerate(values):
+            (outVal[iVal])[idx1, idx2] = val[adjList > 0]
+
+        return tuple([adjMat] + outVal)
+
+def testAdjMatAndList():
+    # Testing the conversion between adjacency list and adjacency matrix
+
+    # set the size of the adjacency matrix
+    nCase = 10
+
+    # generate a random adjacency matrix
+    adjMatrix = np.random.rand(nCase, nCase)
+    adjMatrix = ((adjMatrix.T + adjMatrix) > 1).astype(int)
+    np.fill_diagonal(adjMatrix, 0)
+
+    # generate values with different dimensions for the adjacency matrix
+    adjMatVal = np.random.randint(10, size=adjMatrix.shape) + 1
+    adjMatVal[adjMatrix == 0] = 0
+    adjMatVal2 = np.random.randint(10, size=(nCase, nCase, 3)) + 1
+    adjMatVal2[adjMatrix == 0] = np.array([0, 0, 0])
+
+    # convert adjacency matrix to adjacency list
+    a, b, c, d = adjMat2adjList(adjMatrix, adjMatVal, adjMatVal2)
+
+    # swap indices in the adjacency list to have a non-descending order
+    print(b[0, 0], b[0, 3])
+    b[0, 0], b[0, 3] = b[0, 3], b[0, 0]
+    c[0, 0], c[0, 3] = c[0, 3], c[0, 0]
+    d[0, 0], d[0, 3] = d.copy()[0, 3], d.copy()[0, 0]
+
+    # convert adjacency list to adjacency matrix
+    B, C, D = adjList2adjMat(b, c, d)
+
+    # check whether the original values and the new values are still the same after conversions
+    print(np.sum(C - adjMatVal))
+    print(np.sum(D - adjMatVal2))
+
+    # transpose the values in adjacency matrix (a,b) and (aT,bT) are the same,
+    # only the values (c,d) are changed to (cT, dT)
+    a, b, c, d = adjMat2adjList(adjMatrix, adjMatVal, adjMatVal2)
+    B, C, D = adjList2adjMat(b, c, d)
+    aT, bT, cT, dT = adjMat2adjList(B, C.T, D.transpose([1, 0, 2]))
+
 def np_getNb(np_R, np_lattice, dcut):
     
     nAtoms = np_R.shape[0]
