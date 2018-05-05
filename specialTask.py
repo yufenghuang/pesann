@@ -576,6 +576,7 @@ def specialTask07(params):
     def m(x):
         return erfc(12*np.abs(x-0.5)-3)/2
 
+    J = 1 / 1.602177e-19  # eV
     meter = 1e10  # Angstroms
     s = 1e12  # ps
     mole = 6.022141e23  # atoms
@@ -613,8 +614,14 @@ def specialTask07(params):
         feedDict = {tfCoord: R, tfLattice: lattice}
         sess.run(tf.global_variables_initializer())
         saver.restore(sess, str(params['logDir']) + "/tf.chpt")
-        Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
+        Ep, Fp, Fln = sess.run((tfEp, tfFp, tfFln), feed_dict=feedDict)
         Fp = -Fp
+        Fln = -Fln
+        idxNb, Rln, maxNb, nAtoms = npf.getNb(R, lattice, float(params['dcut']))
+        adjMat, Fln = npf.adjList2adjMat(idxNb, Fln)
+        _, Fln = npf.adjMat2adjList(adjMat, Fln.transpose([1,0,2]))
+        Rln = -Rln
+        Jx = np.sum(Ep*V0[:,0]) + np.sum(Rln[:,:,0] * np.sum(Fln*V0[:,None,:],axis=2))
 
         Vneg = V0 - 0.5*Fp/mSi*dt / constA
 
