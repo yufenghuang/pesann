@@ -744,8 +744,8 @@ def specialTask08(params):
             Rhalf = R0 + m(R0[:, 0] / lattice[0, 0])[:, None] * Vpos * dt
 
             J0 = np.sum(Ep*V0, axis=0)
-            J1 = getJhalf(R0, V0)
-            J2 = getJhalf(Rhalf, V0) # What velocity?
+            J1 = getJhalf(R0, m(R0[:, 0] / lattice[0, 0])[:, None] * V0)
+            J2 = getJhalf(Rhalf, (1-m(R0[:, 0] / lattice[0, 0])[:, None]) * V0) # What velocity?
             J = J0+J1+J2
             Jx = J[0]
 
