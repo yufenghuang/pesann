@@ -570,77 +570,66 @@ def specialTask06(params):
 
 # Thermal conductivity MD run:
 
+# MD constants:
+J = 1 / 1.602177e-19  # eV
+meter = 1e10  # Angstroms
+s = 1e12  # ps
+mole = 6.022141e23  # atoms
+kg = 1e3 * mole  # grams/mole
+mSi = 28.09  # grams/mol
+constA = J / (kg * meter ** 2 / s ** 2)
+bohr = 0.529177249
+
 def MDstep(R0, Vneg, dt, Fp):
-
-    J = 1 / 1.602177e-19  # eV
-    meter = 1e10  # Angstroms
-    s = 1e12  # ps
-    mole = 6.022141e23  # atoms
-    kg = 1e3 * mole  # grams/mole
-
-    mSi = 28.09  # grams/mol
-
-    constA = J / (kg * meter ** 2 / s ** 2)
-
     V0 = Vneg + 0.5 * Fp / mSi * dt / constA
     Vpos = Vneg + Fp / mSi * dt / constA
     R1 = R0 + Vpos * dt
-
     return R1, Vpos, V0
+
+
+def getMDEnergies(Ep, V0):
+    Epot = np.sum(Ep)
+    Ekin = np.sum(0.5 * mSi * V0 ** 2 * constA)
+    Etot = Epot + Ekin
+    return Epot, Ekin, Etot
+
+
+def printXYZ(iStep, R0, V0, Fp, Ep, *other):
+    Epot, Ekin, Etot = getMDEnergies(Ep, V0)
+    print(len(R0))
+    print(iStep, "Epot=", "{:.12f}".format(Epot), "Ekin=", "{:.12f}".format(Ekin), "Etot=",
+          "{:.12f}".format(Etot), "".join(["{:.12f}".format(float(o)) for o in other]))
+    for iAtom in range(len(R0)):
+        print("Si", R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2], V0[iAtom, 0], V0[iAtom, 1], V0[iAtom, 2], Fp[iAtom, 0],
+              Fp[iAtom, 1], Fp[iAtom, 2])
+    sys.stdout.flush()
 
 
 # cleaned up version of NVE
 def specialTask07(params):
     # special MD run
-    J = 1 / 1.602177e-19  # eV
-    meter = 1e10  # Angstroms
-    s = 1e12  # ps
-    mole = 6.022141e23  # atoms
-    kg = 1e3 * mole  # grams/mole
-
-    mSi = 28.09  # grams/mol
-
-    constA = J / (kg * meter ** 2 / s ** 2)
-
-    bohr = 0.529177249
-
     dt = float(params["dt"])
 
+    # setup Tensorflow
     tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
     tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
-
     tfCoord = tf.placeholder(tf.float32, shape=(None, 3))
     tfLattice = tf.placeholder(tf.float32, shape=(3, 3))
-
-    if (params["repulsion"] == "1/R") or (params["repulsion"] == "1/R12") or (params["repulsion"] == "exp(-R)"):
-        tfEs, tfFs = tff.tf_getEF_repulsion(tfCoord, tfLattice, params)
-    else:
-        tfEs, tfFs = tff.tf_getEF(tfCoord, tfLattice, params)
+    tfEs, tfFs = tff.tf_getEF(tfCoord, tfLattice, params)
     tfEp = (tfEs - tfEngyB) / tfEngyA
     tfFp = tfFs / tfEngyA
 
     saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
-    with open(params["inputData"], 'r') as mmtFile:
-        # nAtoms, lattice, R, F0, V0 = getRFVmmt(mmtFile)
-        nAtoms, iIter, lattice, R, F0, V0 = getData11(mmtFile)
-
-    V0 = V0*1000*bohr
-    R1 = R.dot(lattice.T)
 
     with tf.Session() as sess:
-        feedDict = {tfCoord: R, tfLattice: lattice}
+
+        # initialize Tensorflow flow
         sess.run(tf.global_variables_initializer())
         saver.restore(sess, str(params['logDir']) + "/tf.chpt")
-        Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
-        Fp = -Fp
 
-        Vpos = V0 - 0.5*Fp/mSi*dt / constA
-
-        for iStep in range(params["epoch"]):
-            R0 = R1
-            Vneg = Vpos
+        # define the function for Ep and Fp
+        def getEF(R0):
             R = np.linalg.solve(lattice, R0.T).T
-
             R[R > 1] = R[R > 1] - np.floor(R[R > 1])
             R[R < 0] = R[R < 0] - np.floor(R[R < 0])
             R0 = R.dot(lattice.T)
@@ -648,26 +637,131 @@ def specialTask07(params):
             feedDict = {tfCoord: R, tfLattice: lattice}
             Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
             Fp = -Fp
-            V0 = Vneg + 0.5 * Fp / mSi * dt / constA
-            Vpos = Vneg + Fp / mSi * dt / constA
-            R1 = R0 + Vpos * dt
 
-            Epot = np.sum(Ep)
-            Ekin = np.sum(0.5 * mSi * V0 ** 2 * constA)
-            Etot = Epot + Ekin
+            return R0, Ep, Fp
 
+        # initialize the atomic positions and velocities
+        with open(params["inputData"], 'r') as mmtFile:
+            nAtoms, iIter, lattice, R, F0, V0 = pyf.getData11(mmtFile)
+            V0 = V0 * 1000 * bohr
+            R1 = R.dot(lattice.T)
+            feedDict = {tfCoord: R, tfLattice: lattice}
+            Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
+            Fp = -Fp
+            Vpos = V0 - 0.5*Fp/mSi*dt / constA
+
+        # MD loop
+        for iStep in range(params["epoch"]):
+            R0 = R1
+            Vneg = Vpos
+
+            R0, Ep, Fp = getEF(R0)
+            R1, Vpos, V0 = MDstep(R0, Vneg, dt, Fp)
+
+            # printing the output
             if (iStep % int(params["nstep"]) == 0) or \
                     ((iStep % int(params["nstep"]) != 0) & (iStep == params["epoch"] - 1)):
-                print(nAtoms)
-                print(iStep, "Epot=", "{:.12f}".format(Epot), "Ekin=", "{:.12f}".format(Ekin), "Etot=",
-                      "{:.12f}".format(Etot))
-                for iAtom in range(len(R1)):
-                    print("Si", R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2], V0[iAtom, 0], V0[iAtom, 1], V0[iAtom, 2], Fp[iAtom, 0], Fp[iAtom, 1], Fp[iAtom, 2])
-                sys.stdout.flush()
+                printXYZ(iStep, R0, V0, Fp, Ep)
 
 
-
+# Thermal conductivity:
 def specialTask08(params):
+
+    from scipy.special import erfc
+    def m(x):
+        return erfc(12*np.abs(x-0.5)-3)/2
+
+    # special MD run
+    dt = float(params["dt"])
+
+    # setup Tensorflow
+    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
+    tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
+    tfCoord = tf.placeholder(tf.float32, shape=(None, 3))
+    tfLattice = tf.placeholder(tf.float32, shape=(3, 3))
+    tfEs, tfFs = tff.tf_getEF(tfCoord, tfLattice, params)
+    tfEp = (tfEs - tfEngyB) / tfEngyA
+    tfFp = tfFs / tfEngyA
+    tfFln = tff.tf_getFln(tfCoord, tfLattice, params) / tfEngyA
+
+    saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
+
+    with tf.Session() as sess:
+
+        # initialize Tensorflow flow
+        sess.run(tf.global_variables_initializer())
+        saver.restore(sess, str(params['logDir']) + "/tf.chpt")
+
+        # define the function for Ep and Fp
+        def getEF(R0):
+            R = np.linalg.solve(lattice, R0.T).T
+            R[R > 1] = R[R > 1] - np.floor(R[R > 1])
+            R[R < 0] = R[R < 0] - np.floor(R[R < 0])
+
+            feedDict = {tfCoord: R, tfLattice: lattice}
+            Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
+            Fp = -Fp
+
+            return R.dot(lattice.T), Ep, Fp
+
+        def getJhalf(R0, V0):
+            R = np.linalg.solve(lattice, R0.T).T
+            R[R > 1] = R[R > 1] - np.floor(R[R > 1])
+            R[R < 0] = R[R < 0] - np.floor(R[R < 0])
+
+            feedDict = {tfCoord: R, tfLattice: lattice}
+
+            Fln = sess.run(-tfFln, feed_dict=feedDict)
+
+            idxNb, Rln, maxNb, nAtoms = npf.np_getNb(R, lattice, float(params['dcut']))
+            adjMat, Fln = npf.adjList2adjMat(idxNb, Fln)
+            _,_,Fln = npf.adjMat2adjList(adjMat, Fln.transpose([1, 0, 2]))
+            Rln = -Rln
+
+            Jhalf = np.sum(Rln * np.sum(Fln * V0[:, None, :], axis=2)[:, :, None], axis=1).sum(axis=0)
+
+            return Jhalf
+
+        # initialize the atomic positions and velocities
+        with open(params["inputData"], 'r') as mmtFile:
+            nAtoms, iIter, lattice, R, F0, V0 = pyf.getData11(mmtFile)
+            V0 = V0 * 1000 * bohr
+            R1 = R.dot(lattice.T)
+            feedDict = {tfCoord: R, tfLattice: lattice}
+            Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
+            Fp = -Fp
+            Vpos = V0 - 0.5*Fp/mSi*dt / constA
+
+        Jx0 = 0
+
+        # MD loop
+        for iStep in range(params["epoch"]):
+            R0 = R1
+            Vneg = Vpos
+
+            R0, Ep, Fp = getEF(R0)
+            R1, Vpos, V0 = MDstep(R0, Vneg, dt, Fp)
+            Rhalf = R0 + m(R0[:, 0] / lattice[0, 0])[:, None] * Vpos * dt
+
+            J0 = np.sum(Ep*V0, axis=0)
+            J1 = getJhalf(R0, V0)
+            J2 = getJhalf(Rhalf, V0) # What velocity?
+            J = J0+J1+J2
+            Jx = J[0]
+
+            if iStep == 0:
+                Jx0 = Jx
+
+            print(Ep.shape, J0.shape, J1.shape, J2.shape, J.shape, Jx.shape)
+            print(Jx0, Jx, Jx0*Jx)
+
+            # printing the output
+            if (iStep % int(params["nstep"]) == 0) or \
+                    ((iStep % int(params["nstep"]) != 0) & (iStep == params["epoch"] - 1)):
+                printXYZ(iStep, R0, V0, Fp, Ep, Jx0*Jx)
+
+
+def old_specialTask08(params):
 
     from scipy.special import erfc
 
@@ -715,7 +809,7 @@ def specialTask08(params):
         Ep, Fp, Fln = sess.run((tfEp, tfFp, tfFln), feed_dict=feedDict)
         Fp = -Fp
         Fln = -Fln
-        idxNb, Rln, maxNb, nAtoms = npf.getNb(R, lattice, float(params['dcut']))
+        idxNb, Rln, maxNb, nAtoms = npf.np_getNb(R, lattice, float(params['dcut']))
         adjMat, Fln = npf.adjList2adjMat(idxNb, Fln)
         _, Fln = npf.adjMat2adjList(adjMat, Fln.transpose([1,0,2]))
         Rln = -Rln
