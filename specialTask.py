@@ -752,10 +752,11 @@ def specialTask08(params):
             if iStep == 0:
                 Jx0 = Jx
 
-            print(Ep.shape, J0.shape, J1.shape, J2.shape, J.shape, Jx.shape)
-            print(Jx0, Jx, Jx0*Jx)
+            # print(Ep.shape, J0.shape, J1.shape, J2.shape, J.shape, Jx.shape)
+            # print(Jx0, Jx, Jx0*Jx)
 
             # printing the output
+
             if (iStep % int(params["nstep"]) == 0) or \
                     ((iStep % int(params["nstep"]) != 0) & (iStep == params["epoch"] - 1)):
                 printXYZ(iStep, R0, V0, Fp, Ep, Jx0*Jx)
