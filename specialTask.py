@@ -598,7 +598,7 @@ def printXYZ(iStep, R0, V0, Fp, Ep, *other):
     Epot, Ekin, Etot = getMDEnergies(Ep, V0)
     print(len(R0))
     print(iStep, "Epot=", "{:.12f}".format(Epot), "Ekin=", "{:.12f}".format(Ekin), "Etot=",
-          "{:.12f}".format(Etot), "".join(["{:.12f}".format(float(o)) for o in other]))
+          "{:.12f}".format(Etot), " ".join(["{:.12f}".format(float(o)) for o in other]))
     for iAtom in range(len(R0)):
         print("Si", R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2], V0[iAtom, 0], V0[iAtom, 1], V0[iAtom, 2], Fp[iAtom, 0],
               Fp[iAtom, 1], Fp[iAtom, 2])
