@@ -866,7 +866,7 @@ def specialTask09(params):
                 if iStep == 0:
                     Jt0 = Jt
 
-                printXYZ(iStep, R0, V0, Fp, Ep, np.sum(Jt0*Jt, axis=0)[0])
+                printXYZ(iStep, R0, V0, Fp, Ep, np.sum(Jt0*Jt, axis=0))
 
 
 def old_specialTask08(params):
