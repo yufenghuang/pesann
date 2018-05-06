@@ -750,6 +750,9 @@ def specialTask08(params):
             Jt = J0+J1+J2
 
             if iStep == 0:
+                J00 = J0
+                J10 = J1
+                J20 = J2
                 Jt0 = Jt
 
             # print(Ep.shape, J0.shape, J1.shape, J2.shape, J.shape, Jx.shape)
@@ -759,7 +762,8 @@ def specialTask08(params):
 
             if (iStep % int(params["nstep"]) == 0) or \
                     ((iStep % int(params["nstep"]) != 0) & (iStep == params["epoch"] - 1)):
-                printXYZ(iStep, R0, V0, Fp, Ep, np.sum(Jt0*Jt, axis=0)[0])
+                printXYZ(iStep, R0, V0, Fp, Ep, np.sum(Jt0*Jt, axis=0)[0],
+                         np.sum(J0*J00, axis=0)[0], np.sum(J1*J10, axis=0)[0], np.sum(J2*J20, axis=0)[0])
 
 
 def old_specialTask08(params):
