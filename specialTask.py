@@ -732,42 +732,41 @@ def specialTask08(params):
             Fp = -Fp
             Vpos = V0 - 0.5*Fp/mSi*dt / constA
 
-        J00 = 0
-        J10 = 0
-        J20 = 0
-        Jt0 = 0
+        # MD equilibrium loop
+        # for iStep in range(10000):
+        #     R0 = R1
+        #     Vneg = Vpos
+        #     R0, Ep, Fp = getEF(R0)
+        #     R1, Vpos, V0 = MDstep(R0, Vneg, 0.0001, Fp)
+        #     # printing the output
+        #     if (iStep % 10 == 0) or \
+        #             ((iStep % 10 != 0) & (iStep == params["epoch"] - 1)):
+        #         printXYZ(iStep, R0, V0, Fp, Ep)
 
-        # MD loop
+        # Thermal conductivity MD loop
+        Jt0 = 0
         for iStep in range(params["epoch"]):
             R0 = R1
             Vneg = Vpos
 
             R0, Ep, Fp, Es = getEF(R0)
             R1, Vpos, V0 = MDstep(R0, Vneg, dt, Fp)
-            Rhalf = R0 + m(R0[:, 0] / lattice[0, 0])[:, None] * Vpos * dt
-
-            # J0 = Ep*V0
-            J0 = Es*V0
-            J1 = getJhalf(R0, m(R0[:, 0] / lattice[0, 0])[:, None] * V0)
-            J2 = getJhalf(Rhalf, (1-m(R0[:, 0] / lattice[0, 0])[:, None]) * V0) # What velocity?
-            Jt = J0+J1+J2
-
-            if iStep == 0:
-                J00 = J0
-                J10 = J1
-                J20 = J2
-                Jt0 = Jt
-
-            # print(Ep.shape, J0.shape, J1.shape, J2.shape, J.shape, Jx.shape)
-            # print(Jx0, Jx, Jx0*Jx)
 
             # printing the output
-
             if (iStep % int(params["nstep"]) == 0) or \
                     ((iStep % int(params["nstep"]) != 0) & (iStep == params["epoch"] - 1)):
-                printXYZ(iStep, R0, V0, Fp, Ep, np.sum(Jt0*Jt, axis=0)[0],
-                         np.sum(J0*J00, axis=0)[0], np.sum(J1*J10, axis=0)[0], np.sum(J2*J20, axis=0)[0])
 
+                # only calculate <J(t)J(0)> when printing
+                Rhalf = R0 + m(R0[:, 0] / lattice[0, 0])[:, None] * Vpos * dt
+                J0 = Ep*V0
+                # J0 = Es * V0 # shifting to zero
+                J1 = getJhalf(R0, m(R0[:, 0] / lattice[0, 0])[:, None] * V0)
+                J2 = getJhalf(Rhalf, (1 - m(R0[:, 0] / lattice[0, 0])[:, None]) * V0)  # What velocity?
+                Jt = J0 + J1 + J2
+                if iStep == 0:
+                    Jt0 = Jt
+
+                printXYZ(iStep, R0, V0, Fp, Ep, np.sum(Jt0*Jt, axis=0)[0])
 
 def old_specialTask08(params):
 
