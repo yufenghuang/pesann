@@ -733,15 +733,15 @@ def specialTask08(params):
             Vpos = V0 - 0.5*Fp/mSi*dt / constA
 
         # MD equilibrium loop
-        for iStep in range(10000):
-            R0 = R1
-            Vneg = Vpos
-            R0, Ep, Fp, Es = getEF(R0)
-            R1, Vpos, V0 = MDstep(R0, Vneg, 0.0001, Fp)
-            # printing the output
-            if (iStep % 10 == 0) or \
-                    ((iStep % 10 != 0) & (iStep == params["epoch"] - 1)):
-                printXYZ(iStep, R0, V0, Fp, Ep)
+        # for iStep in range(10000):
+        #     R0 = R1
+        #     Vneg = Vpos
+        #     R0, Ep, Fp, Es = getEF(R0)
+        #     R1, Vpos, V0 = MDstep(R0, Vneg, 0.0001, Fp)
+        #     # printing the output
+        #     if (iStep % 10 == 0) or \
+        #             ((iStep % 10 != 0) & (iStep == params["epoch"] - 1)):
+        #         printXYZ(iStep, R0, V0, Fp, Ep)
 
         # Thermal conductivity MD loop
         Jt0 = 0
