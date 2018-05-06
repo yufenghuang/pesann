@@ -862,10 +862,11 @@ def specialTask09(params):
 
                 # only calculate <J(t)J(0)> when printing
                 Rhalf = R0 + m(R0[:, 0] / lattice[0, 0])[:, None] * Vpos * dt
+                Rhalf[:,0] = Rhalf[:,0] - 0.5*lattice[0,0]
                 R1new = R1.copy()
-                R1new[R1[:,0]>lattice[0,0]/2, 0] = R1new[R1[:,0]>lattice[0,0]/2, 0] - lattice[0,0]
+                R1new[R1[:,0]>lattice[0,0]/2] = R1new[R1[:,0]>lattice[0,0]/2] - lattice[0]
                 J0 = Ep[:,0]*V0[:,0]
-                J1, E1 = getJhalf(Rhalf-np.array([lattice[0,0]/2, 0, 0]), Ep)
+                J1, E1 = getJhalf(Rhalf, Ep)
                 J2, E2 = getJhalf(R1new, E1)
                 Jt = J0 + J1 + J2
                 if iStep == 0:
