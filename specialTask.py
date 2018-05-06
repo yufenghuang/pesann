@@ -732,7 +732,10 @@ def specialTask08(params):
             Fp = -Fp
             Vpos = V0 - 0.5*Fp/mSi*dt / constA
 
-        Jx0 = 0
+        J00 = 0
+        J10 = 0
+        J20 = 0
+        Jt0 = 0
 
         # MD loop
         for iStep in range(params["epoch"]):
