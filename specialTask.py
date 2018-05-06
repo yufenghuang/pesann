@@ -854,16 +854,37 @@ def specialTask09(params):
             Fp = -Fp
             Vpos = V0 - 0.5*Fp/mSi*dt / constA
 
+        E0 = 0
+
         # # MD equilibrium loop
-        # for iStep in range(1000):
-        #     R0 = R1
-        #     Vneg = Vpos
-        #     R0, Ep, Fp, Es = getEF(R0)
-        #     R1, Vpos, V0 = MDstep(R0, Vneg, 0.001, Fp)
-        #     # printing the output
-        #     if (iStep % 10 == 0) or \
-        #             ((iStep % 10 != 0) & (iStep == params["epoch"] - 1)):
-        #         printXYZ(iStep, R0, V0, Fp, Ep)
+        for iStep in range(1000):
+            R0 = R1
+            Vneg = Vpos
+            E0 = Ep
+            R0, Ep, Fp, Es = getEF(R0)
+            R1, Vpos, V0 = MDstep(R0, Vneg, 0.0001, Fp)
+
+            R = np.linalg.solve(lattice, R0.T).T
+            R[R > 1] = R[R > 1] - np.floor(R[R > 1])
+            R[R < 0] = R[R < 0] - np.floor(R[R < 0])
+            feedDict = {tfCoord: R, tfLattice: lattice}
+            idxNb, Rln, maxNb, nAtoms = npf.np_getNb(R, lattice, float(params['dcut']))
+            Fln = sess.run(-tfFln, feed_dict=feedDict)
+            adjMat, FlnMat = npf.adjList2adjMat(idxNb, Fln)
+            _, _, Fln = npf.adjMat2adjList(adjMat, FlnMat.transpose([1,0,2]))
+
+            dR = np.zeros((nAtoms, maxNb, 3))
+            dR[idxNb>0] = (R1-R0)[idxNb[idxNb>0]-1]
+
+            dE = -np.sum(Fp * (R1-R0),axis=1) - np.sum(Fln * dR,axis=2).sum(axis=1)
+
+            # printing the output
+            if (iStep % 10 == 0) or \
+                    ((iStep % 10 != 0) & (iStep == params["epoch"] - 1)):
+                # printXYZ(iStep, R0, V0, Fp, Ep)
+                print(iStep)
+                for iAtom in range(nAtoms):
+                    print(Ep[iAtom]-E0[iAtom], dE[iAtom])
 
         # Thermal conductivity MD loop
         Jt0 = 0
