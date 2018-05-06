@@ -810,11 +810,36 @@ def specialTask09(params):
 
             return R.dot(lattice.T), Ep, Fp, Es
 
-        def getJhalf(Rhalf, E0, dR):
-            # R = np.linalg.solve(lattice, Rhalf.T).T
-            # R[R > 1] = R[R > 1] - np.floor(R[R > 1])
-            # R[R < 0] = R[R < 0] - np.floor(R[R < 0])
-            # feedDict = {tfCoord: R, tfLattice: lattice}
+        def getJhalf(Rhalf, Ein, dR):
+            R = np.linalg.solve(lattice, Rhalf.T).T
+            R[R > 1] = R[R > 1] - np.floor(R[R > 1])
+            R[R < 0] = R[R < 0] - np.floor(R[R < 0])
+            feedDict = {tfCoord: R, tfLattice: lattice}
+            E0 = sess.run(tfEp, feed_dict=feedDict)
+
+            R = np.linalg.solve(lattice, (Rhalf+dR).T).T
+            R[R > 1] = R[R > 1] - np.floor(R[R > 1])
+            R[R < 0] = R[R < 0] - np.floor(R[R < 0])
+            feedDict = {tfCoord: R, tfLattice: lattice}
+            E1 = sess.run(tfEp, feed_dict=feedDict)
+
+            dE1 = (E1 - E2)[:,0]
+
+            R = np.linalg.solve(lattice, (Rhalf+0.5*dR).T).T
+            R[R > 1] = R[R > 1] - np.floor(R[R > 1])
+            R[R < 0] = R[R < 0] - np.floor(R[R < 0])
+            feedDict = {tfCoord: R, tfLattice: lattice}
+            Fl, Fln = sess.run((tfFp, tfFln), feed_dict=feedDict)
+            idxNb, Rln, maxNb, nAtoms = npf.np_getNb(R, lattice, float(params['dcut']))
+            adjMat, FlnMat = npf.adjList2adjMat(idxNb, Fln)
+            _, _, Fln = npf.adjMat2adjList(adjMat, FlnMat.transpose([1, 0, 2]))
+
+            dRmat = np.zeros((nAtoms, maxNb, 3))
+            dRmat[idxNb>0] = dR[idxNb[idxNb>0]-1]
+
+            dE2 = np.sum(Fl * dR + np.sum(Fln * dRmat,axis=1),axis=2)
+
+            return dE1, dE2
 
             # idxNb, Rln, maxNb, nAtoms = npf.np_getNb(R, lattice, float(params['dcut']))
             # Vij = np.zeros((nAtoms, maxNb, 3))
@@ -831,18 +856,18 @@ def specialTask09(params):
 
             # Ehalf, Fhalf = sess.run((tfEp, tfFp), feed_dict=feedDict)
 
-            _, Ehalf, Fhalf, __ = getEF(Rhalf)
-
-            dEdt = (Ehalf - E0 + np.sum(Fhalf*dR, axis=1)[:,None])/dt
+            # _, Ehalf, Fhalf, __ = getEF(Rhalf)
+            #
+            # dEdt = (Ehalf - E0 + np.sum(Fhalf*dR, axis=1)[:,None])/dt
 
             # print("Numerical dEi/dt and deltaEi")
             # print((Ehalf-E0)[:10,0])
             # print(dEdt[:10,0])
 
-            Jhalf = Rhalf[:,0] * dEdt[:,0]
+            # Jhalf = Rhalf[:,0] * dEdt[:,0]
             # Jhalf = Rhalf[:,0] * dE_anal
 
-            return Jhalf, Ehalf
+            # return Jhalf, Ehalf
 
         # initialize the atomic positions and velocities
         with open(params["inputData"], 'r') as mmtFile:
@@ -857,40 +882,40 @@ def specialTask09(params):
         E0 = 0
 
         # # MD equilibrium loop
-        for iStep in range(1000):
-            R0 = R1
-            Vneg = Vpos
-            E0 = Ep
-            R0, Ep, Fp, Es = getEF(R0)
-            R1, Vpos, V0 = MDstep(R0, Vneg, 0.0001, Fp)
-
-            R = np.linalg.solve(lattice, R0.T).T
-            R[R > 1] = R[R > 1] - np.floor(R[R > 1])
-            R[R < 0] = R[R < 0] - np.floor(R[R < 0])
-            feedDict = {tfCoord: R, tfLattice: lattice}
-            idxNb, Rln, maxNb, nAtoms = npf.np_getNb(R, lattice, float(params['dcut']))
-            Fln = sess.run(-tfFln, feed_dict=feedDict)
-            adjMat, FlnMat = npf.adjList2adjMat(idxNb, Fln)
-            _, _, Fln = npf.adjMat2adjList(adjMat, FlnMat.transpose([1,0,2]))
-
-            dR = np.zeros((nAtoms, maxNb, 3))
-            dR[idxNb>0] = (R1-R0)[idxNb[idxNb>0]-1]
-
-            dE = -np.sum(Fp * (R1-R0),axis=1) - np.sum(Fln * dR,axis=2).sum(axis=1)
-
-            # printing the output
-            if (iStep % 10 == 0) or \
-                    ((iStep % 10 != 0) & (iStep == params["epoch"] - 1)):
-                # printXYZ(iStep, R0, V0, Fp, Ep)
-                print(iStep)
-                for iAtom in range(nAtoms):
-                    print(Ep[iAtom]-E0[iAtom], dE[iAtom])
+        # for iStep in range(1000):
+        #     R0 = R1
+        #     Vneg = Vpos
+        #     E0 = Ep
+        #     R0, Ep, Fp, Es = getEF(R0)
+        #     R1, Vpos, V0 = MDstep(R0, Vneg, 0.0001, Fp)
+        #
+        #     R = np.linalg.solve(lattice, R0.T).T
+        #     R[R > 1] = R[R > 1] - np.floor(R[R > 1])
+        #     R[R < 0] = R[R < 0] - np.floor(R[R < 0])
+        #     feedDict = {tfCoord: R, tfLattice: lattice}
+        #     idxNb, Rln, maxNb, nAtoms = npf.np_getNb(R, lattice, float(params['dcut']))
+        #     Fln = sess.run(-tfFln, feed_dict=feedDict)
+        #     adjMat, FlnMat = npf.adjList2adjMat(idxNb, Fln)
+        #     _, _, Fln = npf.adjMat2adjList(adjMat, FlnMat.transpose([1,0,2]))
+        #
+        #     dR = np.zeros((nAtoms, maxNb, 3))
+        #     dR[idxNb>0] = (R1-R0)[idxNb[idxNb>0]-1]
+        #
+        #     dE = -np.sum(Fp * (R1-R0),axis=1) - np.sum(Fln * dR,axis=2).sum(axis=1)
+        #
+        #     # printing the output
+        #     if (iStep % 10 == 0) or \
+        #             ((iStep % 10 != 0) & (iStep == params["epoch"] - 1)):
+        #         # printXYZ(iStep, R0, V0, Fp, Ep)
+        #         print(iStep)
+        #         for iAtom in range(nAtoms):
+        #             print(Ep[iAtom]-E0[iAtom], dE[iAtom])
 
         # Thermal conductivity MD loop
-        Jt0 = 0
-        J00 = 0
-        J10 = 0
-        J20 = 0
+        # Jt0 = 0
+        # J00 = 0
+        # J10 = 0
+        # J20 = 0
         for iStep in range(params["epoch"]):
             R0 = R1
             Vneg = Vpos
@@ -903,25 +928,31 @@ def specialTask09(params):
             if (iStep % int(params["nstep"]) == 0) or \
                     ((iStep % int(params["nstep"]) != 0) & (iStep == params["epoch"] - 1)):
 
-                # only calculate <J(t)J(0)> when printing
-                Rhalf = R0 + m(R0[:, 0] / lattice[0, 0])[:, None] * Vpos * dt
-                Rhalf[:,0] = Rhalf[:,0] - 0.5*lattice[0,0]
-                R1new = R1.copy()
-                R1new[R1[:,0]>lattice[0,0]/2] = R1new[R1[:,0]>lattice[0,0]/2] - lattice[0]
-                print("Rhalf range", np.min(Rhalf[:, 0]), np.max(Rhalf[:, 0]))
-                print("R1new range", np.min(R1new[:,0]), np.max(R1new[:,0]))
-                J0 = (Ep[:,0]+Ek)*V0[:,0]
-                J1, E1 = getJhalf(Rhalf, Ep, dt * Vpos*m(R0[:, 0] / lattice[0, 0])[:, None])
-                J2, E2 = getJhalf(R1new, E1, dt * Vpos*(1-m(R0[:, 0] / lattice[0, 0])[:, None]))
-                Jt = J0 + J1 + J2
-                if iStep == 0:
-                    Jt0 = Jt
-                    J00 = J0
-                    J10 = J1
-                    J20 = J2
+                E1, E2 = getJhalf(R0, 0, m(R0[:, 0] / lattice[0, 0])[:, None] * Vpos * dt)
 
-                printXYZ(iStep, R0, V0, Fp, Ep, np.sum(Jt0*Jt, axis=0),
-                         np.sum(J00*J0, axis=0), np.sum(J10*J1, axis=0), np.sum(J20*J2, axis=0))
+                print(iStep)
+                for iAtom in range(nAtoms):
+                    print(iAtom, E1[iAtom], E2[iAtom], (E1-E2)[iAtom])
+
+                # only calculate <J(t)J(0)> when printing
+                # Rhalf = R0 + m(R0[:, 0] / lattice[0, 0])[:, None] * Vpos * dt
+                # Rhalf[:,0] = Rhalf[:,0] - 0.5*lattice[0,0]
+                # R1new = R1.copy()
+                # R1new[R1[:,0]>lattice[0,0]/2] = R1new[R1[:,0]>lattice[0,0]/2] - lattice[0]
+                # print("Rhalf range", np.min(Rhalf[:, 0]), np.max(Rhalf[:, 0]))
+                # print("R1new range", np.min(R1new[:,0]), np.max(R1new[:,0]))
+                # J0 = (Ep[:,0]+Ek)*V0[:,0]
+                # J1, E1 = getJhalf(Rhalf, Ep, dt * Vpos*m(R0[:, 0] / lattice[0, 0])[:, None])
+                # J2, E2 = getJhalf(R1new, E1, dt * Vpos*(1-m(R0[:, 0] / lattice[0, 0])[:, None]))
+                # Jt = J0 + J1 + J2
+                # if iStep == 0:
+                    # Jt0 = Jt
+                    # J00 = J0
+                    # J10 = J1
+                    # J20 = J2
+
+                # printXYZ(iStep, R0, V0, Fp, Ep, np.sum(Jt0*Jt, axis=0)
+                #          np.sum(J00*J0, axis=0), np.sum(J10*J1, axis=0), np.sum(J20*J2, axis=0))
 
 
 def old_specialTask08(params):
