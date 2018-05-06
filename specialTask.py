@@ -819,7 +819,7 @@ def specialTask09(params):
             Ehalf = sess.run(tfEp, feed_dict=feedDict)
             dEdt = (Ehalf - E0)/dt
 
-            Jhalf = R1[:,0] * dEdt[:,0]
+            Jhalf = Rhalf[:,0] * dEdt[:,0]
 
             return Jhalf, Ehalf
 
