@@ -699,10 +699,10 @@ def specialTask08(params):
             R[R < 0] = R[R < 0] - np.floor(R[R < 0])
 
             feedDict = {tfCoord: R, tfLattice: lattice}
-            Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
+            Es, Ep, Fp = sess.run(((tfEs-0.5)/tfEngyA, tfEp, tfFp), feed_dict=feedDict)
             Fp = -Fp
 
-            return R.dot(lattice.T), Ep, Fp
+            return R.dot(lattice.T), Ep, Fp, Es
 
         def getJhalf(R0, V0):
             R = np.linalg.solve(lattice, R0.T).T
@@ -739,11 +739,12 @@ def specialTask08(params):
             R0 = R1
             Vneg = Vpos
 
-            R0, Ep, Fp = getEF(R0)
+            R0, Ep, Fp, Es = getEF(R0)
             R1, Vpos, V0 = MDstep(R0, Vneg, dt, Fp)
             Rhalf = R0 + m(R0[:, 0] / lattice[0, 0])[:, None] * Vpos * dt
 
-            J0 = Ep*V0
+            # J0 = Ep*V0
+            J0 = Es*V0
             J1 = getJhalf(R0, m(R0[:, 0] / lattice[0, 0])[:, None] * V0)
             J2 = getJhalf(Rhalf, (1-m(R0[:, 0] / lattice[0, 0])[:, None]) * V0) # What velocity?
             Jt = J0+J1+J2
