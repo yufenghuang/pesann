@@ -52,7 +52,7 @@ savedScaler={"featScalerA", "featScalerB", "engyScalerA", "engyScalerB"}
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--task", choices=[-3,-2,-1,0,1,2,100,105,106, 107, 108, 109,110,111, 112, 113,114,115,
-                                       201, 202,203, 204, 205, 206, 207, 208], type=int,
+                                       201, 202,203, 204, 205, 206, 207, 208, 209], type=int,
                     help="task.  2=get energy and forces, \
                                     1=get energy (default), \
                                     0=MD, \
@@ -329,6 +329,10 @@ elif params["task"] == 207:
 elif params["task"] == 208:
 
     specialTask.specialTask08(params)
+
+elif params["task"] == 209:
+
+    specialTask.specialTask09(params)
 
 
 else:

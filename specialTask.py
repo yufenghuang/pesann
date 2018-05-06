@@ -664,7 +664,7 @@ def specialTask07(params):
                 printXYZ(iStep, R0, V0, Fp, Ep)
 
 
-# Thermal conductivity:
+# Thermal conductivity (MD method)
 def specialTask08(params):
 
     from scipy.special import erfc
@@ -733,11 +733,112 @@ def specialTask08(params):
             Vpos = V0 - 0.5*Fp/mSi*dt / constA
 
         # MD equilibrium loop
-        # for iStep in range(10000):
+        for iStep in range(1000):
+            R0 = R1
+            Vneg = Vpos
+            R0, Ep, Fp, Es = getEF(R0)
+            R1, Vpos, V0 = MDstep(R0, Vneg, 0.001, Fp)
+            # printing the output
+            if (iStep % 10 == 0) or \
+                    ((iStep % 10 != 0) & (iStep == params["epoch"] - 1)):
+                printXYZ(iStep, R0, V0, Fp, Ep)
+
+        # Thermal conductivity MD loop
+        Jt0 = 0
+        for iStep in range(params["epoch"]):
+            R0 = R1
+            Vneg = Vpos
+
+            R0, Ep, Fp, Es = getEF(R0)
+            R1, Vpos, V0 = MDstep(R0, Vneg, dt, Fp)
+
+            # printing the output
+            if (iStep % int(params["nstep"]) == 0) or \
+                    ((iStep % int(params["nstep"]) != 0) & (iStep == params["epoch"] - 1)):
+
+                # only calculate <J(t)J(0)> when printing
+                Rhalf = R0 + m(R0[:, 0] / lattice[0, 0])[:, None] * Vpos * dt
+                J0 = Ep*V0
+                J1 = getJhalf(R0, V0)
+                Jt = J0 + J1
+                # J0 = Es * V0 # shifting to zero
+                # J1 = getJhalf(R0, m(R0[:, 0] / lattice[0, 0])[:, None] * V0)
+                # J2 = getJhalf(Rhalf, (1 - m(R0[:, 0] / lattice[0, 0])[:, None]) * V0)  # What velocity?
+                # Jt = J0 + J1 + J2
+                if iStep == 0:
+                    Jt0 = Jt
+
+                printXYZ(iStep, R0, V0, Fp, Ep, np.sum(Jt0*Jt, axis=0)[0])
+
+
+# Thermal conductivity (Kang, Jun):
+def specialTask09(params):
+    from scipy.special import erfc
+    def m(x):
+        return erfc(12*np.abs(x-0.5)-3)/2
+
+    # special MD run
+    dt = float(params["dt"])
+
+    # setup Tensorflow
+    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
+    tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
+    tfCoord = tf.placeholder(tf.float32, shape=(None, 3))
+    tfLattice = tf.placeholder(tf.float32, shape=(3, 3))
+    tfEs, tfFs = tff.tf_getEF(tfCoord, tfLattice, params)
+    tfEp = (tfEs - tfEngyB) / tfEngyA
+    tfFp = tfFs / tfEngyA
+    tfFln = tff.tf_getFln(tfCoord, tfLattice, params) / tfEngyA
+
+    saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
+
+    with tf.Session() as sess:
+
+        # initialize Tensorflow flow
+        sess.run(tf.global_variables_initializer())
+        saver.restore(sess, str(params['logDir']) + "/tf.chpt")
+
+        # define the function for Ep and Fp
+        def getEF(R0):
+            R = np.linalg.solve(lattice, R0.T).T
+            R[R > 1] = R[R > 1] - np.floor(R[R > 1])
+            R[R < 0] = R[R < 0] - np.floor(R[R < 0])
+
+            feedDict = {tfCoord: R, tfLattice: lattice}
+            Es, Ep, Fp = sess.run(((tfEs-0.5)/tfEngyA, tfEp, tfFp), feed_dict=feedDict)
+            Fp = -Fp
+
+            return R.dot(lattice.T), Ep, Fp, Es
+
+        def getJhalf(Rhalf, E0):
+            R = np.linalg.solve(lattice, Rhalf.T).T
+            R[R > 1] = R[R > 1] - np.floor(R[R > 1])
+            R[R < 0] = R[R < 0] - np.floor(R[R < 0])
+            feedDict = {tfCoord: R, tfLattice: lattice}
+
+            Ehalf = sess.run(tfEp, feed_dict=feedDict)
+            dEdt = (Ehalf - E0)/dt
+
+            Jhalf = R1[:,0] * dEdt[:,0]
+
+            return Jhalf, Ehalf
+
+        # initialize the atomic positions and velocities
+        with open(params["inputData"], 'r') as mmtFile:
+            nAtoms, iIter, lattice, R, F0, V0 = pyf.getData11(mmtFile)
+            V0 = V0 * 1000 * bohr
+            R1 = R.dot(lattice.T)
+            feedDict = {tfCoord: R, tfLattice: lattice}
+            Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
+            Fp = -Fp
+            Vpos = V0 - 0.5*Fp/mSi*dt / constA
+
+        # # MD equilibrium loop
+        # for iStep in range(1000):
         #     R0 = R1
         #     Vneg = Vpos
         #     R0, Ep, Fp, Es = getEF(R0)
-        #     R1, Vpos, V0 = MDstep(R0, Vneg, 0.0001, Fp)
+        #     R1, Vpos, V0 = MDstep(R0, Vneg, 0.001, Fp)
         #     # printing the output
         #     if (iStep % 10 == 0) or \
         #             ((iStep % 10 != 0) & (iStep == params["epoch"] - 1)):
@@ -758,15 +859,15 @@ def specialTask08(params):
 
                 # only calculate <J(t)J(0)> when printing
                 Rhalf = R0 + m(R0[:, 0] / lattice[0, 0])[:, None] * Vpos * dt
-                J0 = Ep*V0
-                # J0 = Es * V0 # shifting to zero
-                J1 = getJhalf(R0, m(R0[:, 0] / lattice[0, 0])[:, None] * V0)
-                J2 = getJhalf(Rhalf, (1 - m(R0[:, 0] / lattice[0, 0])[:, None]) * V0)  # What velocity?
+                J0 = Ep[:,0]*V0[:,0]
+                J1, E1 = getJhalf(Rhalf, Ep)
+                J2, E2 = getJhalf(R1, E1)
                 Jt = J0 + J1 + J2
                 if iStep == 0:
                     Jt0 = Jt
 
                 printXYZ(iStep, R0, V0, Fp, Ep, np.sum(Jt0*Jt, axis=0)[0])
+
 
 def old_specialTask08(params):
 
