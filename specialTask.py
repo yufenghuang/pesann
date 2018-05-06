@@ -823,7 +823,7 @@ def specialTask09(params):
             feedDict = {tfCoord: R, tfLattice: lattice}
             E1 = sess.run(tfEp, feed_dict=feedDict)
 
-            dE1 = (E1 - E2)[:,0]
+            dE1 = (E1 - E0)[:,0]
 
             R = np.linalg.solve(lattice, (Rhalf+0.5*dR).T).T
             R[R > 1] = R[R > 1] - np.floor(R[R > 1])
@@ -928,11 +928,11 @@ def specialTask09(params):
             if (iStep % int(params["nstep"]) == 0) or \
                     ((iStep % int(params["nstep"]) != 0) & (iStep == params["epoch"] - 1)):
 
-                E1, E2 = getJhalf(R0, 0, m(R0[:, 0] / lattice[0, 0])[:, None] * Vpos * dt)
+                dE1, dE2 = getJhalf(R0, 0, m(R0[:, 0] / lattice[0, 0])[:, None] * Vpos * dt)
 
                 print(iStep)
                 for iAtom in range(nAtoms):
-                    print(iAtom, E1[iAtom], E2[iAtom], (E1-E2)[iAtom])
+                    print(iAtom, dE1[iAtom], dE2[iAtom], (dE1-dE2)[iAtom])
 
                 # only calculate <J(t)J(0)> when printing
                 # Rhalf = R0 + m(R0[:, 0] / lattice[0, 0])[:, None] * Vpos * dt
