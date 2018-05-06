@@ -861,7 +861,7 @@ def specialTask09(params):
                 Rhalf = R0 + m(R0[:, 0] / lattice[0, 0])[:, None] * Vpos * dt
                 J0 = Ep[:,0]*V0[:,0]
                 J1, E1 = getJhalf(Rhalf, Ep)
-                J2, E2 = getJhalf(R1, E1)
+                J2, E2 = getJhalf(R1-np.array([lattice[0,0], 0, 0]), E1)
                 Jt = J0 + J1 + J2
                 if iStep == 0:
                     Jt0 = Jt
