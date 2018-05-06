@@ -837,7 +837,7 @@ def specialTask09(params):
             dRmat = np.zeros((nAtoms, maxNb, 3))
             dRmat[idxNb>0] = dR[idxNb[idxNb>0]-1]
 
-            dE2 = np.sum(Fl * dR + np.sum(Fln * dRmat,axis=1),axis=2)
+            dE2 = np.sum(Fl * dR + np.sum(Fln * dRmat,axis=1),axis=1)
 
             return dE1, dE2
 
