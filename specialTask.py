@@ -846,6 +846,9 @@ def specialTask09(params):
 
         # Thermal conductivity MD loop
         Jt0 = 0
+        J00 = 0
+        J10 = 0
+        J20 = 0
         for iStep in range(params["epoch"]):
             R0 = R1
             Vneg = Vpos
@@ -859,14 +862,20 @@ def specialTask09(params):
 
                 # only calculate <J(t)J(0)> when printing
                 Rhalf = R0 + m(R0[:, 0] / lattice[0, 0])[:, None] * Vpos * dt
+                R1new = R1.copy()
+                R1new[R1[:,0]>lattice[0,0]/2, 0] = R1new[R1[:,0]>lattice[0,0]/2, 0] - lattice[0,0]
                 J0 = Ep[:,0]*V0[:,0]
                 J1, E1 = getJhalf(Rhalf-np.array([lattice[0,0]/2, 0, 0]), Ep)
-                J2, E2 = getJhalf(R1, E1)
+                J2, E2 = getJhalf(R1new, E1)
                 Jt = J0 + J1 + J2
                 if iStep == 0:
                     Jt0 = Jt
+                    J00 = J0
+                    J10 = J1
+                    J20 = J2
 
-                printXYZ(iStep, R0, V0, Fp, Ep, np.sum(Jt0*Jt, axis=0))
+                printXYZ(iStep, R0, V0, Fp, Ep, np.sum(Jt0*Jt, axis=0),
+                         np.sum(J00*J0, axis=0), np.sum(J10*J1, axis=0), np.sum(J20*J2, axis=0))
 
 
 def old_specialTask08(params):
