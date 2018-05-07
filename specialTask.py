@@ -811,6 +811,147 @@ def specialTask09(params):
             return R.dot(lattice.T), Ep, Fp, Es
 
         def getJhalf(Rhalf, Ein, dR, region=1):
+            lattice2 = lattice.copy()
+            lattice2[0,0] = lattice[0,0]*2
+            R = np.linalg.solve(lattice2, Rhalf.T).T
+            R[R > 1] = R[R > 1] - np.floor(R[R > 1])
+            R[R < 0] = R[R < 0] - np.floor(R[R < 0])
+            feedDict = {tfCoord: R, tfLattice: lattice2}
+            E0, F0 = sess.run((tfEp, -tfFp), feed_dict=feedDict)
+
+            R = np.linalg.solve(lattice2, (Rhalf+dR).T).T
+            R[R > 1] = R[R > 1] - np.floor(R[R > 1])
+            R[R < 0] = R[R < 0] - np.floor(R[R < 0])
+            feedDict = {tfCoord: R, tfLattice: lattice2}
+            E1, F1 = sess.run((tfEp, -tfFp), feed_dict=feedDict)
+
+            dE1 = (E1 - E0)[:,0]
+            dF1 = (F0 + F1)/2
+
+            dEk = np.sum(dF1 * dR, axis=1)
+
+            if region == 1:
+                R = R - [0.5, 0, 0]
+            elif region == 2:
+                R[R[:,0]>0.5] = R[R[:,0]>0.5] - [1,0,0]
+            else:
+                print("ERROR! Please choose either region 1 or 2")
+
+            Rshifted = R.dot(lattice2.T)
+            print("Region", region, "Rshifted Max & Min: ", np.max(Rshifted[:,0]), np.min(Rshifted[:,0]))
+
+            Jhalf = Rshifted[:,0] * (dE1 + dEk)/dt
+
+            R = np.linalg.solve(lattice2, (Rhalf+0.5*dR).T).T
+            R[R > 1] = R[R > 1] - np.floor(R[R > 1])
+            R[R < 0] = R[R < 0] - np.floor(R[R < 0])
+            feedDict = {tfCoord: R, tfLattice: lattice2}
+            Fl, Fln = sess.run((tfFp, tfFln), feed_dict=feedDict)
+            idxNb, Rln, maxNb, nAtoms = npf.np_getNb(R, lattice2, float(params['dcut']))
+            adjMat, FlnMat = npf.adjList2adjMat(idxNb, Fln)
+            _, _, Fln = npf.adjMat2adjList(adjMat, FlnMat.transpose([1, 0, 2]))
+
+            dRmat = np.zeros((nAtoms, maxNb, 3))
+            dRmat[idxNb>0] = dR[idxNb[idxNb>0]-1]
+
+            dE2 = np.sum(Fl * dR + np.sum(Fln * dRmat,axis=1),axis=1)
+
+            dE3 = E0 - Ein
+
+            return Jhalf, dE1, dE2, dE3, E1
+
+        # initialize the atomic positions and velocities
+        with open(params["inputData"], 'r') as mmtFile:
+            nAtoms, iIter, lattice, R, F0, V0 = pyf.getData11(mmtFile)
+            V0 = V0 * 1000 * bohr
+            R1 = R.dot(lattice.T)
+            feedDict = {tfCoord: R, tfLattice: lattice}
+            Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
+            Fp = -Fp
+            Vpos = V0 - 0.5*Fp/mSi*dt / constA
+
+        E0 = 0
+
+        # Thermal conductivity MD loop
+        # Jt0 = 0
+        # J00 = 0
+        # J10 = 0
+        # J20 = 0
+        for iStep in range(params["epoch"]):
+            R0 = R1
+            Vneg = Vpos
+
+            R0, Ep, Fp, Es = getEF(R0)
+            R1, Vpos, V0 = MDstep(R0, Vneg, dt, Fp)
+            Ek = np.sum(0.5 * mSi * V0 ** 2 * constA, axis=1)
+
+            # printing the output
+            if (iStep % int(params["nstep"]) == 0) or \
+                    ((iStep % int(params["nstep"]) != 0) & (iStep == params["epoch"] - 1)):
+
+                J0 = (Ep[:, 0] + Ek) * V0[:, 0]
+                J0 = np.concatenate([J0, J0])
+
+                R0new = np.concatenate([R0, R0 + lattice[0]], axis=0)
+                Epnew  = np.concatenate([Epnew, Epnew], axis=0)
+                VposNew = np.concatenate([Vpos, Vpos], axis=0)
+
+                J1, dE1, dE2, dE3, Eout = getJhalf(R0new, Epnew, m(R0new[:, 0] / (2*lattice[0, 0]))[:, None] * VposNew * dt,1)
+                # Rhalf = R0 + m(R0[:, 0] / lattice[0, 0])[:, None] * Vpos * dt
+                Rhalf = R0new + m(R0new[:, 0] / (2*lattice[0, 0]))[:, None] * VposNew * dt
+                J2, dE1, dE2, dE3, Eout = getJhalf(Rhalf, Eout, np.concatenate([R1, R1 + lattice[0]], axis=0)-Rhalf,2)
+
+                print(iStep)
+                for iAtom in range(len(dE1)):
+                    print(iAtom, dE1[iAtom], dE2[iAtom], (dE1-dE2)[iAtom], dE3[iAtom])
+
+                Jt = J0 + J1 + J2
+                if iStep == 0:
+                    Jt0 = Jt
+
+                print("iStep: ", iStep, np.sum(Jt0*Jt, axis=0), np.mean(Jt))
+
+
+# Thermal conductivity (Kang, Jun):
+def old_specialTask09(params):
+    from scipy.special import erfc
+    def m(x):
+        return erfc(12*np.abs(x-0.5)-3)/2
+
+    # special MD run
+    dt = float(params["dt"])
+
+    # setup Tensorflow
+    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
+    tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
+    tfCoord = tf.placeholder(tf.float32, shape=(None, 3))
+    tfLattice = tf.placeholder(tf.float32, shape=(3, 3))
+    tfEs, tfFs = tff.tf_getEF(tfCoord, tfLattice, params)
+    tfEp = (tfEs - tfEngyB) / tfEngyA
+    tfFp = tfFs / tfEngyA
+    tfFln = tff.tf_getFln(tfCoord, tfLattice, params) / tfEngyA
+
+    saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
+
+    with tf.Session() as sess:
+
+        # initialize Tensorflow flow
+        sess.run(tf.global_variables_initializer())
+        saver.restore(sess, str(params['logDir']) + "/tf.chpt")
+
+        # define the function for Ep and Fp
+        def getEF(R0):
+            R = np.linalg.solve(lattice, R0.T).T
+            R[R > 1] = R[R > 1] - np.floor(R[R > 1])
+            R[R < 0] = R[R < 0] - np.floor(R[R < 0])
+
+            feedDict = {tfCoord: R, tfLattice: lattice}
+            Es, Ep, Fp = sess.run(((tfEs-0.5)/tfEngyA, tfEp, tfFp), feed_dict=feedDict)
+            Fp = -Fp
+
+            return R.dot(lattice.T), Ep, Fp, Es
+
+        def getJhalf(Rhalf, Ein, dR, region=1):
             R = np.linalg.solve(lattice, Rhalf.T).T
             R[R > 1] = R[R > 1] - np.floor(R[R > 1])
             R[R < 0] = R[R < 0] - np.floor(R[R < 0])
