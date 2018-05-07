@@ -810,7 +810,7 @@ def specialTask09(params):
 
             return R.dot(lattice.T), Ep, Fp, Es
 
-        def getJhalf(Rhalf, Ein, dR):
+        def getJhalf(Rhalf, Ein, dR, region=1):
             R = np.linalg.solve(lattice, Rhalf.T).T
             R[R > 1] = R[R > 1] - np.floor(R[R > 1])
             R[R < 0] = R[R < 0] - np.floor(R[R < 0])
@@ -824,6 +824,16 @@ def specialTask09(params):
             E1 = sess.run(tfEp, feed_dict=feedDict)
 
             dE1 = (E1 - E0)[:,0]
+
+            if region == 1:
+                R = R - [0.5, 0, 0]
+            elif region == 2:
+                R[R[:,0]>0.5] = R[R[:,0]>0.5] - [1,0,0]
+            else:
+                print("ERROR! Please choose either region 1 or 2")
+
+            Rshifted = R.dot(lattice.T)
+            print("Region", region, "Rshifted Max & Min: ", np.max(Rshifted[:,0]), np.min(Rshifted[:,0]))
 
             R = np.linalg.solve(lattice, (Rhalf+0.5*dR).T).T
             R[R > 1] = R[R > 1] - np.floor(R[R > 1])
@@ -930,9 +940,9 @@ def specialTask09(params):
             if (iStep % int(params["nstep"]) == 0) or \
                     ((iStep % int(params["nstep"]) != 0) & (iStep == params["epoch"] - 1)):
 
-                dE1, dE2, dE3, Eout = getJhalf(R0, Ep, m(R0[:, 0] / lattice[0, 0])[:, None] * Vpos * dt)
+                dE1, dE2, dE3, Eout = getJhalf(R0, Ep, m(R0[:, 0] / lattice[0, 0])[:, None] * Vpos * dt,1)
                 Rhalf = R0 + m(R0[:, 0] / lattice[0, 0])[:, None] * Vpos * dt
-                dE1, dE2, dE3, Eout = getJhalf(Rhalf, Eout, R1-Rhalf)
+                dE1, dE2, dE3, Eout = getJhalf(Rhalf, Eout, R1-Rhalf,2)
 
                 print(iStep)
                 for iAtom in range(nAtoms):
