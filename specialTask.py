@@ -599,9 +599,9 @@ def printXYZ(iStep, R0, V0, Fp, Ep, *other):
     print(len(R0))
     print(iStep, "Epot=", "{:.12f}".format(Epot), "Ekin=", "{:.12f}".format(Ekin), "Etot=",
           "{:.12f}".format(Etot), " ".join(["{:.12f}".format(float(o)) for o in other]))
-    # for iAtom in range(len(R0)):
-    #     print("Si", R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2], V0[iAtom, 0], V0[iAtom, 1], V0[iAtom, 2], Fp[iAtom, 0],
-    #           Fp[iAtom, 1], Fp[iAtom, 2])
+    for iAtom in range(len(R0)):
+        print("Si", R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2], V0[iAtom, 0], V0[iAtom, 1], V0[iAtom, 2], Fp[iAtom, 0],
+              Fp[iAtom, 1], Fp[iAtom, 2])
     sys.stdout.flush()
 
 
@@ -666,6 +666,114 @@ def specialTask07(params):
 
 # Thermal conductivity (MD method)
 def specialTask08(params):
+    # special MD run
+    dt = float(params["dt"])
+
+    # setup Tensorflow
+    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
+    tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
+    tfCoord = tf.placeholder(tf.float32, shape=(None, 3))
+    tfLattice = tf.placeholder(tf.float32, shape=(3, 3))
+    tfEs, tfFs = tff.tf_getEF(tfCoord, tfLattice, params)
+    tfEp = (tfEs - tfEngyB) / tfEngyA
+    tfFp = tfFs / tfEngyA
+    tfFln = tff.tf_getFln(tfCoord, tfLattice, params) / tfEngyA
+
+    saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
+
+    with tf.Session() as sess:
+
+        # initialize Tensorflow flow
+        sess.run(tf.global_variables_initializer())
+        saver.restore(sess, str(params['logDir']) + "/tf.chpt")
+
+        # define the function for Ep and Fp
+        def getEF(R0):
+            R = np.linalg.solve(lattice, R0.T).T
+            R[R > 1] = R[R > 1] - np.floor(R[R > 1])
+            R[R < 0] = R[R < 0] - np.floor(R[R < 0])
+
+            feedDict = {tfCoord: R, tfLattice: lattice}
+            Es, Ep, Fp = sess.run(((tfEs-0.5)/tfEngyA, tfEp, tfFp), feed_dict=feedDict)
+            Fp = -Fp
+
+            return R.dot(lattice.T), Ep, Fp, Es
+
+        def getJ(R0, V0):
+            R = np.linalg.solve(lattice, R0.T).T
+            R[R > 1] = R[R > 1] - np.floor(R[R > 1])
+            R[R < 0] = R[R < 0] - np.floor(R[R < 0])
+
+            feedDict = {tfCoord: R, tfLattice: lattice}
+
+            Fln = sess.run(-tfFln, feed_dict=feedDict)
+
+            idxNb, Rln, maxNb, nAtoms = npf.np_getNb(R, lattice, float(params['dcut']))
+            adjMat, Fln = npf.adjList2adjMat(idxNb, Fln)
+            _,_,Fln = npf.adjMat2adjList(adjMat, Fln.transpose([1, 0, 2]))
+            Rln = -Rln
+
+            Jpot = np.sum(Rln * np.sum(Fln * V0[:, None, :], axis=2)[:, :, None], axis=1)
+
+            return Jpot
+
+        # initialize the atomic positions and velocities
+        with open(params["inputData"], 'r') as mmtFile:
+            nAtoms, iIter, lattice, R, F0, V0 = pyf.getData11(mmtFile)
+            V0 = V0 * 1000 * bohr
+            R1 = R.dot(lattice.T)
+            feedDict = {tfCoord: R, tfLattice: lattice}
+            Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
+            Fp = -Fp
+            Vpos = V0 - 0.5*Fp/mSi*dt / constA
+
+        # MD equilibrium loop
+        for iStep in range(1000):
+            R0 = R1
+            Vneg = Vpos
+            R0, Ep, Fp, Es = getEF(R0)
+            R1, Vpos, V0 = MDstep(R0, Vneg, 0.001, Fp)
+            # printing the output
+            if (iStep % 10 == 0) or \
+                    ((iStep % 10 != 0) & (iStep == params["epoch"] - 1)):
+                printXYZ(iStep, R0, V0, Fp, Ep)
+
+        # Thermal conductivity MD loop
+        Jt0 = 0
+        JxOut = open("Jx", 'w')
+        JyOut = open("Jy", 'w')
+        JzOut = open("Jz", 'w')
+
+        for iStep in range(params["epoch"]):
+            R0 = R1
+            Vneg = Vpos
+
+            R0, Ep, Fp, Es = getEF(R0)
+            R1, Vpos, V0 = MDstep(R0, Vneg, dt, Fp)
+
+            # printing the output
+            if (iStep % int(params["nstep"]) == 0) or \
+                    ((iStep % int(params["nstep"]) != 0) & (iStep == params["epoch"] - 1)):
+
+                # only calculate <J(t)J(0)> when printing
+                Ek = np.sum(0.5 * mSi * V0 ** 2 * constA, axis=1)
+                J0 = (Ep+Ek[:,None])*V0
+                J1 = getJ(R0, V0)
+                Jt = J0 + J1
+                if iStep == 0:
+                    Jt0 = Jt
+
+                printXYZ(iStep, R0, V0, Fp, Ep, np.sum(Jt0*Jt, axis=0)[0])
+                JxOut.write(str(iStep) + " ".join([str(x) for x in Jt[:, 0]]) + "\n")
+                JyOut.write(str(iStep) + " ".join([str(x) for x in Jt[:, 1]]) + "\n")
+                JzOut.write(str(iStep) + " ".join([str(x) for x in Jt[:, 2]]) + "\n")
+
+
+
+# Thermal conductivity (MD method)
+# This is a back up of the working method
+# need to modify this slightly
+def old_specialTask08(params):
 
     from scipy.special import erfc
     def m(x):
@@ -772,7 +880,7 @@ def specialTask08(params):
 
 
 # Thermal conductivity (Kang, Jun):
-def specialTask09(params):
+def old2_specialTask09(params):
     from scipy.special import erfc
     def m(x):
         return erfc(12*np.abs(x-0.5)-3)/2
