@@ -841,7 +841,7 @@ def specialTask09(params):
 
             dE3 = E0 - Ein
 
-            return dE1, dE2, dE3
+            return dE1, dE2, dE3, E1
 
             # idxNb, Rln, maxNb, nAtoms = npf.np_getNb(R, lattice, float(params['dcut']))
             # Vij = np.zeros((nAtoms, maxNb, 3))
@@ -930,7 +930,9 @@ def specialTask09(params):
             if (iStep % int(params["nstep"]) == 0) or \
                     ((iStep % int(params["nstep"]) != 0) & (iStep == params["epoch"] - 1)):
 
-                dE1, dE2, dE3 = getJhalf(R0, Ep, m(R0[:, 0] / lattice[0, 0])[:, None] * Vpos * dt)
+                dE1, dE2, dE3, Eout = getJhalf(R0, Ep, m(R0[:, 0] / lattice[0, 0])[:, None] * Vpos * dt)
+                Rhalf = R0 + m(R0[:, 0] / lattice[0, 0])[:, None] * Vpos * dt
+                dE1, dE2, dE3, Eout = getJhalf(Rhalf, Eout, R1-Rhalf)
 
                 print(iStep)
                 for iAtom in range(nAtoms):
