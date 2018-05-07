@@ -824,7 +824,7 @@ def specialTask09(params):
             E1, F1 = sess.run((tfEp, -tfFp), feed_dict=feedDict)
 
             dE1 = (E1 - E0)[:,0]
-            dF1 = (F1 + F2)/2
+            dF1 = (F0 + F1)/2
 
             dEk = np.sum(dF1 * dR, axis=1)
 
