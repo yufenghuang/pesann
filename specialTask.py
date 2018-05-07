@@ -835,6 +835,8 @@ def specialTask09(params):
             Rshifted = R.dot(lattice.T)
             print("Region", region, "Rshifted Max & Min: ", np.max(Rshifted[:,0]), np.min(Rshifted[:,0]))
 
+            Jhalf = R[:,0] * dE1/dt
+
             R = np.linalg.solve(lattice, (Rhalf+0.5*dR).T).T
             R[R > 1] = R[R > 1] - np.floor(R[R > 1])
             R[R < 0] = R[R < 0] - np.floor(R[R < 0])
@@ -851,7 +853,7 @@ def specialTask09(params):
 
             dE3 = E0 - Ein
 
-            return dE1, dE2, dE3, E1
+            return Jhalf, dE1, dE2, dE3, E1
 
             # idxNb, Rln, maxNb, nAtoms = npf.np_getNb(R, lattice, float(params['dcut']))
             # Vij = np.zeros((nAtoms, maxNb, 3))
@@ -940,9 +942,10 @@ def specialTask09(params):
             if (iStep % int(params["nstep"]) == 0) or \
                     ((iStep % int(params["nstep"]) != 0) & (iStep == params["epoch"] - 1)):
 
-                dE1, dE2, dE3, Eout = getJhalf(R0, Ep, m(R0[:, 0] / lattice[0, 0])[:, None] * Vpos * dt,1)
+                J0 = (Ep[:, 0]) * V0[:, 0]
+                J1, dE1, dE2, dE3, Eout = getJhalf(R0, Ep, m(R0[:, 0] / lattice[0, 0])[:, None] * Vpos * dt,1)
                 Rhalf = R0 + m(R0[:, 0] / lattice[0, 0])[:, None] * Vpos * dt
-                dE1, dE2, dE3, Eout = getJhalf(Rhalf, Eout, R1-Rhalf,2)
+                J2, dE1, dE2, dE3, Eout = getJhalf(Rhalf, Eout, R1-Rhalf,2)
 
                 print(iStep)
                 for iAtom in range(nAtoms):
@@ -958,9 +961,11 @@ def specialTask09(params):
                 # J0 = (Ep[:,0]+Ek)*V0[:,0]
                 # J1, E1 = getJhalf(Rhalf, Ep, dt * Vpos*m(R0[:, 0] / lattice[0, 0])[:, None])
                 # J2, E2 = getJhalf(R1new, E1, dt * Vpos*(1-m(R0[:, 0] / lattice[0, 0])[:, None]))
-                # Jt = J0 + J1 + J2
-                # if iStep == 0:
-                    # Jt0 = Jt
+                Jt = J0 + J1 + J2
+                if iStep == 0:
+                    Jt0 = Jt
+
+                print("iStep: ", iStep, np.sum(Jt0*Jt, axis=0))
                     # J00 = J0
                     # J10 = J1
                     # J20 = J2
