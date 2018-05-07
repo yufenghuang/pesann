@@ -968,7 +968,7 @@ def specialTask09(params):
                 if iStep == 0:
                     Jt0 = Jt
 
-                print("iStep: ", iStep, np.sum(Jt0*Jt, axis=0))
+                print("iStep: ", iStep, np.sum(Jt0*Jt, axis=0), np.mean(Jt))
                     # J00 = J0
                     # J10 = J1
                     # J20 = J2
