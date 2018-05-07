@@ -893,7 +893,7 @@ def specialTask09(params):
                 J0 = np.concatenate([J0, J0])
 
                 R0new = np.concatenate([R0, R0 + lattice[0]], axis=0)
-                Epnew  = np.concatenate([Epnew, Epnew], axis=0)
+                Epnew  = np.concatenate([Ep, Ep], axis=0)
                 VposNew = np.concatenate([Vpos, Vpos], axis=0)
 
                 J1, dE1, dE2, dE3, Eout = getJhalf(R0new, Epnew, m(R0new[:, 0] / (2*lattice[0, 0]))[:, None] * VposNew * dt,1)
