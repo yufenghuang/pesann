@@ -838,7 +838,7 @@ def specialTask09(params):
             Rshifted = R.dot(lattice.T)
             print("Region", region, "Rshifted Max & Min: ", np.max(Rshifted[:,0]), np.min(Rshifted[:,0]))
 
-            Jhalf = R[:,0] * (dE1 + dEk)/dt
+            Jhalf = Rshifted[:,0] * (dE1 + dEk)/dt
 
             R = np.linalg.solve(lattice, (Rhalf+0.5*dR).T).T
             R[R > 1] = R[R > 1] - np.floor(R[R > 1])
