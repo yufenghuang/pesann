@@ -815,15 +815,18 @@ def specialTask09(params):
             R[R > 1] = R[R > 1] - np.floor(R[R > 1])
             R[R < 0] = R[R < 0] - np.floor(R[R < 0])
             feedDict = {tfCoord: R, tfLattice: lattice}
-            E0 = sess.run(tfEp, feed_dict=feedDict)
+            E0, F0 = sess.run((tfEp, -tfFp), feed_dict=feedDict)
 
             R = np.linalg.solve(lattice, (Rhalf+dR).T).T
             R[R > 1] = R[R > 1] - np.floor(R[R > 1])
             R[R < 0] = R[R < 0] - np.floor(R[R < 0])
             feedDict = {tfCoord: R, tfLattice: lattice}
-            E1 = sess.run(tfEp, feed_dict=feedDict)
+            E1, F1 = sess.run((tfEp, -tfFp), feed_dict=feedDict)
 
             dE1 = (E1 - E0)[:,0]
+            dF1 = (F1 + F2)/2
+
+            dEk = np.sum(dF1 * dR, axis=1)
 
             if region == 1:
                 R = R - [0.5, 0, 0]
@@ -835,7 +838,7 @@ def specialTask09(params):
             Rshifted = R.dot(lattice.T)
             print("Region", region, "Rshifted Max & Min: ", np.max(Rshifted[:,0]), np.min(Rshifted[:,0]))
 
-            Jhalf = R[:,0] * dE1/dt
+            Jhalf = R[:,0] * (dE1 + dEk)/dt
 
             R = np.linalg.solve(lattice, (Rhalf+0.5*dR).T).T
             R[R > 1] = R[R > 1] - np.floor(R[R > 1])
@@ -942,7 +945,7 @@ def specialTask09(params):
             if (iStep % int(params["nstep"]) == 0) or \
                     ((iStep % int(params["nstep"]) != 0) & (iStep == params["epoch"] - 1)):
 
-                J0 = (Ep[:, 0]) * V0[:, 0]
+                J0 = (Ep[:, 0] + Ek) * V0[:, 0]
                 J1, dE1, dE2, dE3, Eout = getJhalf(R0, Ep, m(R0[:, 0] / lattice[0, 0])[:, None] * Vpos * dt,1)
                 Rhalf = R0 + m(R0[:, 0] / lattice[0, 0])[:, None] * Vpos * dt
                 J2, dE1, dE2, dE3, Eout = getJhalf(Rhalf, Eout, R1-Rhalf,2)
