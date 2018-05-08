@@ -815,7 +815,50 @@ def specialTask09(params):
 
             Jpot = np.sum(Rln * np.sum(Fln * Vln, axis=2)[:, :, None], axis=1)
 
-            return Jpot
+            adjMat, FlnMat, RlnMat, VlnMat = npf.adjList2adjMat(idxNb, Fln, Rln, Vln)
+            _,_,FlnList = npf.adjMat2adjList(adjMat, FlnMat.transpose([1, 0, 2]))
+
+            Jpot2 = np.sum(-Rln * np.sum(FlnList * V0[:, None, :], axis=2)[:, :, None], axis=1)
+
+            Jpot3 = np.sum(np.sum(FlnMat * V0[None, :, :],axis=2)[:,:,None]*RlnMat, axis=1)
+
+            V0ln = V0[None,:,:] * np.ones((nAtoms,1 ,1))
+            V0ln[adjMat<1] = np.zeros(3)
+
+            adjMat2, FlnMat2 = npf.adjList2adjMat(idxNb, FlnList)
+            Jpot4 = np.sum(np.sum(FlnMat2 * V0[:,None,:], axis=2)[:,:, None] * -RlnMat, axis=1)
+
+
+            # check Jpot, Jpot2, Jpot3
+            print("====================")
+            print('Jpot-Jpot2', np.max(np.abs(Jpot-Jpot2)))
+            # print(Jpot-Jpot2)
+            print("Jpot-Jpot3", np.max(np.abs(Jpot-Jpot3)))
+            # print(Jpot-Jpot3)
+            print("Jpot2-Jpot3", np.max(np.abs(Jpot2-Jpot3)))
+            # print(Jpot2-Jpot3)
+
+            print("Jpot2-Jpot4", np.max(np.abs(Jpot2 - Jpot4)))
+
+            for iAtom in range(nAtoms):
+                print(Jpot3[iAtom], Jpot4[iAtom])
+
+            # check Vln
+            print("V0ln-VlnMat: ", np.max(np.abs(V0ln-VlnMat)))
+            # print(V0ln-VlnMat)
+
+            # check RlnMat
+            print("RlnMat: Rij + Rji: ", np.max(np.abs(RlnMat.transpose([1,0,2]) + RlnMat)))
+
+            # check FlnMat
+            print("FlnMat: ", np.max(np.abs(FlnMat2.transpose([1,0,2]) - FlnMat)))
+
+            # check dUi/dRj * vj vs. dUj/dRi * vi
+            print("dUi/dRj * vj", np.max(np.abs(np.sum(FlnMat2 * V0[:,None,:], axis=2) - np.sum(FlnMat * V0[None, :, :],axis=2).T)))
+
+            print(np.sum(Jpot3), np.sum(Jpot4))
+
+            return Jpot2
 
         # initialize the atomic positions and velocities
         with open(params["inputData"], 'r') as mmtFile:
@@ -828,15 +871,15 @@ def specialTask09(params):
             Vpos = V0 - 0.5*Fp/mSi*dt / constA
 
         # MD equilibrium loop
-        for iStep in range(1000):
-            R0 = R1
-            Vneg = Vpos
-            R0, Ep, Fp, Fpq = getEF(R0)
-            R1, Vpos, V0 = MDstep(R0, Vneg, 0.001, Fp)
-            # printing the output
-            if (iStep % 10 == 0) or \
-                    ((iStep % 10 != 0) & (iStep == params["epoch"] - 1)):
-                printXYZ(iStep, R0, V0, Fp, Ep)
+        # for iStep in range(1000):
+        #     R0 = R1
+        #     Vneg = Vpos
+        #     R0, Ep, Fp, Fpq = getEF(R0)
+        #     R1, Vpos, V0 = MDstep(R0, Vneg, 0.001, Fp)
+        #     # printing the output
+        #     if (iStep % 10 == 0) or \
+        #             ((iStep % 10 != 0) & (iStep == params["epoch"] - 1)):
+        #         printXYZ(iStep, R0, V0, Fp, Ep)
 
         # Thermal conductivity MD loop
         Jt0 = 0
@@ -863,10 +906,11 @@ def specialTask09(params):
                 if iStep == 0:
                     Jt0 = Jt
 
-                printXYZ(iStep, R0, V0, Fp, Ep, np.sum(Jt0*Jt, axis=0)[0])
-                JxOut.write(str(iStep) + " " + " ".join([str(x) for x in Jt[:, 0]]) + "\n")
-                JyOut.write(str(iStep) + " " + " ".join([str(x) for x in Jt[:, 1]]) + "\n")
-                JzOut.write(str(iStep) + " " + " ".join([str(x) for x in Jt[:, 2]]) + "\n")
+                print("<Jx(t)Jx(0)>", np.sum(Jt0*Jt, axis=0)[0])
+                # printXYZ(iStep, R0, V0, Fp, Ep, np.sum(Jt0*Jt, axis=0)[0])
+                # JxOut.write(str(iStep) + " " + " ".join([str(x) for x in Jt[:, 0]]) + "\n")
+                # JyOut.write(str(iStep) + " " + " ".join([str(x) for x in Jt[:, 1]]) + "\n")
+                # JzOut.write(str(iStep) + " " + " ".join([str(x) for x in Jt[:, 2]]) + "\n")
 
 
 
