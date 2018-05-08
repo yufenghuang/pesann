@@ -886,7 +886,7 @@ def specialTask09(params):
             Vpos = V0 - 0.5*Fp/mSi*dt / constA
 
         # MD equilibrium loop
-        # for iStep in range(1000):
+        # for iStep in range(5000):
         #     R0 = R1
         #     Vneg = Vpos
         #     R0, Ep, Fp, Fpq = getEF(R0)
@@ -907,19 +907,16 @@ def specialTask09(params):
             R1, Vpos, V0 = MDstep(R0, Vneg, dt, Fp)
 
             # printing the output
-            if (iStep % int(params["nstep"]) == 0) or \
-                    ((iStep % int(params["nstep"]) != 0) & (iStep == params["epoch"] - 1)):
+            Ek = np.sum(0.5 * mSi * V0 ** 2 * constA, axis=1)
+            J0 = (Ep+Ek[:,None])*V0
+            J1 = getJ(R0, V0, Fpq)
+            Jt = np.sum(J0 + J1, axis=0)
 
-                # only calculate <J(t)J(0)> when printing
-                Ek = np.sum(0.5 * mSi * V0 ** 2 * constA, axis=1)
-                J0 = (Ep+Ek[:,None])*V0
-                J1 = getJ(R0, V0, Fpq)
-                Jt = J0 + J1
-                # if iStep == 0:
-                #     Jt0 = Jt
+            Epot, Ekin, Etot = getMDEnergies(Ep, V0)
+            print(iStep, "Epot=", "{:.12f}".format(Epot), "Ekin=", "{:.12f}".format(Ekin),
+                  "Etot=", "{:.12f}".format(Etot),
+                  "Jt=", "{:.12f}".format(Jt[0]), "{:.12f}".format(Jt[1]), "{:.12f}".format(Jt[2]))
 
-                # print("<Jx(t)Jx(0)>", Jt.sum(axis=0)[0])
-                printXYZ(iStep, R0, V0, Fp, Ep, Jt.sum(axis=0)[0])
 
 # Thermal conductivity (MD method)
 # This is a back up of the working method
