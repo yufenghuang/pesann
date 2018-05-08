@@ -809,7 +809,6 @@ def specialTask09(params):
             R[R < 0] = R[R < 0] - np.floor(R[R < 0])
 
             idxNb, Rln, maxNb, nAtoms = npf.np_getNb(R, lattice, float(params['dcut']))
-            Rln = -Rln
 
             Vln = np.zeros((nAtoms, maxNb, 3))
             Vln[idxNb>0] = V0[idxNb[idxNb>0]-1]
