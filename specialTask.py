@@ -802,7 +802,7 @@ def specialTask09(params):
             Ep, Fp, Fpq = sess.run((tfEp, -tfFp, -tfFpq), feed_dict=feedDict)
 
             return R.dot(lattice.T), Ep, Fp, Fpq
-
+        '''
         def getJ(R0, V0, Fln):
             R = np.linalg.solve(lattice, R0.T).T
             R[R > 1] = R[R > 1] - np.floor(R[R > 1])
@@ -859,6 +859,21 @@ def specialTask09(params):
             print(np.sum(Jpot3), np.sum(Jpot4))
 
             return Jpot2
+        '''
+        def getJ(R0, V0, Fln):
+            R = np.linalg.solve(lattice, R0.T).T
+            R[R > 1] = R[R > 1] - np.floor(R[R > 1])
+            R[R < 0] = R[R < 0] - np.floor(R[R < 0])
+
+            idxNb, Rln, maxNb, nAtoms = npf.np_getNb(R, lattice, float(params['dcut']))
+
+            Vln = np.zeros((nAtoms, maxNb, 3))
+            Vln[idxNb>0] = V0[idxNb[idxNb>0]-1]
+
+            Jpot = np.sum(Rln * np.sum(Fln * Vln, axis=2)[:, :, None], axis=1)
+
+            return Jpot
+
 
         # initialize the atomic positions and velocities
         with open(params["inputData"], 'r') as mmtFile:
@@ -882,10 +897,7 @@ def specialTask09(params):
         #         printXYZ(iStep, R0, V0, Fp, Ep)
 
         # Thermal conductivity MD loop
-        Jt0 = 0
-        JxOut = open("Jx", 'w')
-        JyOut = open("Jy", 'w')
-        JzOut = open("Jz", 'w')
+        # Jt0 = 0
 
         for iStep in range(params["epoch"]):
             R0 = R1
@@ -903,16 +915,11 @@ def specialTask09(params):
                 J0 = (Ep+Ek[:,None])*V0
                 J1 = getJ(R0, V0, Fpq)
                 Jt = J0 + J1
-                if iStep == 0:
-                    Jt0 = Jt
+                # if iStep == 0:
+                #     Jt0 = Jt
 
-                print("<Jx(t)Jx(0)>", np.sum(Jt0*Jt, axis=0)[0])
-                # printXYZ(iStep, R0, V0, Fp, Ep, np.sum(Jt0*Jt, axis=0)[0])
-                # JxOut.write(str(iStep) + " " + " ".join([str(x) for x in Jt[:, 0]]) + "\n")
-                # JyOut.write(str(iStep) + " " + " ".join([str(x) for x in Jt[:, 1]]) + "\n")
-                # JzOut.write(str(iStep) + " " + " ".join([str(x) for x in Jt[:, 2]]) + "\n")
-
-
+                # print("<Jx(t)Jx(0)>", Jt.sum(axis=0)[0])
+                printXYZ(iStep, R0, V0, Fp, Ep, Jt.sum(axis=0)[0])
 
 # Thermal conductivity (MD method)
 # This is a back up of the working method
