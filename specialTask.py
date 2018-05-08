@@ -781,7 +781,7 @@ def specialTask09(params):
     tfEs, tfFs1, tfFs2 = tff.tf_getEFln(tfCoord, tfLattice, params)
 
     tfEp = (tfEs - tfEngyB) / tfEngyA
-    tfFp = (tfFs1 + tfFs2.sum(axis=1)) / tfEngyA
+    tfFp = (tfFs1 + np.sum(tfFs2, axis=1)) / tfEngyA
     tfFpq = tfFs2 / tfEngyA
 
     saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
