@@ -764,9 +764,9 @@ def specialTask08(params):
                     Jt0 = Jt
 
                 printXYZ(iStep, R0, V0, Fp, Ep, np.sum(Jt0*Jt, axis=0)[0])
-                JxOut.write(str(iStep) + " ".join([str(x) for x in Jt[:, 0]]) + "\n")
-                JyOut.write(str(iStep) + " ".join([str(x) for x in Jt[:, 1]]) + "\n")
-                JzOut.write(str(iStep) + " ".join([str(x) for x in Jt[:, 2]]) + "\n")
+                JxOut.write(str(iStep) + " " + " ".join([str(x) for x in Jt[:, 0]]) + "\n")
+                JyOut.write(str(iStep) + " " + " ".join([str(x) for x in Jt[:, 1]]) + "\n")
+                JzOut.write(str(iStep) + " " + " ".join([str(x) for x in Jt[:, 2]]) + "\n")
 
 # Improved heat conductivity calculation
 def specialTask09(params):
@@ -865,9 +865,9 @@ def specialTask09(params):
                     Jt0 = Jt
 
                 printXYZ(iStep, R0, V0, Fp, Ep, np.sum(Jt0*Jt, axis=0)[0])
-                JxOut.write(str(iStep) + " ".join([str(x) for x in Jt[:, 0]]) + "\n")
-                JyOut.write(str(iStep) + " ".join([str(x) for x in Jt[:, 1]]) + "\n")
-                JzOut.write(str(iStep) + " ".join([str(x) for x in Jt[:, 2]]) + "\n")
+                JxOut.write(str(iStep) + " " + " ".join([str(x) for x in Jt[:, 0]]) + "\n")
+                JyOut.write(str(iStep) + " " + " ".join([str(x) for x in Jt[:, 1]]) + "\n")
+                JzOut.write(str(iStep) + " " + " ".join([str(x) for x in Jt[:, 2]]) + "\n")
 
 
 
