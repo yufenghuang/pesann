@@ -768,6 +768,107 @@ def specialTask08(params):
                 JyOut.write(str(iStep) + " ".join([str(x) for x in Jt[:, 1]]) + "\n")
                 JzOut.write(str(iStep) + " ".join([str(x) for x in Jt[:, 2]]) + "\n")
 
+# Improved heat conductivity calculation
+def specialTask09(params):
+    # special MD run
+    dt = float(params["dt"])
+
+    # setup Tensorflow
+    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
+    tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
+    tfCoord = tf.placeholder(tf.float32, shape=(None, 3))
+    tfLattice = tf.placeholder(tf.float32, shape=(3, 3))
+    tfEs, tfFs1, tfFs2 = tff.tf_getEFln(tfCoord, tfLattice, params)
+
+    tfEp = (tfEs - tfEngyB) / tfEngyA
+    tfFp = (tfFs1 + tfFs2.sum(axis=1)) / tfEngyA
+    tfFpq = tfFs2 / tfEngyA
+
+    saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
+
+    with tf.Session() as sess:
+
+        # initialize Tensorflow flow
+        sess.run(tf.global_variables_initializer())
+        saver.restore(sess, str(params['logDir']) + "/tf.chpt")
+
+        # define the function for Ep and Fp
+        def getEF(R0):
+            R = np.linalg.solve(lattice, R0.T).T
+            R[R > 1] = R[R > 1] - np.floor(R[R > 1])
+            R[R < 0] = R[R < 0] - np.floor(R[R < 0])
+
+            feedDict = {tfCoord: R, tfLattice: lattice}
+            Ep, Fp, Fpq = sess.run((tfEp, -tfFp, -tfFpq), feed_dict=feedDict)
+
+            return R.dot(lattice.T), Ep, Fp, Fpq
+
+        def getJ(R0, V0, Fln):
+            R = np.linalg.solve(lattice, R0.T).T
+            R[R > 1] = R[R > 1] - np.floor(R[R > 1])
+            R[R < 0] = R[R < 0] - np.floor(R[R < 0])
+
+            idxNb, Rln, maxNb, nAtoms = npf.np_getNb(R, lattice, float(params['dcut']))
+            Rln = -Rln
+
+            Vln = np.zeros((nAtoms), maxNb, 3)
+            Vln[idxNb>0] = V0[idxNb[idxNb>0]-1]
+
+            Jpot = np.sum(Rln * np.sum(Fln * Vln, axis=2)[:, :, None], axis=1)
+
+            return Jpot
+
+        # initialize the atomic positions and velocities
+        with open(params["inputData"], 'r') as mmtFile:
+            nAtoms, iIter, lattice, R, F0, V0 = pyf.getData11(mmtFile)
+            V0 = V0 * 1000 * bohr
+            R1 = R.dot(lattice.T)
+            feedDict = {tfCoord: R, tfLattice: lattice}
+            Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
+            Fp = -Fp
+            Vpos = V0 - 0.5*Fp/mSi*dt / constA
+
+        # MD equilibrium loop
+        for iStep in range(1000):
+            R0 = R1
+            Vneg = Vpos
+            R0, Ep, Fp, Fpq = getEF(R0)
+            R1, Vpos, V0 = MDstep(R0, Vneg, 0.001, Fp)
+            # printing the output
+            if (iStep % 10 == 0) or \
+                    ((iStep % 10 != 0) & (iStep == params["epoch"] - 1)):
+                printXYZ(iStep, R0, V0, Fp, Ep)
+
+        # Thermal conductivity MD loop
+        Jt0 = 0
+        JxOut = open("Jx", 'w')
+        JyOut = open("Jy", 'w')
+        JzOut = open("Jz", 'w')
+
+        for iStep in range(params["epoch"]):
+            R0 = R1
+            Vneg = Vpos
+
+            R0, Ep, Fp, Fpq = getEF(R0)
+            R1, Vpos, V0 = MDstep(R0, Vneg, dt, Fp)
+
+            # printing the output
+            if (iStep % int(params["nstep"]) == 0) or \
+                    ((iStep % int(params["nstep"]) != 0) & (iStep == params["epoch"] - 1)):
+
+                # only calculate <J(t)J(0)> when printing
+                Ek = np.sum(0.5 * mSi * V0 ** 2 * constA, axis=1)
+                J0 = (Ep+Ek[:,None])*V0
+                J1 = getJ(R0, V0, Fpq)
+                Jt = J0 + J1
+                if iStep == 0:
+                    Jt0 = Jt
+
+                printXYZ(iStep, R0, V0, Fp, Ep, np.sum(Jt0*Jt, axis=0)[0])
+                JxOut.write(str(iStep) + " ".join([str(x) for x in Jt[:, 0]]) + "\n")
+                JyOut.write(str(iStep) + " ".join([str(x) for x in Jt[:, 1]]) + "\n")
+                JzOut.write(str(iStep) + " ".join([str(x) for x in Jt[:, 2]]) + "\n")
+
 
 
 # Thermal conductivity (MD method)

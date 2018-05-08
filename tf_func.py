@@ -261,6 +261,51 @@ def tf_getEF(tfCoord, tfLattice,params):
     return tfEs, tfFs
 
 
+def tf_getEFln(tfCoord, tfLattice, params):
+    tfFeatA = tf.constant(params['featScalerA'], dtype=tf.float32)
+    tfFeatB = tf.constant(params['featScalerB'], dtype=tf.float32)
+    numFeat = params['n2bBasis'] + params['n3bBasis'] ** 3
+
+    tfIdxNb, tfRNb, tfMaxNb, tfNAtoms = tf_getNb(tfCoord, tfLattice, float(params['dcut']))
+    tfRhat, tfRi, tfDc = tf_getStruct(tfRNb)
+
+    RcA = 2 / (float(params['dcut']) - float(params['Rcut']))
+    RcB = - (float(params['dcut']) + float(params['Rcut'])) / (float(params['dcut']) - float(params['Rcut']))
+
+    tfGR2 = tf.scatter_nd(tf.where(tfRi > 0),
+                          tf_getCos2(tf.boolean_mask(tfRi, tfRi > 0) * RcA + RcB, params['n2bBasis']),
+                          [tfNAtoms, tfMaxNb, params['n2bBasis']])
+    tfGR2d = tf.scatter_nd(tf.where(tfRi > 0),
+                           tf_getdCos2(tf.boolean_mask(tfRi, tfRi > 0) * RcA + RcB, params['n2bBasis']),
+                           [tfNAtoms, tfMaxNb, params['n2bBasis']])
+    tfGR3 = tf.scatter_nd(tf.where(tfRi > 0),
+                          tf_getCos2(tf.boolean_mask(tfRi, tfRi > 0) * RcA + RcB, params['n3bBasis']),
+                          [tfNAtoms, tfMaxNb, params['n3bBasis']])
+    tfGR3d = tf.scatter_nd(tf.where(tfRi > 0),
+                           tf_getdCos2(tf.boolean_mask(tfRi, tfRi > 0) * RcA + RcB, params['n3bBasis']),
+                           [tfNAtoms, tfMaxNb, params['n3bBasis']])
+    tfGD3 = tf.scatter_nd(tf.where(tfDc > 0),
+                          tf_getCos2(tf.boolean_mask(tfDc, tfDc > 0) * RcA + RcB, params['n3bBasis']),
+                          [tfNAtoms, tfMaxNb, tfMaxNb, params['n3bBasis']])
+
+    tfdXi, tfdXin = tf_get_dXidRl(tfGR2, tfGR2d, tfGR3, tfGR3d, tfGD3, tfRhat * RcA)
+    tfdXi = tf.expand_dims(tfFeatA, 2) * tfdXi
+    tfdXin = tf.expand_dims(tfFeatA, 2) * tfdXin
+
+    tfFeats = tfFeatA * tf_getFeats(tfGR2, tfGR3, tfGD3) + tfFeatB
+    tfEs = tf_engyFromFeats(tfFeats, numFeat, params['nL1Nodes'], params['nL2Nodes'])
+
+    dEldXi = tf_get_dEldXi(tfFeats, numFeat, params['nL1Nodes'], params['nL2Nodes'])
+    Fll = tf.reduce_sum(tf.expand_dims(dEldXi, 2) * tfdXi, axis=1)
+
+    dENldXi = tf.gather_nd(dEldXi,
+                           tf.expand_dims(tf.transpose(tf.boolean_mask(tfIdxNb, tf.greater(tfIdxNb, 0)) - 1), 1))
+    dEnldXin = tf.scatter_nd(tf.where(tf.greater(tfIdxNb, 0)), dENldXi, [tfNAtoms, tfMaxNb, numFeat])
+    Fln = tf.reduce_sum(tf.expand_dims(dEnldXin, 3) * tfdXin, axis=2)
+
+    return tfEs, Fll, Fln
+
+
 def tf_getFln(tfCoord, tfLattice, params):
     tfFeatA = tf.constant(params['featScalerA'], dtype=tf.float32)
     tfFeatB = tf.constant(params['featScalerB'], dtype=tf.float32)
