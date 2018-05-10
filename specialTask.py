@@ -969,7 +969,10 @@ def specialTask10(params):
         with open(params["inputData"], 'r') as mmtFile:
             nAtoms, iIter, lattice, R, F0, V0 = pyf.getData11(mmtFile)
             V0 = V0 * 1000 * bohr
-            V0 = np.random.randn(*V0.shape) * np.sqrt(np.sum(V0 ** 2) * constA*1000*mole)* meter/s
+
+            sigmaV = np.sqrt(2*np.sum(0.5 * mSi * V0 ** 2 * constA)/J/(mSi/(1000*mole)))* meter/s
+
+            V0 = np.random.randn(*V0.shape) * sigmaV
             R1 = R.dot(lattice.T)
             feedDict = {tfCoord: R, tfLattice: lattice}
             Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
