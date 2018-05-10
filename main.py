@@ -41,6 +41,7 @@ params={
     "nstep":100, # print every 100 steps
     "repulsion":"None",
     "mmtForces":"None",
+    "T": 0,
     }
 
 newParams={}
@@ -52,7 +53,7 @@ savedScaler={"featScalerA", "featScalerB", "engyScalerA", "engyScalerB"}
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--task", choices=[-3,-2,-1,0,1,2,100,105,106, 107, 108, 109,110,111, 112, 113,114,115,
-                                       201, 202,203, 204, 205, 206, 207, 208, 209], type=int,
+                                       201, 202,203, 204, 205, 206, 207, 208, 209, 210], type=int,
                     help="task.  2=get energy and forces, \
                                     1=get energy (default), \
                                     0=MD, \
@@ -92,6 +93,8 @@ parser.add_argument("--nstep", type=int, help="dumping the geometry in xyz forma
 parser.add_argument("--repulsion", type=str, help="additional repulsion energy", choices=["None", "1/R12", "1/R","exp(-R)"])
 
 parser.add_argument("--mmtForces", type=str, help="MOVEMENT file to train with forces")
+
+parser.add_argument("--T", type=str, help="Inivitial temperature for the thermal conductivity calculation. Not yet working with MD")
 
 args = parser.parse_args()
 
@@ -331,6 +334,10 @@ elif params["task"] == 208:
     specialTask.specialTask08(params)
 
 elif params["task"] == 209:
+
+    specialTask.specialTask09(params)
+
+elif params["task"] == 210:
 
     specialTask.specialTask09(params)
 
