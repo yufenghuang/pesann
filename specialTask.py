@@ -1012,11 +1012,11 @@ def specialTask10(params):
 
             if ((iStep+1) % int(100) == 0):
                 with open("md.xyz",'w') as xyzFile:
-                    xyzFile.write(str(nAtoms))
-                    xyzFile.write(" ".join([str(x) for x in lattice.reshape(-1)]))
+                    xyzFile.write(str(nAtoms) + "\n")
+                    xyzFile.write(" ".join([str(x) for x in lattice.reshape(-1)]) + "\n")
                     for iAtom in range(nAtoms):
                         xyzFile.write("Si " + str(R1[iAtom, 0]) + " " + str(R1[iAtom, 1]) + " " + str(R1[iAtom, 2]) + \
-                                      " " + str(Vpos[iAtom, 0]) + " " + str(Vpos[iAtom, 1]) + " " + str(Vpos[iAtom, 2]))
+                                      " " + str(Vpos[iAtom, 0]) + " " + str(Vpos[iAtom, 1]) + " " + str(Vpos[iAtom, 2]) + "\n")
 
 
 # Thermal conductivity (MD method)
