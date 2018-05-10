@@ -981,42 +981,42 @@ def specialTask10(params):
 
 
         # MD equilibrium loop
-        # for iStep in range(5000):
-        #     R0 = R1
-        #     Vneg = Vpos
-        #     R0, Ep, Fp, Fpq = getEF(R0)
-        #     R1, Vpos, V0 = MDstep(R0, Vneg, 0.001, Fp)
-        #     # printing the output
-        #     if (iStep % 10 == 0) or \
-        #             ((iStep % 10 != 0) & (iStep == params["epoch"] - 1)):
-        #         printXYZ(iStep, R0, V0, Fp, Ep)
-
-        # Thermal conductivity MD loop
-        for iStep in range(params["epoch"]):
+        for iStep in range(5000):
             R0 = R1
             Vneg = Vpos
-
             R0, Ep, Fp, Fpq = getEF(R0)
-            R1, Vpos, V0 = MDstep(R0, Vneg, dt, Fp)
-
+            R1, Vpos, V0 = MDstep(R0, Vneg, 0.001, Fp)
             # printing the output
-            Ek = np.sum(0.5 * mSi * V0 ** 2 * constA, axis=1)
-            J0 = (Ep+Ek[:,None])*V0
-            J1 = getJ(R0, V0, Fpq)
-            Jt = np.sum(J0 + J1, axis=0)
+            if (iStep % 10 == 0) or \
+                    ((iStep % 10 != 0) & (iStep == params["epoch"] - 1)):
+                printXYZ(iStep, R0, V0, Fp, Ep)
 
-            Epot, Ekin, Etot = getMDEnergies(Ep, V0)
-            print(iStep, "Epot=", "{:.12f}".format(Epot), "Ekin=", "{:.12f}".format(Ekin),
-                  "Etot=", "{:.12f}".format(Etot),
-                  "Jt=", "{:.12f}".format(Jt[0]), "{:.12f}".format(Jt[1]), "{:.12f}".format(Jt[2]))
+        # Thermal conductivity MD loop
+        with open("md.xyz", 'w') as xyzFile:
+            for iStep in range(params["epoch"]):
+                R0 = R1
+                Vneg = Vpos
 
-            if ((iStep+1) % int(100) == 0):
-                with open("md.xyz",'w') as xyzFile:
-                    xyzFile.write(str(nAtoms) + "\n")
-                    xyzFile.write(" ".join([str(x) for x in lattice.reshape(-1)]) + "\n")
-                    for iAtom in range(nAtoms):
-                        xyzFile.write("Si " + str(R1[iAtom, 0]) + " " + str(R1[iAtom, 1]) + " " + str(R1[iAtom, 2]) + \
-                                      " " + str(Vpos[iAtom, 0]) + " " + str(Vpos[iAtom, 1]) + " " + str(Vpos[iAtom, 2]) + "\n")
+                R0, Ep, Fp, Fpq = getEF(R0)
+                R1, Vpos, V0 = MDstep(R0, Vneg, dt, Fp)
+
+                # printing the output
+                Ek = np.sum(0.5 * mSi * V0 ** 2 * constA, axis=1)
+                J0 = (Ep+Ek[:,None])*V0
+                J1 = getJ(R0, V0, Fpq)
+                Jt = np.sum(J0 + J1, axis=0)
+
+                Epot, Ekin, Etot = getMDEnergies(Ep, V0)
+                print(iStep, "Epot=", "{:.12f}".format(Epot), "Ekin=", "{:.12f}".format(Ekin),
+                      "Etot=", "{:.12f}".format(Etot),
+                      "Jt=", "{:.12f}".format(Jt[0]), "{:.12f}".format(Jt[1]), "{:.12f}".format(Jt[2]))
+
+                if ((iStep+1) % int(100) == 0):
+                        xyzFile.write(str(nAtoms) + "\n")
+                        xyzFile.write(" ".join([str(x) for x in lattice.reshape(-1)]) + "\n")
+                        for iAtom in range(nAtoms):
+                            xyzFile.write("Si " + str(R1[iAtom, 0]) + " " + str(R1[iAtom, 1]) + " " + str(R1[iAtom, 2]) + \
+                                          " " + str(Vpos[iAtom, 0]) + " " + str(Vpos[iAtom, 1]) + " " + str(Vpos[iAtom, 2]) + "\n")
 
 
 # Thermal conductivity (MD method)
