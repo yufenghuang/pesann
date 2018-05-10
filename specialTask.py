@@ -970,13 +970,14 @@ def specialTask10(params):
             nAtoms, iIter, lattice, R, F0, V0 = pyf.getData11(mmtFile)
             V0 = V0 * 1000 * bohr
             temperature = float(params["T"])
-            if temperature != 0:
-                V0 = np.random.randn(*V0.shape) * np.sqrt(kB * temperature/(mSi/(1000*mole))) * meter/s
             R1 = R.dot(lattice.T)
             feedDict = {tfCoord: R, tfLattice: lattice}
             Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
             Fp = -Fp
             Vpos = V0 - 0.5*Fp/mSi*dt / constA
+            if temperature != 0:
+                Vpos = np.random.randn(*V0.shape) * np.sqrt(kB * temperature/(mSi/(1000*mole))) * meter/s
+
 
         # MD equilibrium loop
         for iStep in range(5000):
