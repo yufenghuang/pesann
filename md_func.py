@@ -151,6 +151,7 @@ def andersen(params):
                         print("Si", R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2],
                               V0[iAtom, 0], V0[iAtom, 1], V0[iAtom, 2],
                               F0[iAtom, 0], F0[iAtom, 1], F0[iAtom, 2])
+                    sys.stdout.flush()
 
         # MD loop
         for iStep in range(params["epoch"]):
@@ -172,3 +173,4 @@ def andersen(params):
                     print("Si", R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2],
                           V0[iAtom, 0], V0[iAtom, 1], V0[iAtom, 2],
                           F0[iAtom, 0], F0[iAtom, 1], F0[iAtom, 2])
+                sys.stdout.flush()

@@ -40,7 +40,7 @@ params={
     "testSet": "",
     "feRatio": 1.0,
     "dt": 1.0, #picosecond
-    "nstep":100, # print every 100 steps
+    "nstep":1, # print every 1 steps
     "repulsion":"None",
     "mmtForces":"None",
     "T": 0,
