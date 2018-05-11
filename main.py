@@ -12,6 +12,7 @@ import specialTask
 import os
 import sys
 import pandas as pd
+import md_func as mdf
 
 import argparse
 
@@ -44,8 +45,8 @@ params={
     "mmtForces":"None",
     "T": 0,
     "Tbegin": -1,
-    "Tend": 300,
-    "Tstep": 100,
+    "Tend": -1,
+    "dTstep": 0,
     "coll_prob": 0,
     }
 
@@ -58,7 +59,7 @@ savedScaler={"featScalerA", "featScalerB", "engyScalerA", "engyScalerB"}
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--task", choices=[-3,-2,-1,0,1,2,100,105,106, 107, 108, 109,110,111, 112, 113,114,115,
-                                       201, 202,203, 204, 205, 206, 207, 208, 209, 210], type=int,
+                                       201, 202,203, 204, 205, 206, 207, 208, 209, 210, 301], type=int,
                     help="task.  2=get energy and forces, \
                                     1=get energy (default), \
                                     0=MD, \
@@ -104,7 +105,7 @@ parser.add_argument("--T", type=float, help="Inivitial temperature for the therm
 
 parser.add_argument("--Tbegin", type=float, help="Initial temperature when applying the thermostat")
 parser.add_argument("--Tend", type=float, help="Final temperature for the thermostat")
-parser.add_argument("--Tstep", type=int, help="")
+parser.add_argument("--dTstep", type=int, help="")
 parser.add_argument("--coll_prob", type=float, help="")
 
 args = parser.parse_args()
@@ -133,6 +134,8 @@ for arg in vars(args):
         params[arg] = getattr(args, arg)
 
 os.environ["CUDA_VISIBLE_DEVICES"]=str(params['iGPU'])
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+# tf.logging.set_verbosity(tf.logging.ERROR)
 
 if params['restart']:
     paramFile = str(params['logDir'])+"/params"
@@ -352,6 +355,9 @@ elif params["task"] == 210:
 
     specialTask.specialTask10(params)
 
+elif params["task"] == 301:
+
+    mdf.andersen(params)
 
 else:
     print("Unrecognized task: ", params["task"])
