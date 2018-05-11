@@ -1037,7 +1037,9 @@ def specialTask11(params):
 
     saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
 
-    with tf.Session() as sess:
+    config = tf.ConfigProto()
+    config.gpu_options.per_process_gpu_memory_fraction = 0.4
+    with tf.Session(config=config) as sess:
 
         # initialize Tensorflow flow
         sess.run(tf.global_variables_initializer())
