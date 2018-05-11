@@ -59,7 +59,7 @@ savedScaler={"featScalerA", "featScalerB", "engyScalerA", "engyScalerB"}
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--task", choices=[-3,-2,-1,0,1,2,100,105,106, 107, 108, 109,110,111, 112, 113,114,115,
-                                       201, 202,203, 204, 205, 206, 207, 208, 209, 210, 301], type=int,
+                                       201, 202,203, 204, 205, 206, 207, 208, 209, 210, 301, 302, 303], type=int,
                     help="task.  2=get energy and forces, \
                                     1=get energy (default), \
                                     0=MD, \
@@ -358,6 +358,15 @@ elif params["task"] == 210:
 elif params["task"] == 301:
 
     mdf.andersen(params)
+
+elif params["task"] == 302:
+
+    mdf.NVE(params)
+
+elif params["task"] == 303:
+
+    mdf.hcacf(params)
+
 
 else:
     print("Unrecognized task: ", params["task"])

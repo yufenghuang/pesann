@@ -66,9 +66,6 @@ def readXYZ(xyzFile):
                 V_[i] = line[3:6]
             if len(line)>6:
                 F_[i] = line[6:9]
-        R_ = np.linalg.solve(lattice_, R_.T).T
-        R_ = R_ - np.floor(R_)
-
     return nAtoms, lattice_, R_, V_, F_
 
 def read_structure(fileName, format):
@@ -150,49 +147,28 @@ def andersen(params):
             Tend = params["Tend"]
 
         # change temperature from Tbegin to Tend
-        if params["dTstep"] > 2:
-            dT = (Tend - Tbegin) / (params["dTstep"] - 1)
+        assert params["dTstep"] > 2, "the number of epochs must be greater than 2..." \
+                                     "The current value is " + params["epoch"]
 
-            T1 = Tbegin
-            for iStep in range(params["dTstep"]):
-                R0, E0, V0, F0, T0 = R1, E1, V1, F1, T1
-                R1, E1, V1, F1 = andersenIntegrator(R0, V0, F0)
-                T1 = T0 + dT
-                V1 = reassignV(V1, coll_prob, T1)
-
-                Epot, Ekin, Etot = getMDEnergies(E0, V0)
-
-                Temp = Ekin / (3 / 2 * nAtoms) * eV2J / kB
-
-                if (iStep % int(params["nstep"]) == 0):
-                    print(nAtoms)
-                    print("iStep", iStep,
-                          "lattice", " ".join([str(x) for x in lattice.reshape(-1)]),
-                          "Epot", "{:.12f}".format(Epot), "Ekin", "{:.12f}".format(Ekin),
-                          "Etot", "{:.12f}".format(Etot), "Temp", "{:.12f}".format(Temp),
-                          "Target", "{:.12f}".format(T0))
-                    for iAtom in range(nAtoms):
-                        print("Si", R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2],
-                              V0[iAtom, 0], V0[iAtom, 1], V0[iAtom, 2],
-                              F0[iAtom, 0], F0[iAtom, 1], F0[iAtom, 2])
-                    sys.stdout.flush()
-
-        # MD loop
-        for iStep in range(params["epoch"]):
-            R0, E0, V0, F0 = R1, E1, V1, F1
+        dT = (Tend - Tbegin) / (params["dTstep"] - 1)
+        T1 = Tbegin
+        for iStep in range(params["dTstep"]):
+            R0, E0, V0, F0, T0 = R1, E1, V1, F1, T1
             R1, E1, V1, F1 = andersenIntegrator(R0, V0, F0)
-            V1 = reassignV(V1, coll_prob, Tend)
+            T1 = T0 + dT
+            V1 = reassignV(V1, coll_prob, T1)
+
             Epot, Ekin, Etot = getMDEnergies(E0, V0)
 
-            Temp = Ekin/(3/2*nAtoms)*eV2J/kB
+            Temp = Ekin / (3 / 2 * nAtoms) * eV2J / kB
 
-            if (iStep  % int(params["nstep"]) == 0):
+            if (iStep % int(params["nstep"]) == 0):
                 print(nAtoms)
                 print("iStep", iStep,
                       "lattice", " ".join([str(x) for x in lattice.reshape(-1)]),
                       "Epot", "{:.12f}".format(Epot), "Ekin", "{:.12f}".format(Ekin),
                       "Etot", "{:.12f}".format(Etot), "Temp", "{:.12f}".format(Temp),
-                      "Target", "{:.12f}".format(Tend))
+                      "Target", "{:.12f}".format(T0))
                 for iAtom in range(nAtoms):
                     print("Si", R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2],
                           V0[iAtom, 0], V0[iAtom, 1], V0[iAtom, 2],
@@ -257,7 +233,7 @@ def NVE(params):
             R0 = R1
             Vneg = Vpos
 
-            R0, Ep, Fp = getEF(R0)
+            R0, Ep, Fp = getEF(R0, lattice)
             R1, Vpos, V0 = vverlet(R0, Vneg, dt, Fp)
 
             Epot, Ekin, Etot = getMDEnergies(Ep, V0)
@@ -287,6 +263,7 @@ def NVE(params):
                         xyzFile.write("Si " + str(R0[iAtom, 0]) + " " + str(R0[iAtom, 1]) + " " + str(R0[iAtom, 2]) +
                                       " " + str(V0[iAtom, 0]) + " " + str(V0[iAtom, 1]) + " " + str(V0[iAtom, 2]) +
                                       " " + str(Fp[iAtom, 0]) + " " + str(Fp[iAtom, 1]) + " " + str(Fp[iAtom, 2]) + "\n")
+
 
 # calculate heat current J(t) for the calculation of the
 # heat current auto-correlation function (HCACF)
@@ -338,7 +315,7 @@ def hcacf(params):
         # initialize the atomic positions and velocities
         dt = float(params["dt"])
         nAtoms, lattice, R, V0 = read_structure(params["inputData"], params["format"])
-        R1, Ep, Fp = getEF(R.dot(lattice.T), lattice)
+        R1, Ep, Fp, _ = getEF(R.dot(lattice.T), lattice)
         Vpos = V0 - 0.5 * Fp / mSi * dt / constA
 
         # Thermal conductivity MD loop
