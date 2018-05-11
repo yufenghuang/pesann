@@ -149,12 +149,12 @@ def andersen(params):
             Tend = params["Tend"]
 
         # change temperature from Tbegin to Tend
-        assert params["dTstep"] > 2, "the number of epochs must be greater than 2..." \
+        assert params["epoch"] > 2, "the number of epochs must be greater than 2..." \
                                      "The current value is " + str(params["epoch"])
 
-        dT = (Tend - Tbegin) / (params["dTstep"] - 1)
+        dT = (Tend - Tbegin) / (params["epoch"] - 1)
         T1 = Tbegin
-        for iStep in range(params["dTstep"]):
+        for iStep in range(params["epoch"]):
             R0, E0, V0, F0, T0 = R1, E1, V1, F1, T1
             R1, E1, V1, F1 = andersenIntegrator(R0, V0, F0)
             T1 = T0 + dT
