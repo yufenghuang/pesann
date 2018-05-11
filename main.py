@@ -21,6 +21,7 @@ params={
     "epoch": 5000,
     "restart": False,
     "inputData": "MOVEMENT.train.first100",
+    "format": "mmt",
     "featFile": "feat",
     "engyFile": "engy",
     "logDir": "log",
@@ -42,6 +43,10 @@ params={
     "repulsion":"None",
     "mmtForces":"None",
     "T": 0,
+    "Tbegin": -1,
+    "Tend": 300,
+    "Tstep": 100,
+    "coll_prob": 0,
     }
 
 newParams={}
@@ -66,6 +71,7 @@ parser.add_argument("--testSet", type=str)
 
 parser.add_argument("--inputFile", type=str, help="Input file specifying the calculation. \
                                                    Keys will be overwritten by command line arguments")
+parser.add_argument("--format", type=str, choices=["xyz", "mmt"])
 parser.add_argument("--restart", action="store_true",
                     help="Restart calculation by loading saved data  in the logDir directory. \
                     Seting this flag will ignore --dcut, --n2bBasis, --n3bBasis, --nL1Nodes and --nL2Nodes")
@@ -94,7 +100,12 @@ parser.add_argument("--repulsion", type=str, help="additional repulsion energy",
 
 parser.add_argument("--mmtForces", type=str, help="MOVEMENT file to train with forces")
 
-parser.add_argument("--T", type=str, help="Inivitial temperature for the thermal conductivity calculation. Not yet working with MD")
+parser.add_argument("--T", type=float, help="Inivitial temperature for the thermal conductivity calculation. Not yet working with MD")
+
+parser.add_argument("--Tbegin", type=float, help="Initial temperature when applying the thermostat")
+parser.add_argument("--Tend", type=float, help="Final temperature for the thermostat")
+parser.add_argument("--Tstep", type=int, help="")
+parser.add_argument("--coll_prob", type=float, help="")
 
 args = parser.parse_args()
 

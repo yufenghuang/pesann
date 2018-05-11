@@ -1019,6 +1019,109 @@ def specialTask10(params):
                                           " " + str(Vpos[iAtom, 0]) + " " + str(Vpos[iAtom, 1]) + " " + str(Vpos[iAtom, 2]) + "\n")
 
 
+# Andersen Thermostat
+def specialTask11(params):
+    # special MD run
+    dt = float(params["dt"])
+
+    # setup Tensorflow
+    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
+    tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
+    tfCoord = tf.placeholder(tf.float32, shape=(None, 3))
+    tfLattice = tf.placeholder(tf.float32, shape=(3, 3))
+    tfEs, tfFs1, tfFs2 = tff.tf_getEFln(tfCoord, tfLattice, params)
+
+    tfEp = (tfEs - tfEngyB) / tfEngyA
+    tfFp = (tfFs1 + tf.reduce_sum(tfFs2, axis=1)) / tfEngyA
+    tfFpq = tfFs2 / tfEngyA
+
+    saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
+
+    with tf.Session() as sess:
+
+        # initialize Tensorflow flow
+        sess.run(tf.global_variables_initializer())
+        saver.restore(sess, str(params['logDir']) + "/tf.chpt")
+
+        # define the function for Ep and Fp
+        def getEF(R0):
+            R = np.linalg.solve(lattice, R0.T).T
+            R[R > 1] = R[R > 1] - np.floor(R[R > 1])
+            R[R < 0] = R[R < 0] - np.floor(R[R < 0])
+
+            feedDict = {tfCoord: R, tfLattice: lattice}
+            Ep, Fp, Fpq = sess.run((tfEp, -tfFp, -tfFpq), feed_dict=feedDict)
+
+            return R.dot(lattice.T), Ep, Fp, Fpq
+
+        def getJ(R0, V0, Fln):
+            R = np.linalg.solve(lattice, R0.T).T
+            R[R > 1] = R[R > 1] - np.floor(R[R > 1])
+            R[R < 0] = R[R < 0] - np.floor(R[R < 0])
+
+            idxNb, Rln, maxNb, nAtoms = npf.np_getNb(R, lattice, float(params['dcut']))
+
+            Vln = np.zeros((nAtoms, maxNb, 3))
+            Vln[idxNb>0] = V0[idxNb[idxNb>0]-1]
+
+            Jpot = np.sum(Rln * np.sum(Fln * Vln, axis=2)[:, :, None], axis=1)
+
+            return Jpot
+
+        # initialize the atomic positions and velocities
+        with open(params["inputData"], 'r') as mmtFile:
+            nAtoms, iIter, lattice, R, F0, V0 = pyf.getData11(mmtFile)
+            V0 = V0 * 1000 * bohr
+
+            sigmaV = np.sqrt(2/3/256*np.sum(0.5 * mSi * V0 ** 2 * constA)/J/(mSi/(1000*mole)))* meter/s
+
+            V0 = np.random.randn(*V0.shape) * sigmaV
+            R1 = R.dot(lattice.T)
+            feedDict = {tfCoord: R, tfLattice: lattice}
+            Ep, Fp = sess.run((tfEp, tfFp), feed_dict=feedDict)
+            Fp = -Fp
+            Vpos = V0 - 0.5*Fp/mSi*dt / constA
+
+
+        # MD equilibrium loop
+        for iStep in range(5000):
+            R0 = R1
+            Vneg = Vpos
+            R0, Ep, Fp, Fpq = getEF(R0)
+            R1, Vpos, V0 = MDstep(R0, Vneg, 0.001, Fp)
+            # printing the output
+            if (iStep % 10 == 0) or \
+                    ((iStep % 10 != 0) & (iStep == params["epoch"] - 1)):
+                printXYZ(iStep, R0, V0, Fp, Ep)
+
+        # Thermal conductivity MD loop
+        with open("md.xyz", 'w') as xyzFile:
+            for iStep in range(params["epoch"]):
+                R0 = R1
+                Vneg = Vpos
+
+                R0, Ep, Fp, Fpq = getEF(R0)
+                R1, Vpos, V0 = MDstep(R0, Vneg, dt, Fp)
+
+                # printing the output
+                Ek = np.sum(0.5 * mSi * V0 ** 2 * constA, axis=1)
+                J0 = (Ep+Ek[:,None])*V0
+                J1 = getJ(R0, V0, Fpq)
+                Jt = np.sum(J0 + J1, axis=0)
+
+                Epot, Ekin, Etot = getMDEnergies(Ep, V0)
+                print(iStep, "Epot=", "{:.12f}".format(Epot), "Ekin=", "{:.12f}".format(Ekin),
+                      "Etot=", "{:.12f}".format(Etot),
+                      "Jt=", "{:.12f}".format(Jt[0]), "{:.12f}".format(Jt[1]), "{:.12f}".format(Jt[2]))
+
+                if ((iStep+1) % int(100) == 0):
+                        xyzFile.write(str(nAtoms) + "\n")
+                        xyzFile.write(" ".join([str(x) for x in lattice.reshape(-1)]) + "\n")
+                        for iAtom in range(nAtoms):
+                            xyzFile.write("Si " + str(R1[iAtom, 0]) + " " + str(R1[iAtom, 1]) + " " + str(R1[iAtom, 2]) + \
+                                          " " + str(Vpos[iAtom, 0]) + " " + str(Vpos[iAtom, 1]) + " " + str(Vpos[iAtom, 2]) + "\n")
+
+
 # Thermal conductivity (MD method)
 # This is a back up of the working method
 # need to modify this slightly
