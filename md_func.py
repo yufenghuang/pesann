@@ -150,7 +150,7 @@ def andersen(params):
 
         # change temperature from Tbegin to Tend
         assert params["dTstep"] > 2, "the number of epochs must be greater than 2..." \
-                                     "The current value is " + params["epoch"]
+                                     "The current value is " + str(params["epoch"])
 
         dT = (Tend - Tbegin) / (params["dTstep"] - 1)
         T1 = Tbegin
