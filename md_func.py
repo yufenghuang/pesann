@@ -48,9 +48,35 @@ def printXYZ(iStep, R0, V0, Fp, Ep, *other):
               Fp[iAtom, 1], Fp[iAtom, 2])
     sys.stdout.flush()
 
+def readXYZ(xyzFile):
+    lattice_ = np.zeros(9)
+    with open(xyzFile,'r') as xyzFH: #FH: file handler
+        nAtoms = int(xyzFH.readline())
+        line2 = xyzFH.readline().split()
+        for i in range(len(line2)):
+            if line2[i] == 'lattice':
+                lattice_ = np.array([float(x) for x in line2[i+1:i+10]]).reshape((3,3))
+        R_ = np.zeros((nAtoms, 3))
+        V_ = np.zeros((nAtoms, 3))
+        F_ = np.zeros((nAtoms, 3))
+        for i in range(nAtoms):
+            line = np.array([x for x in xyzFH.readline().split()[1:10]])
+            R_[i] = line[:3]
+            if len(line)>3:
+                V_[i] = line[3:6]
+            if len(line)>6:
+                F_[i] = line[6:9]
+        R_ = np.linalg.solve(lattice_, R_.T).T
+        R_ = R_ - np.floor(R_)
+
+    return nAtoms, lattice_, R_, V_, F_
+
 def read_structure(fileName, format):
     if format == "xyz":
-        pass
+        nAtoms, lattice, R, V0, F = readXYZ(fileName)
+        R = np.linalg.solve(lattice, R.T).T
+        R = R - np.floor(R)
+
     elif format == "mmt":
         with open(fileName, 'r') as mmtFile:
             nAtoms, iIter, lattice, R, F0, V0 = pyf.getData11(mmtFile)
