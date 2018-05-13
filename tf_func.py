@@ -86,6 +86,15 @@ def tf_getStruct(tfCoord):
     tfRhat2 = tf.scatter_nd(idxRi, tfRhat1, tf.shape(tfCoord,out_type=tf.int64))
     return tfRhat2, tfRi, tfDc4
 
+def tf_getStruct2(tfCoord):
+    tfRi = tf.sqrt(tf.reduce_sum(tfCoord ** 2, axis=2))
+    idxRi = tf.where(tf.greater(tfRi, tf.constant(0.000000, dtype=tf.float32)))
+    tfRi_masked = tf.boolean_mask(tfRi, tf.greater(tfRi, tf.constant(0.000000, dtype=tf.float32)))
+    tfCoord_masked = tf.boolean_mask(tfCoord, tf.greater(tfRi, tf.constant(0.000000, dtype=tf.float32)))
+    tfRhat1 = tfCoord_masked / tf.expand_dims(tfRi_masked, 1)
+    tfRhat2 = tf.scatter_nd(idxRi, tfRhat1, tf.shape(tfCoord, out_type=tf.int64))
+    return tfRhat2, tfRi
+
 def tf_getCos(tf_X,tf_nBasis):
     tf_pi = tf.constant(np.pi, tf.float32)
 #    tf_X = tf.placeholder(tf.float32,[None])
