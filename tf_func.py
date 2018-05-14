@@ -71,6 +71,56 @@ def tf_getNb(tf_R, tf_lattice, dcut):
 
     return tf_idxNb,tf_RNb,tf_maxNb,tf_RdShape[0]
 
+
+def tf_getNb2(tf_R, tf_lattice, dcut):
+    tf_Rd = tf.expand_dims(tf_R, 0) - tf.expand_dims(tf_R, 1)
+
+    tf_RdShape = tf.shape(tf_Rd, out_type=tf.int64)
+
+    tf_RdMaskPos = tf_Rd > 0.5
+    tf_RdMaskNeg = tf_Rd < -0.5
+
+    tf_Rd = tf.where(tf_RdMaskPos,
+                     tf.scatter_nd(tf.where(tf_RdMaskPos), tf.boolean_mask(tf_Rd, tf_RdMaskPos) - 1, tf_RdShape),
+                     tf_Rd)
+    tf_Rd = tf.where(tf_RdMaskNeg,
+                     tf.scatter_nd(tf.where(tf_RdMaskNeg), tf.boolean_mask(tf_Rd, tf_RdMaskNeg) + 1, tf_RdShape),
+                     tf_Rd)
+
+    tf_Rd = tf.reshape(tf.tensordot(tf_Rd, tf.transpose(tf_lattice), 1), tf_RdShape)
+
+    tf_dcutMask = tf.reduce_sum(tf_Rd ** 2, axis=2) < tf.reshape(dcut, [1]) ** 2
+    tf_Rd = tf.scatter_nd(tf.where(tf_dcutMask), tf.boolean_mask(tf_Rd, tf_dcutMask), tf_RdShape)
+
+    tf_idxMask = tf.reduce_sum(tf_Rd ** 2, axis=2) > 0
+
+    tf_numNb = tf.reduce_sum(tf.cast(tf_idxMask, tf.float32), axis=1)
+    tf_maxNb = tf.cast(tf.reduce_max(tf_numNb), tf.int64)
+
+    tf_idx = tf.transpose(tf.where(tf_idxMask))
+    tf_iidx = tf_idx[0]
+    tf_jidx = tf_idx[1]
+    #    tf_jidx2 = tf.cast(tf.concat([tf.range(tf_numNb[i]) for i in range(nAtoms)], axis=0),tf.int64)
+
+    tfi0 = tf.constant(0, dtype=tf.int64)
+    c = lambda i, x, y: i < tf.shape(x, out_type=tf.int64)[0]
+    b = lambda i, x, y: [i + 1, x, tf.concat([y, tf.range(x[i])], axis=0)]
+
+    [o1, o2, o3] = tf.while_loop(c, b,
+                                 [tfi0, tf.cast(tf_numNb, tf.int64), tf.zeros([1], dtype=tf.int64)],
+                                 shape_invariants=[tfi0.get_shape(), tf_numNb.get_shape(), tf.TensorShape([None])])
+    tf_jidx2 = o3[1:]
+
+    tf_idx = tf.transpose(tf.stack([tf_iidx, tf_jidx2]))
+
+    tf_idxNb = tf.scatter_nd(tf_idx, tf_jidx + 1, [tf_RdShape[0], tf_maxNb])
+    tf_RNb = tf.scatter_nd(tf_idx, tf.boolean_mask(tf_Rd, tf_idxMask), [tf_RdShape[0], tf_maxNb, 3])
+
+    tf_idxMat = tf.where(tf_idxMask, tf.ones((tf_RdShape[0], tf_RdShape[0]), dtype=tf.int64), tf.zeros((tf_RdShape[0], tf_RdShape[0]), dtype=tf.int64))
+
+    return tf_idxNb, tf_RNb, tf_maxNb, tf_RdShape[0]
+
+
 def tf_getStruct(tfCoord):
     tfRi = tf.sqrt(tf.reduce_sum(tfCoord**2,axis=2))
     tfDc = tf.sqrt(tf.reduce_sum((tf.expand_dims(tfCoord,2)-tf.expand_dims(tfCoord,1))**2,axis=3))

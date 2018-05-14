@@ -2,6 +2,7 @@ import md_func as mdf
 import np_func as npf
 import numpy as np
 import time
+import tensorflow as tf
 
 nAtoms, lattice, R, V, F = mdf.readXYZ("md.xyz")
 R = np.linalg.solve(lattice, R.T).T
@@ -36,3 +37,12 @@ Dtemp = np.zeros_like(Dc)
 Dtemp[Ri>0] = (Ri[Ri>0])[:,None] * Dc[Ri>0]
 Dtemp.sum(axis=1)
 print(time.time()-t)
+
+idxNb4 = np.zeros((maxNb, nAtoms, maxNb), dtype=int)
+ones = np.ones(maxNb,dtype=int)
+idxNb4[ones>0] = idxNb
+
+tfx = tf.constant(np.arange(12).reshape(3,4), shape=(3,4), dtype=tf.float32)
+tfy = tf.tile(tfx[None,:,:], [4,1,1])
+with tf.Session() as sess:
+    y = sess.run(tfy)
