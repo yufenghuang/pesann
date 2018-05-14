@@ -289,31 +289,18 @@ def hcacf(params):
     config.gpu_options.per_process_gpu_memory_fraction = 0.4
     with tf.Session(config=config) as sess:
 
-        profiler = tf.profiler.Profiler(sess.graph)
-
         # initialize Tensorflow flow
         sess.run(tf.global_variables_initializer())
         saver.restore(sess, str(params['logDir']) + "/tf.chpt")
 
         # define the function for Ep and Fp
-        def getEF(iStep, R0, lattice):
+        def getEF(R0, lattice):
             R = np.linalg.solve(lattice, R0.T).T
             R[R > 1] = R[R > 1] - np.floor(R[R > 1])
             R[R < 0] = R[R < 0] - np.floor(R[R < 0])
 
-            run_meta = tf.RunMetadata()
-            _ = sess.run(...,
-                         options=tf.RunOptions(
-                             trace_level=tf.RunOptions.FULL_TRACE),
-                         run_metadata=run_meta)
-
             feedDict = {tfCoord: R, tfLattice: lattice}
-            # Ep, Fp, Fpq = sess.run((tfEp, -tfFp, -tfFpq), feed_dict=feedDict)
-            Ep, Fp, Fpq = sess.run((tfEp, -tfFp, -tfFpq), feed_dict=feedDict,
-                                   options=tf.RunOptions(
-                                       trace_level=tf.RunOptions.FULL_TRACE),
-                                   run_metadata=run_meta)
-            profiler.add_step(iStep, run_meta)
+            Ep, Fp, Fpq = sess.run((tfEp, -tfFp, -tfFpq), feed_dict=feedDict)
 
             return R.dot(lattice.T), Ep, Fp, Fpq
 
@@ -334,7 +321,7 @@ def hcacf(params):
         # initialize the atomic positions and velocities
         dt = float(params["dt"])
         nAtoms, lattice, R, V0 = read_structure(params["inputData"], params["format"])
-        R1, Ep, Fp, _ = getEF(0, R.dot(lattice.T), lattice)
+        R1, Ep, Fp, _ = getEF(R.dot(lattice.T), lattice)
         Vpos = V0 - 0.5 * Fp / mSi * dt / constA
 
         # Thermal conductivity MD loop
@@ -342,7 +329,7 @@ def hcacf(params):
             R0 = R1
             Vneg = Vpos
 
-            R0, Ep, Fp, Fpq = getEF(iStep+1, R0, lattice)
+            R0, Ep, Fp, Fpq = getEF(R0, lattice)
             R1, Vpos, V0 = vverlet(R0, Vneg, dt, Fp)
 
             # printing the output
