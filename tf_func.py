@@ -343,7 +343,7 @@ def tf_getEFln(tfCoord, tfLattice, params):
                           tf_getCos2(tf.boolean_mask(tfDc, tfDc > 0) * RcA + RcB, params['n3bBasis']),
                           [tfNAtoms, tfMaxNb, tfMaxNb, params['n3bBasis']])
 
-    tfFeats, tfdXi, tfdXin = tf_get_dXidRl(tfGR2, tfGR2d, tfGR3, tfGR3d, tfGD3, tfRhat * RcA)
+    tfFeats, tfdXi, tfdXin = tf_get_dXidRl2(tfGR2, tfGR2d, tfGR3, tfGR3d, tfGD3, tfRhat * RcA)
     tfdXi = tf.expand_dims(tfFeatA, 2) * tfdXi
     tfdXin = tf.expand_dims(tfFeatA, 2) * tfdXin
 
