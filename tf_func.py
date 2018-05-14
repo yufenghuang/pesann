@@ -317,7 +317,7 @@ def tf_getEFln(tfCoord, tfLattice, params):
     tfIdxNb, tfRNb, tfMaxNb, tfNAtoms = tf_getNb(tfCoord, tfLattice, float(params['dcut']))
     tfRhat, tfRi, tfDc = tf_getStruct(tfRNb)
 
-    tfDc = tf.where(tfDc > float(params['dcut']), tfDc, tf.zeros_like(tfDc))
+    tfDc = tf.where(tfDc < float(params['dcut']), tfDc, tf.zeros_like(tfDc))
 
     RcA = 2 / (float(params['dcut']) - float(params['Rcut']))
     RcB = - (float(params['dcut']) + float(params['Rcut'])) / (float(params['dcut']) - float(params['Rcut']))
