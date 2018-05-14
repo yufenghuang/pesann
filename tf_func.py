@@ -346,7 +346,8 @@ def tf_getEFln(tfCoord, tfLattice, params):
     tfEs = tf_engyFromFeats(tfFeats, numFeat, params['nL1Nodes'], params['nL2Nodes'])
 
     dEldXi = tf_get_dEldXi(tfFeats, numFeat, params['nL1Nodes'], params['nL2Nodes'])
-    Fll = tf.reduce_sum(tf.expand_dims(dEldXi, 2) * tfdXi, axis=1)
+    # Fll = tf.reduce_sum(tf.expand_dims(dEldXi, 2) * tfdXi, axis=1)
+    Fll = tf.matmul(tf.expand_dims(dEldXi, 1), tfdXi)
 
     dENldXi = tf.gather_nd(dEldXi,
                            tf.expand_dims(tf.transpose(tf.boolean_mask(tfIdxNb, tf.greater(tfIdxNb, 0)) - 1), 1))
