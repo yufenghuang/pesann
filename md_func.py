@@ -334,7 +334,7 @@ def hcacf(params):
         # initialize the atomic positions and velocities
         dt = float(params["dt"])
         nAtoms, lattice, R, V0 = read_structure(params["inputData"], params["format"])
-        R1, Ep, Fp, _ = getEF(R.dot(lattice.T), lattice)
+        R1, Ep, Fp, _ = getEF(0, R.dot(lattice.T), lattice)
         Vpos = V0 - 0.5 * Fp / mSi * dt / constA
 
         # Thermal conductivity MD loop
@@ -342,7 +342,7 @@ def hcacf(params):
             R0 = R1
             Vneg = Vpos
 
-            R0, Ep, Fp, Fpq = getEF(iStep, R0, lattice)
+            R0, Ep, Fp, Fpq = getEF(iStep+1, R0, lattice)
             R1, Vpos, V0 = vverlet(R0, Vneg, dt, Fp)
 
             # printing the output
