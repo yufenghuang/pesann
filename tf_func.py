@@ -91,8 +91,8 @@ def tf_getNb2(tf_R, tf_lattice, dcut):
 
     tf_dcutMask = tf.reduce_sum(tf_Rd ** 2, axis=2) < tf.reshape(dcut, [1]) ** 2
     tf_Rd = tf.scatter_nd(tf.where(tf_dcutMask), tf.boolean_mask(tf_Rd, tf_dcutMask), tf_RdShape)
-
     tf_idxMask = tf.reduce_sum(tf_Rd ** 2, axis=2) > 0
+    # tf_RdOut = tf.scatter_nd(tf.where(tf_dcutMask), tf.boolean_mask(tf.sqrt(tf.reduce_sum(tf_Rd ** 2, axis=2)), tf_dcutMask), (tf_RdShape[0], tf_RdShape[1]))
 
     tf_numNb = tf.reduce_sum(tf.cast(tf_idxMask, tf.float32), axis=1)
     tf_maxNb = tf.cast(tf.reduce_max(tf_numNb), tf.int64)
@@ -100,7 +100,6 @@ def tf_getNb2(tf_R, tf_lattice, dcut):
     tf_idx = tf.transpose(tf.where(tf_idxMask))
     tf_iidx = tf_idx[0]
     tf_jidx = tf_idx[1]
-    #    tf_jidx2 = tf.cast(tf.concat([tf.range(tf_numNb[i]) for i in range(nAtoms)], axis=0),tf.int64)
 
     tfi0 = tf.constant(0, dtype=tf.int64)
     c = lambda i, x, y: i < tf.shape(x, out_type=tf.int64)[0]
@@ -116,10 +115,9 @@ def tf_getNb2(tf_R, tf_lattice, dcut):
     tf_idxNb = tf.scatter_nd(tf_idx, tf_jidx + 1, [tf_RdShape[0], tf_maxNb])
     tf_RNb = tf.scatter_nd(tf_idx, tf.boolean_mask(tf_Rd, tf_idxMask), [tf_RdShape[0], tf_maxNb, 3])
 
-    tf_idxMat = tf.where(tf_idxMask, tf.ones((tf_RdShape[0], tf_RdShape[0]), dtype=tf.int64), tf.zeros((tf_RdShape[0], tf_RdShape[0]), dtype=tf.int64))
+    tf_idxMat = tf.cast(tf_idxMask, dtype=tf.int64)
 
-    return tf_idxNb, tf_RNb, tf_maxNb, tf_RdShape[0]
-
+    return tf_idxMat, tf_idxNb, tf_RNb, tf_maxNb, tf_RdShape[0]
 
 def tf_getStruct(tfCoord):
     tfRi = tf.sqrt(tf.reduce_sum(tfCoord**2,axis=2))
@@ -135,15 +133,6 @@ def tf_getStruct(tfCoord):
     tfRhat1 = tfCoord_masked/tf.expand_dims(tfRi_masked,1)
     tfRhat2 = tf.scatter_nd(idxRi, tfRhat1, tf.shape(tfCoord,out_type=tf.int64))
     return tfRhat2, tfRi, tfDc4
-
-def tf_getStruct2(tfCoord):
-    tfRi = tf.sqrt(tf.reduce_sum(tfCoord ** 2, axis=2))
-    idxRi = tf.where(tf.greater(tfRi, tf.constant(0.000000, dtype=tf.float32)))
-    tfRi_masked = tf.boolean_mask(tfRi, tf.greater(tfRi, tf.constant(0.000000, dtype=tf.float32)))
-    tfCoord_masked = tf.boolean_mask(tfCoord, tf.greater(tfRi, tf.constant(0.000000, dtype=tf.float32)))
-    tfRhat1 = tfCoord_masked / tf.expand_dims(tfRi_masked, 1)
-    tfRhat2 = tf.scatter_nd(idxRi, tfRhat1, tf.shape(tfCoord, out_type=tf.int64))
-    return tfRhat2, tfRi
 
 def tf_getCos(tf_X,tf_nBasis):
     tf_pi = tf.constant(np.pi, tf.float32)
@@ -327,6 +316,8 @@ def tf_getEFln(tfCoord, tfLattice, params):
 
     tfIdxNb, tfRNb, tfMaxNb, tfNAtoms = tf_getNb(tfCoord, tfLattice, float(params['dcut']))
     tfRhat, tfRi, tfDc = tf_getStruct(tfRNb)
+
+    tfDc = tf.where(tfDc > float(params['dcut']), tfDc, tf.zeros_like(tfDc))
 
     RcA = 2 / (float(params['dcut']) - float(params['Rcut']))
     RcB = - (float(params['dcut']) + float(params['Rcut'])) / (float(params['dcut']) - float(params['Rcut']))
