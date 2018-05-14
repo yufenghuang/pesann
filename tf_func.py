@@ -257,10 +257,15 @@ def tf_get_dEldXi(tfFeats, nFeat, nL1, nL2):
         W3 = tf.get_variable("weights", shape=[nL2,1], dtype=tf.float32,
               initializer=tf.contrib.layers.xavier_initializer())
         
-    w_j = tf.reduce_sum(tf.expand_dims(L2out*(1-L2out),1) * \
-                       tf.expand_dims(W2,0) * \
-                       tf.expand_dims(tf.transpose(W3),0), axis=2)
-    dEldXi = tf.reduce_sum(tf.expand_dims(L1out*(1-L1out)*w_j,1) * tf.expand_dims(W1,0),2)
+    # w_j = tf.reduce_sum(tf.expand_dims(L2out*(1-L2out),1) * \
+    #                    tf.expand_dims(W2,0) * \
+    #                    tf.expand_dims(tf.transpose(W3),0), axis=2)
+
+    w_j = tf.matmul((L2out*(1-L2out))*tf.squeeze(W3), tf.transpose(W2)) # dimension = p x k
+    dEldXi = tf.matmul(L1out * (1 - L1out) * w_j, tf.transpose(W1))
+
+    # dEldXi = tf.reduce_sum(tf.expand_dims(L1out*(1-L1out)*w_j,1) * tf.expand_dims(W1,0),2)
+
     return dEldXi
 
 def tf_getEF(tfCoord, tfLattice,params):
@@ -338,11 +343,13 @@ def tf_getEFln(tfCoord, tfLattice, params):
                           tf_getCos2(tf.boolean_mask(tfDc, tfDc > 0) * RcA + RcB, params['n3bBasis']),
                           [tfNAtoms, tfMaxNb, tfMaxNb, params['n3bBasis']])
 
-    tfdXi, tfdXin = tf_get_dXidRl(tfGR2, tfGR2d, tfGR3, tfGR3d, tfGD3, tfRhat * RcA)
+    tfFeats, tfdXi, tfdXin = tf_get_dXidRl(tfGR2, tfGR2d, tfGR3, tfGR3d, tfGD3, tfRhat * RcA)
     tfdXi = tf.expand_dims(tfFeatA, 2) * tfdXi
     tfdXin = tf.expand_dims(tfFeatA, 2) * tfdXin
 
-    tfFeats = tfFeatA * tf_getFeats(tfGR2, tfGR3, tfGD3) + tfFeatB
+    # tfFeats = tfFeatA * tf_getFeats(tfGR2, tfGR3, tfGD3) + tfFeatB
+    tfFeats = tfFeatA * tfFeats + tfFeatB
+
     tfEs = tf_engyFromFeats(tfFeats, numFeat, params['nL1Nodes'], params['nL2Nodes'])
 
     dEldXi = tf_get_dEldXi(tfFeats, numFeat, params['nL1Nodes'], params['nL2Nodes'])
@@ -354,48 +361,6 @@ def tf_getEFln(tfCoord, tfLattice, params):
     Fln = tf.squeeze(tf.matmul(tf.expand_dims(dEnldXin, 2), tfdXin))
 
     return tfEs, Fll, Fln
-
-
-def tf_getFln(tfCoord, tfLattice, params):
-    tfFeatA = tf.constant(params['featScalerA'], dtype=tf.float32)
-    tfFeatB = tf.constant(params['featScalerB'], dtype=tf.float32)
-    numFeat = params['n2bBasis'] + params['n3bBasis'] ** 3
-
-    tfIdxNb, tfRNb, tfMaxNb, tfNAtoms = tf_getNb(tfCoord, tfLattice, float(params['dcut']))
-    tfRhat, tfRi, tfDc = tf_getStruct(tfRNb)
-
-    RcA = 2 / (float(params['dcut']) - float(params['Rcut']))
-    RcB = - (float(params['dcut']) + float(params['Rcut'])) / (float(params['dcut']) - float(params['Rcut']))
-
-    tfGR2 = tf.scatter_nd(tf.where(tfRi > 0),
-                          tf_getCos2(tf.boolean_mask(tfRi, tfRi > 0) * RcA + RcB, params['n2bBasis']),
-                          [tfNAtoms, tfMaxNb, params['n2bBasis']])
-    tfGR2d = tf.scatter_nd(tf.where(tfRi > 0),
-                           tf_getdCos2(tf.boolean_mask(tfRi, tfRi > 0) * RcA + RcB, params['n2bBasis']),
-                           [tfNAtoms, tfMaxNb, params['n2bBasis']])
-    tfGR3 = tf.scatter_nd(tf.where(tfRi > 0),
-                          tf_getCos2(tf.boolean_mask(tfRi, tfRi > 0) * RcA + RcB, params['n3bBasis']),
-                          [tfNAtoms, tfMaxNb, params['n3bBasis']])
-    tfGR3d = tf.scatter_nd(tf.where(tfRi > 0),
-                           tf_getdCos2(tf.boolean_mask(tfRi, tfRi > 0) * RcA + RcB, params['n3bBasis']),
-                           [tfNAtoms, tfMaxNb, params['n3bBasis']])
-    tfGD3 = tf.scatter_nd(tf.where(tfDc > 0),
-                          tf_getCos2(tf.boolean_mask(tfDc, tfDc > 0) * RcA + RcB, params['n3bBasis']),
-                          [tfNAtoms, tfMaxNb, tfMaxNb, params['n3bBasis']])
-
-    tfdXi, tfdXin = tf_get_dXidRl(tfGR2, tfGR2d, tfGR3, tfGR3d, tfGD3, tfRhat * RcA)
-    tfdXin = tf.expand_dims(tfFeatA, 2) * tfdXin
-
-    tfFeats = tfFeatA * tf_getFeats(tfGR2, tfGR3, tfGD3) + tfFeatB
-
-    dEldXi = tf_get_dEldXi(tfFeats, numFeat, params['nL1Nodes'], params['nL2Nodes'])
-
-    dENldXi = tf.gather_nd(dEldXi,
-                           tf.expand_dims(tf.transpose(tf.boolean_mask(tfIdxNb, tf.greater(tfIdxNb, 0)) - 1), 1))
-    dEnldXin = tf.scatter_nd(tf.where(tf.greater(tfIdxNb, 0)), dENldXi, [tfNAtoms, tfMaxNb, numFeat])
-    Fln = tf.reduce_sum(tf.expand_dims(dEnldXin, 3) * tfdXin, axis=2)
-
-    return Fln
 
 def tf_getEF2(tfCoord, tfLattice,params):
     tfFeatA = tf.constant(params['featScalerA'], dtype=tf.float32)
@@ -557,44 +522,53 @@ def tf_getE(tfCoord, tfLattice,params):
     return tfEs
 
 
+def tf_get_dXidRl2(tf_GR2, tf_GR2d, tf_GR3, tf_GR3d, tf_GD3, tf_Rh):
+    
+    tf_Shape = tf.shape(tf_GR3,out_type=tf.int32)
+    tf_nAtoms = tf_Shape[0]
+    tf_maxNb = tf_Shape[1]
+    tf_nBasis3b = tf_Shape[2]
+
+    #
+    Z2B = tf.expand_dims(tf_GR2d, 3) * tf.expand_dims(tf_Rh, 2)
+    Z3A = tf.matmul(tf.transpose(tf_GR3,[0,2,1]), tf.reshape(tf_GD3, [tf_nAtoms, tf_maxNb, -1]))
+    Z3A = tf.transpose(tf.reshape(Z3A, [tf_nAtoms, tf_nBasis3b, tf_maxNb, tf_nBasis3b]), [0,2,1,3])
+    Z3B = tf.expand_dims(tf_GR3d, 3) * tf.expand_dims(tf_Rh, 2)
+
+    # features
+    tf_yR = tf.reduce_sum(tf_GR2, axis=1)
+    tf_yD = tf.matmul(tf.transpose(tf_GR3, [0,2,1]), tf.reshape(Z3A, [tf_nAtoms, tf_maxNb, -1]))
+    tf_yD = tf.reshape(tf_yD, [tf_nAtoms, -1])
+    tf_feats = tf.concat([tf_yR, tf_yD], axis=1)
+
+    # Derivatives
+    # 2 body:
+    tfdX2ldl = tf.reduce_sum(Z2B, axis=1)
+    tfdX2pdl = Z2B
+
+    # 3 body:
+    tfdX3ldl = tf.matmul(tf.transpose(tf.reshape(Z3B, [tf_nAtoms, tf_maxNb, -1]), [0,2,1]),
+                         tf.reshape(Z3A, [tf_nAtoms, tf_maxNb, -1]))
+    tfdX3ldl = tf.transpose(tf.reshape(tfdX3ldl, [tf_nAtoms, tf_nBasis3b, 3, tf_nBasis3b, tf_nBasis3b]),
+                            [0, 1,3,4,2])
+    tfdX3ldl = tfdX3ldl + tf.transpose(tfdX3ldl, [0,2,1,3,4])
+
+    tfdX3pdl_A = tf.expand_dims(tf.expand_dims(Z3B, 3),4) * tf.expand_dims(tf.expand_dims(Z3A, 2),5)
+    tfdX3pdl_C = tf.matmul(tf.transpose(tf.reshape(Z3B, [tf_nAtoms, tf_maxNb, -1]), [0,2,1]),
+                           tf.reshape(tf_GD3, [tf_nAtoms, tf_maxNb, -1]))
+    tfdX3pdl_C = tf.transpose(tf.reshape(tfdX3pdl_C, [tf_nAtoms, tf_nBasis3b, 3, tf_maxNb, tf_nBasis3b]),
+                              [0, 3,4,1,2])
+    tfdX3pdl_C = tf.expand_dims(tfdX3pdl_C, 2) * tf.expand_dims(tf.expand_dims(tf.expand_dims(tf_GR3, 3),4),5)
+
+    tfdX3pdl = tfdX3pdl_A + tfdX3pdl_C
+    tfdX3pdl = tfdX3pdl + tf.transpose(tfdX3pdl, [0,1,3,2,4,5])
+
+    tfdXldl = tf.concat([tfdX2ldl, tf.reshape(tfdX3ldl, [tf_nAtoms,-1,3])], axis=1)
+    tfdXpdl = tf.concat([tfdX2pdl, tf.reshape(tfdX3pdl, [tf_nAtoms, tf_maxNb, -1, 3])], axis=2)
+
+    return tf_feats, tfdXldl,tfdXpdl
+
 def tf_get_dXidRl(tf_GR2, tf_GR2d, tf_GR3, tf_GR3d, tf_GD3, tf_Rh):
-    
-    tf_Shape = tf.shape(tf_GR3,out_type=tf.int64)
-    tf_maxNb = tf.reshape(tf_Shape[1],[1])
-    tf_nBasis3b = tf.reshape(tf_Shape[2],[1])
-    
-    tfX1d = tf.reduce_sum(tf.expand_dims(tf_GR2d,3) * tf.expand_dims(-tf_Rh,2),1) # dX2/dRl
-    
-    tfX2da = tf.reduce_sum(tf.expand_dims(tf_GD3,3) * tf.expand_dims(tf.expand_dims(tf_GR3,2),4),1)
-    tfX2db = tf.reduce_sum(tf.expand_dims(tf.expand_dims(tf.expand_dims(tf_GR3d,3),4) * tf.expand_dims(tfX2da,2),5) * \
-                           tf.expand_dims(tf.expand_dims(tf.expand_dims(-tf_Rh,2),3),4), 1)
-    tfX2d = tfX2db + tf.transpose(tfX2db,[0,2,1,3,4]) # dX3/dRl
-    
-    tfX1dn = tf.expand_dims(tf_GR2d,3) * tf.expand_dims(-tf_Rh,2) # dX2/dRnl
-    
-    tfX2dn_a = tf.reduce_sum(tf.expand_dims(tf.expand_dims(tf_GR3,1),3) * tf.expand_dims(tf_GD3,4),2)
-    tfX2dn_b = tf.expand_dims(tf.expand_dims(tfX2dn_a,2),5) * \
-               tf.expand_dims(tf.expand_dims(tf.expand_dims(-tf_Rh, 2),3),4) * \
-               tf.expand_dims(tf.expand_dims(tf.expand_dims(tf_GR3d,3),4),5)
-    tfX2dn1 = tfX2dn_b + tf.transpose(tfX2dn_b, [0,1,3,2,4,5])
-    
-    tfX2dn_c = tf.reduce_sum(tf.expand_dims(tf.expand_dims(tf_GD3,4),5) * \
-               tf.expand_dims(tf.expand_dims(tf.expand_dims(tf_GR3d,1),3),5) * \
-               tf.expand_dims(tf.expand_dims(tf.expand_dims(-tf_Rh,1),3),4),2)
-    tfX2dn_d = tf.expand_dims(tfX2dn_c,2) * tf.expand_dims(tf.expand_dims(tf.expand_dims(tf_GR3,3),4),5)
-    tfX2dn2 = tfX2dn_d + tf.transpose(tfX2dn_d,[0,1,3,2,4,5])
-    
-    tfShapeTemp = tf.concat([[-1],tf_maxNb,tf_nBasis3b**3,[3]],axis=0)
-    tfX2dn = tf.reshape(tfX2dn1 + tfX2dn2, tfShapeTemp) # dX3/dRnl    
-    
-    tfShapeTemp = tf.concat([[-1],tf_nBasis3b**3,[3]],axis=0)
-    tfXd = tf.concat([tfX1d, tf.reshape(tfX2d,tfShapeTemp)],axis=1)
-    tfXdn = tf.concat([tfX1dn, tfX2dn],axis=2)
-
-    return tfXd,tfXdn
-
-
-def tf_get_dXidRl_backup(tf_GR2, tf_GR2d, tf_GR3, tf_GR3d, tf_GD3, tf_Rh):
     tf_Shape = tf.shape(tf_GR3, out_type=tf.int64)
     tf_maxNb = tf.reshape(tf_Shape[1], [1])
     tf_nBasis3b = tf.reshape(tf_Shape[2], [1])
@@ -786,3 +760,49 @@ def tf_getEF_repulsion(tfCoord, tfLattice, params):
     tfFs = Fln + Fll + 2 * tfEngyA * tf_getdVi(tfRi, tfRhat, params['dcut'], params['dcut']/3, params)
 
     return tfEs, tfFs
+
+def tf_getEFln_backup(tfCoord, tfLattice, params):
+    tfFeatA = tf.constant(params['featScalerA'], dtype=tf.float32)
+    tfFeatB = tf.constant(params['featScalerB'], dtype=tf.float32)
+    numFeat = params['n2bBasis'] + params['n3bBasis'] ** 3
+
+    tfIdxNb, tfRNb, tfMaxNb, tfNAtoms = tf_getNb(tfCoord, tfLattice, float(params['dcut']))
+    tfRhat, tfRi, tfDc = tf_getStruct(tfRNb)
+
+    tfDc = tf.where(tfDc < float(params['dcut']), tfDc, tf.zeros_like(tfDc))
+
+    RcA = 2 / (float(params['dcut']) - float(params['Rcut']))
+    RcB = - (float(params['dcut']) + float(params['Rcut'])) / (float(params['dcut']) - float(params['Rcut']))
+
+    tfGR2 = tf.scatter_nd(tf.where(tfRi > 0),
+                          tf_getCos2(tf.boolean_mask(tfRi, tfRi > 0) * RcA + RcB, params['n2bBasis']),
+                          [tfNAtoms, tfMaxNb, params['n2bBasis']])
+    tfGR2d = tf.scatter_nd(tf.where(tfRi > 0),
+                           tf_getdCos2(tf.boolean_mask(tfRi, tfRi > 0) * RcA + RcB, params['n2bBasis']),
+                           [tfNAtoms, tfMaxNb, params['n2bBasis']])
+    tfGR3 = tf.scatter_nd(tf.where(tfRi > 0),
+                          tf_getCos2(tf.boolean_mask(tfRi, tfRi > 0) * RcA + RcB, params['n3bBasis']),
+                          [tfNAtoms, tfMaxNb, params['n3bBasis']])
+    tfGR3d = tf.scatter_nd(tf.where(tfRi > 0),
+                           tf_getdCos2(tf.boolean_mask(tfRi, tfRi > 0) * RcA + RcB, params['n3bBasis']),
+                           [tfNAtoms, tfMaxNb, params['n3bBasis']])
+    tfGD3 = tf.scatter_nd(tf.where(tfDc > 0),
+                          tf_getCos2(tf.boolean_mask(tfDc, tfDc > 0) * RcA + RcB, params['n3bBasis']),
+                          [tfNAtoms, tfMaxNb, tfMaxNb, params['n3bBasis']])
+
+    tfdXi, tfdXin = tf_get_dXidRl(tfGR2, tfGR2d, tfGR3, tfGR3d, tfGD3, tfRhat * RcA)
+    tfdXi = tf.expand_dims(tfFeatA, 2) * tfdXi
+    tfdXin = tf.expand_dims(tfFeatA, 2) * tfdXin
+
+    tfFeats = tfFeatA * tf_getFeats(tfGR2, tfGR3, tfGD3) + tfFeatB
+    tfEs = tf_engyFromFeats(tfFeats, numFeat, params['nL1Nodes'], params['nL2Nodes'])
+
+    dEldXi = tf_get_dEldXi(tfFeats, numFeat, params['nL1Nodes'], params['nL2Nodes'])
+    Fll = tf.squeeze(tf.matmul(tf.expand_dims(dEldXi, 1), tfdXi))
+
+    dENldXi = tf.gather_nd(dEldXi,
+                           tf.expand_dims(tf.transpose(tf.boolean_mask(tfIdxNb, tf.greater(tfIdxNb, 0)) - 1), 1))
+    dEnldXin = tf.scatter_nd(tf.where(tf.greater(tfIdxNb, 0)), dENldXi, [tfNAtoms, tfMaxNb, numFeat])
+    Fln = tf.squeeze(tf.matmul(tf.expand_dims(dEnldXin, 2), tfdXin))
+
+    return tfEs, Fll, Fln
