@@ -312,7 +312,10 @@ def tf_getEF(tfCoord, tfLattice,params):
     dENldXi = tf.gather_nd(dEldXi,
                            tf.expand_dims(tf.transpose(tf.boolean_mask(tfIdxNb, tf.greater(tfIdxNb, 0)) - 1), 1))
     dEnldXin = tf.scatter_nd(tf.where(tf.greater(tfIdxNb, 0)), dENldXi, [tfNAtoms, tfMaxNb, numFeat])
-    Fln = tf.squeeze(tf.matmul(tf.expand_dims(dEnldXin, 2), tfdXin))
+
+    Fln = tf.squeeze(tf.matmul(tf.reshape(dEnldXin, [tfNAtoms, 1, -1]), tf.reshape(tfdXin, [tfNAtoms, -1, 3])))
+
+    # Fln = tf.squeeze(tf.matmul(tf.expand_dims(dEnldXin, 2), tfdXin))
     
     tfFs = Fln + Fll 
 
