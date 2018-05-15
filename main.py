@@ -48,7 +48,7 @@ params={
     "Tend": -1,
     "dTstep": 0,
     "coll_prob": 0,
-    "fracMem": 0.5,
+    "fracMem": 0.2,
     }
 
 newParams={}

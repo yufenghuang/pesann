@@ -268,7 +268,7 @@ def tf_get_dEldXi(tfFeats, nFeat, nL1, nL2):
 
     return dEldXi
 
-def tf_getEF_failed(tfCoord, tfLattice,params):
+def tf_getEF(tfCoord, tfLattice,params):
     tfFeatA = tf.constant(params['featScalerA'], dtype=tf.float32)
     tfFeatB = tf.constant(params['featScalerB'], dtype=tf.float32)
     numFeat = params['n2bBasis'] + params['n3bBasis'] ** 3
@@ -314,11 +314,11 @@ def tf_getEF_failed(tfCoord, tfLattice,params):
     dEnldXin = tf.scatter_nd(tf.where(tf.greater(tfIdxNb, 0)), dENldXi, [tfNAtoms, tfMaxNb, numFeat])
 
     tfNAtoms = tf.cast(tfNAtoms, tf.int32)
-    # Fln = tf.squeeze(tf.matmul(tf.reshape(dEnldXin, [tfNAtoms, 1, -1]), tf.reshape(tfdXin, [tfNAtoms, -1, 3])))
+    Fln = tf.squeeze(tf.matmul(tf.reshape(dEnldXin, [tfNAtoms, 1, -1]), tf.reshape(tfdXin, [tfNAtoms, -1, 3])))
 
     # Fln = tf.squeeze(tf.matmul(tf.expand_dims(dEnldXin, 2), tfdXin))
 
-    Fln = tf.reduce_sum(tf.expand_dims(dEnldXin, 3) * tfdXin, axis=[1, 2])
+    # Fln = tf.reduce_sum(tf.expand_dims(dEnldXin, 3) * tfdXin, axis=[1, 2])
     
     tfFs = Fln + Fll 
 
@@ -541,10 +541,10 @@ def tf_get_dXidRl2(tf_GR2, tf_GR2d, tf_GR3, tf_GR3d, tf_GD3, tf_Rh):
     tf_nBasis3b = tf_Shape[2]
 
     #
-    Z2B = tf.expand_dims(tf_GR2d, 3) * tf.expand_dims(tf_Rh, 2)
+    Z2B = tf.expand_dims(tf_GR2d, 3) * tf.expand_dims(-tf_Rh, 2)
     Z3A = tf.matmul(tf.transpose(tf_GR3,[0,2,1]), tf.reshape(tf_GD3, [tf_nAtoms, tf_maxNb, -1]))
     Z3A = tf.transpose(tf.reshape(Z3A, [tf_nAtoms, tf_nBasis3b, tf_maxNb, tf_nBasis3b]), [0,2,1,3])
-    Z3B = tf.expand_dims(tf_GR3d, 3) * tf.expand_dims(tf_Rh, 2)
+    Z3B = tf.expand_dims(tf_GR3d, 3) * tf.expand_dims(-tf_Rh, 2)
 
     # features
     tf_yR = tf.reduce_sum(tf_GR2, axis=1)
@@ -564,7 +564,9 @@ def tf_get_dXidRl2(tf_GR2, tf_GR2d, tf_GR3, tf_GR3d, tf_GD3, tf_Rh):
                             [0, 1,3,4,2])
     tfdX3ldl = tfdX3ldl + tf.transpose(tfdX3ldl, [0,2,1,3,4])
 
-    tfdX3pdl_A = tf.expand_dims(tf.expand_dims(Z3B, 3),4) * tf.expand_dims(tf.expand_dims(Z3A, 2),5)
+    tfdX3pdl_A = tf.expand_dims(tf.expand_dims(Z3B, 3), 4) * \
+                 tf.expand_dims(tf.expand_dims(tf.transpose(Z3A, [0,1,3,2]),2),5)
+
     tfdX3pdl_C = tf.matmul(tf.transpose(tf.reshape(Z3B, [tf_nAtoms, tf_maxNb, -1]), [0,2,1]),
                            tf.reshape(tf_GD3, [tf_nAtoms, tf_maxNb, -1]))
     tfdX3pdl_C = tf.transpose(tf.reshape(tfdX3pdl_C, [tf_nAtoms, tf_nBasis3b, 3, tf_maxNb, tf_nBasis3b]),
@@ -819,7 +821,7 @@ def tf_getEFln_backup(tfCoord, tfLattice, params):
     return tfEs, Fll, Fln
 
 
-def tf_getEF(tfCoord, tfLattice, params):
+def tf_getEF_backup(tfCoord, tfLattice, params):
     tfFeatA = tf.constant(params['featScalerA'], dtype=tf.float32)
     tfFeatB = tf.constant(params['featScalerB'], dtype=tf.float32)
     numFeat = params['n2bBasis'] + params['n3bBasis'] ** 3
