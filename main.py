@@ -48,6 +48,7 @@ params={
     "Tend": -1,
     "dTstep": 0,
     "coll_prob": 0,
+    "fracMem": 0.5,
     }
 
 newParams={}
@@ -107,6 +108,8 @@ parser.add_argument("--Tbegin", type=float, help="Initial temperature when apply
 parser.add_argument("--Tend", type=float, help="Final temperature for the thermostat")
 parser.add_argument("--dTstep", type=int, help="")
 parser.add_argument("--coll_prob", type=float, help="")
+parser.add_argument("--fracMem", type=float, help="fraction of the total GPU memory to be used")
+
 
 args = parser.parse_args()
 

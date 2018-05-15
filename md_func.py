@@ -99,7 +99,7 @@ def andersen(params):
     saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
 
     config = tf.ConfigProto()
-    config.gpu_options.per_process_gpu_memory_fraction = 0.4
+    config.gpu_options.per_process_gpu_memory_fraction = float(params["fracMem"])
     with tf.Session(config=config) as sess:
         sess.run(tf.global_variables_initializer())
         saver.restore(sess, str(params['logDir']) + "/tf.chpt")
@@ -209,7 +209,7 @@ def NVE(params):
     saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
 
     config = tf.ConfigProto()
-    config.gpu_options.per_process_gpu_memory_fraction = 0.4
+    config.gpu_options.per_process_gpu_memory_fraction = float(params["fracMem"])
     with tf.Session(config=config) as sess:
 
         # initialize Tensorflow flow
@@ -268,7 +268,6 @@ def NVE(params):
                                       " " + str(V0[iAtom, 0]) + " " + str(V0[iAtom, 1]) + " " + str(V0[iAtom, 2]) +
                                       " " + str(Fp[iAtom, 0]) + " " + str(Fp[iAtom, 1]) + " " + str(Fp[iAtom, 2]) + "\n")
 
-
 # calculate heat current J(t) for the calculation of the
 # heat current auto-correlation function (HCACF)
 def hcacf(params):
@@ -286,7 +285,7 @@ def hcacf(params):
     saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
 
     config = tf.ConfigProto()
-    config.gpu_options.per_process_gpu_memory_fraction = 0.4
+    config.gpu_options.per_process_gpu_memory_fraction = float(params["fracMem"])
     with tf.Session(config=config) as sess:
 
         # initialize Tensorflow flow
