@@ -268,7 +268,7 @@ def tf_get_dEldXi(tfFeats, nFeat, nL1, nL2):
 
     return dEldXi
 
-def tf_getEF(tfCoord, tfLattice,params):
+def tf_getEF_failed(tfCoord, tfLattice,params):
     tfFeatA = tf.constant(params['featScalerA'], dtype=tf.float32)
     tfFeatB = tf.constant(params['featScalerB'], dtype=tf.float32)
     numFeat = params['n2bBasis'] + params['n3bBasis'] ** 3
@@ -819,7 +819,7 @@ def tf_getEFln_backup(tfCoord, tfLattice, params):
     return tfEs, Fll, Fln
 
 
-def tf_getEF_backup(tfCoord, tfLattice, params):
+def tf_getEF(tfCoord, tfLattice, params):
     tfFeatA = tf.constant(params['featScalerA'], dtype=tf.float32)
     tfFeatB = tf.constant(params['featScalerB'], dtype=tf.float32)
     numFeat = params['n2bBasis'] + params['n3bBasis'] ** 3
