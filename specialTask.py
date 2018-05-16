@@ -1169,7 +1169,6 @@ def specialTask12(params):
                   "Etot", "{:.12f}".format(Etot), "Temp", "{:.12f}".format(Temp),
                   "Jx", "{:.12f}".format(Jt[0]), "Jy", "{:.12f}".format(Jt[1]), "Jz", "{:.12f}".format(Jt[2]))
 
-
 # Thermal conductivity (MD method)
 # This is a back up of the working method
 # need to modify this slightly
