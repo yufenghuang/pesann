@@ -1124,6 +1124,52 @@ def specialTask11(params):
                                           " " + str(Vpos[iAtom, 0]) + " " + str(Vpos[iAtom, 1]) + " " + str(Vpos[iAtom, 2]) + "\n")
 
 
+# HCACF using tensorflow
+def specialTask12(params):
+    import md_func as mdf
+    kB = 1.38e-23  # J/K
+    eV2J = 1.602177e-19  # converting eV to Joules
+
+    # setup Tensorflow
+    tfEngyA = tf.constant(params['engyScalerA'], dtype=tf.float32)
+    tfEngyB = tf.constant(params['engyScalerB'], dtype=tf.float32)
+    tfCoord = tf.placeholder(tf.float32, shape=(None, 3))
+    tfLattice = tf.placeholder(tf.float32, shape=(3, 3))
+    tfVneg = tf.placeholder(tf.float32, shape=(None, 3))
+    tfR1, tfVpos, tfEs, tfJpot = tff.tf_getJt(tfCoord, tfLattice, tfVneg, params)
+
+    saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
+
+    config = tf.ConfigProto()
+    config.gpu_options.per_process_gpu_memory_fraction = float(params["fracMem"])
+    with tf.Session(config=config) as sess:
+        sess.run(tf.global_variables_initializer())
+        saver.restore(sess, str(params['logDir']) + "/tf.chpt")
+
+        dt = float(params["dt"])
+        nAtoms, lattice, R, V0 = mdf.read_structure(params["inputData"], params["format"])
+
+        R1 = R.dot(lattice.T)
+        feedDict = {tfCoord: R, tfLattice: lattice, tfVneg: V0}
+        Vpos =  V0 - (sess.run(tfVpos, feed_dict=feedDict)-V0)/2
+
+        for iStep in range(params["epoch"]):
+            R0, Vneg = R1, Vpos
+            R = np.linalg.solve(lattice, R0.T).T
+            feedDict = {tfCoord: R, tfLattice: lattice, tfVneg: Vneg}
+            R1, Vpos, Ep, J1 = sess.run((tfR1, tfVpos, tfEs, tfJpot), feed_dict=feedDict)
+            V0 = (Vneg+Vpos)/2
+            Epot, Ekin, Etot = mdf.getMDEnergies(Ep, V0)
+            Temp = Ekin / (3 / 2 * nAtoms) * eV2J / kB
+
+            Ek = np.sum(0.5 * mSi * V0 ** 2 * constA, axis=1)
+            J0 = (Ep + Ek[:, None]) * V0
+            Jt = np.sum(J0 + J1, axis=0)
+            print(iStep, "Epot", "{:.12f}".format(Epot), "Ekin", "{:.12f}".format(Ekin),
+                  "Etot", "{:.12f}".format(Etot), "Temp", "{:.12f}".format(Temp),
+                  "Jx", "{:.12f}".format(Jt[0]), "Jy", "{:.12f}".format(Jt[1]), "Jz", "{:.12f}".format(Jt[2]))
+
+
 # Thermal conductivity (MD method)
 # This is a back up of the working method
 # need to modify this slightly
