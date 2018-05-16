@@ -1169,6 +1169,23 @@ def specialTask12(params):
                   "Etot", "{:.12f}".format(Etot), "Temp", "{:.12f}".format(Temp),
                   "Jx", "{:.12f}".format(Jt[0]), "Jy", "{:.12f}".format(Jt[1]), "Jz", "{:.12f}".format(Jt[2]))
 
+        # printing the final structure
+        feedDict = {tfCoord: np.linalg.solve(lattice, R1.T).T, tfLattice: lattice, tfVneg: Vpos}
+        Vpp, Ep = sess.run((tfVpos, tfEs), feed_dict=feedDict)
+        V1 = (Vpp+Vpos)/2
+        Epot, Ekin, Etot = mdf.getMDEnergies(Ep, V1)
+        Temp = Ekin / (3 / 2 * nAtoms) * eV2J / kB
+        
+        with open("md.xyz", 'w') as xyzFile:
+            xyzFile.write(str(nAtoms) + "\n")
+            xyzFile.write("lattice " + " ".join([str(x) for x in lattice.reshape(-1)]) +
+                          " Epot " + "{:.12f}".format(Epot) + " Ekin " + "{:.12f}".format(Ekin) +
+                          " Etot " + "{:.12f}".format(Etot) + " Temp " + "{:.12f}".format(Temp) + "\n")
+            for iAtom in range(nAtoms):
+                xyzFile.write("Si " + str(R1[iAtom, 0]) + " " + str(R1[iAtom, 1]) + " " + str(R1[iAtom, 2]) +
+                              " " + str(V1[iAtom, 0]) + " " + str(V1[iAtom, 1]) + " " + str(V1[iAtom, 2]) + "\n")
+
+
 # Thermal conductivity (MD method)
 # This is a back up of the working method
 # need to modify this slightly
