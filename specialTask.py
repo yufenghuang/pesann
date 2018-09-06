@@ -1185,6 +1185,59 @@ def specialTask12(params):
                 xyzFile.write("Si " + str(R1[iAtom, 0]) + " " + str(R1[iAtom, 1]) + " " + str(R1[iAtom, 2]) +
                               " " + str(V1[iAtom, 0]) + " " + str(V1[iAtom, 1]) + " " + str(V1[iAtom, 2]) + "\n")
 
+# Special task 13
+# print the parameters
+def specialTask13(params):
+    featA = params['featScalerA']
+    featB = params['featScalerB']
+    engyA = params['engyScalerA']
+    engyB = params['engyScalerB']
+
+    nFeat = params['n2bBasis'] + params['n3bBasis'] ** 3
+    nL1 = params['nL1Nodes']
+    nL2 = params['nL2Nodes']
+
+    with tf.variable_scope('layer1', reuse=tf.AUTO_REUSE):
+        W0 = tf.get_variable("weights", shape=[nFeat, nL1], dtype=tf.float32,
+                            initializer=tf.contrib.layers.xavier_initializer())
+        B0 = tf.get_variable("biases", shape=[nL1], dtype=tf.float32,
+                            initializer=tf.zeros_initializer())
+        tf.add_to_collection("saved_params", W0)
+        tf.add_to_collection("saved_params", B0)
+
+    with tf.variable_scope('layer2', reuse=tf.AUTO_REUSE):
+        W1 = tf.get_variable("weights", shape=[nL1, nL2], dtype=tf.float32,
+                            initializer=tf.contrib.layers.xavier_initializer())
+        B1 = tf.get_variable("biases", shape=[nL2], dtype=tf.float32,
+                            initializer=tf.zeros_initializer())
+        tf.add_to_collection("saved_params", W1)
+        tf.add_to_collection("saved_params", B1)
+
+    with tf.variable_scope('layer3', reuse=tf.AUTO_REUSE):
+        W2 = tf.get_variable("weights", shape=[nL2, 1], dtype=tf.float32,
+                            initializer=tf.contrib.layers.xavier_initializer())
+        B2 = tf.get_variable("biases", shape=[1], dtype=tf.float32,
+                            initializer=tf.zeros_initializer())
+        tf.add_to_collection("saved_params", W2)
+        tf.add_to_collection("saved_params", B2)
+
+    # setup Tensorflow
+    saver = tf.train.Saver(list(set(tf.get_collection("saved_params"))))
+
+    config = tf.ConfigProto()
+    config.gpu_options.per_process_gpu_memory_fraction = float(params["fracMem"])
+    with tf.Session(config=config) as sess:
+        sess.run(tf.global_variables_initializer())
+        saver.restore(sess, str(params['logDir']) + "/tf.chpt")
+
+        w0 = sess.run(W0)
+        b0 = sess.run(B0)
+        w1 = sess.run(W1)
+        b1 = sess.run(B1)
+        w2 = sess.run(W2)
+        b2 = sess.run(B2)
+
+        np.savez(str(params['logDir']) + "/nn_params.npz", w0=w0, w1=w1, w2=w2, b0=b0, b1=b1, b2=b2)
 
 # Thermal conductivity (MD method)
 # This is a back up of the working method
@@ -1743,6 +1796,9 @@ def old_specialTask08(params):
                 for iAtom in range(len(R1)):
                     print("Si", R0[iAtom, 0], R0[iAtom, 1], R0[iAtom, 2], V0[iAtom, 0], V0[iAtom, 1], V0[iAtom, 2], Fp[iAtom, 0], Fp[iAtom, 1], Fp[iAtom, 2])
                 sys.stdout.flush()
+
+
+
 
 '''
 
