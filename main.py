@@ -182,15 +182,15 @@ if params["task"] == 2:
     print("Total Energy is {}".format(np.sum(Ep)))
     print("Atomic energy + forces:")
     for i in range(len(Ep)):
-        print("{} {} {} {}".format(Ep[i], Fp[i, 0], Fp[i, 1], Fp[i, 2]))
+        print("{} {} {} {}".format(Ep[i, 0], Fp[i, 0], Fp[i, 1], Fp[i, 2]))
 
 elif params["task"] == 1:
     Ep = pyf.getEngy(params)
     print("Total Energy is {}".format(np.sum(Ep)))
     print("Atomic energy:")
     for i in range(len(Ep)):
-        print("{}".format(Ep[i]))
-        
+        print("{}".format(Ep[i, 0]))
+
 elif params["task"] == 0:
     pyf.NVE(params)
 elif params["task"] == -1:
